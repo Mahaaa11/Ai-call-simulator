@@ -13,19 +13,12 @@
   <script>
     (function () {
       var iframe = document.getElementById("sim");
-      var currentPage = "";
-      var pendingConfig = null;
 
       function postToSim(message) {
         if (!iframe.contentWindow) return;
         try {
           iframe.contentWindow.postMessage(message, "*");
         } catch (_) {}
-      }
-
-      function applyConfig(config) {
-        if (!config) return;
-        postToSim({ type: "SIM_CONFIG", config: config });
       }
 
       window.addEventListener("message", function (event) {
@@ -46,28 +39,28 @@
 
       function onRender() {
         var args = (window.Streamlit && Streamlit.args) || {};
-        var page = args.page || "simulation";
         var height = args.height || 1180;
         var config = args.config || {};
+        var htmlContent = args.html_content || "";
+        var contentKey = args.content_key || "";
 
         Streamlit.setFrameHeight(height);
 
-        if (iframe.dataset.ready === "1" && currentPage === page) {
-          applyConfig(config);
+        if (iframe.dataset.ready === "1" && iframe.dataset.key === contentKey) {
           if (config.lastSaveResult) {
             postToSim({ type: "SAVE_RESULT", result: config.lastSaveResult });
           }
           return;
         }
 
-        currentPage = page;
-        pendingConfig = config;
+        iframe.dataset.key = contentKey;
         iframe.onload = function () {
           iframe.dataset.ready = "1";
-          applyConfig(pendingConfig);
-          pendingConfig = null;
+          if (config.lastSaveResult) {
+            postToSim({ type: "SAVE_RESULT", result: config.lastSaveResult });
+          }
         };
-        iframe.src = page + ".html";
+        iframe.srcdoc = htmlContent;
       }
 
       if (window.Streamlit) {

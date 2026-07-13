@@ -557,6 +557,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             "nvidia/nemotron-3-super-120b-a12b"
         ];
         function isStreamlitCloud() {
+            const cfg = window.__SIMULATOR_CONFIG__ || {};
+            if (cfg.hostedOnStreamlit || cfg.streamlitSave) return true;
             const host = (location.hostname || "").toLowerCase();
             return host.endsWith(".streamlit.app") || host === "streamlit.app";
         }

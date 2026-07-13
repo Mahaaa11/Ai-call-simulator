@@ -245,6 +245,8 @@ RÈGLES FORMAT :
 
         function getCfg() { return window.__SIMULATOR_CONFIG__ || {}; }
         function isStreamlitCloud() {
+            const cfg = getCfg();
+            if (cfg.hostedOnStreamlit || cfg.streamlitSave) return true;
             const host = (location.hostname || "").toLowerCase();
             return host.endsWith(".streamlit.app") || host === "streamlit.app";
         }

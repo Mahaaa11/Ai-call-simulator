@@ -16,7 +16,6 @@ from ui.simulator_component import simulator_frame
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_PATH = PROJECT_ROOT / ".env"
 WEB_DIR = PROJECT_ROOT / "web"
-COMPONENT_FRONTEND = Path(__file__).resolve().parent / "simulator_component" / "frontend"
 
 if str(WEB_DIR) not in sys.path:
     sys.path.insert(0, str(WEB_DIR))
@@ -27,8 +26,6 @@ from mysql_store import (
     save_conversation,
     update_conversation_evaluation,
 )
-
-_SIM_PAGES = ("simulation.html", "simulation_prospect.html")
 
 
 def _load_env_file() -> None:
@@ -98,19 +95,19 @@ def _inject_config(html: str, config: dict) -> str:
     return injection + cleaned
 
 
-def _sync_component_pages(config: dict) -> None:
-    COMPONENT_FRONTEND.mkdir(parents=True, exist_ok=True)
-    for name in _SIM_PAGES:
-        src = WEB_DIR / name
-        if not src.exists():
-            continue
-        html = src.read_text(encoding="utf-8")
-        dst = COMPONENT_FRONTEND / name
-        dst.write_text(_inject_config(html, config), encoding="utf-8")
+def _build_html_content(html_path: Path, config: dict) -> str:
+    embed_config = {k: v for k, v in config.items() if k != "lastSaveResult"}
+    html = html_path.read_text(encoding="utf-8")
+    return _inject_config(html, embed_config)
 
 
-def _page_stem(html_path: Path) -> str:
-    return html_path.stem
+def _content_key(html_path: Path, config: dict) -> str:
+    payload = {
+        "page": html_path.name,
+        "mysql": bool(config.get("mysqlEnabled")),
+        "api": bool(config.get("openrouterApiKey")),
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
 
 def _build_streamlit_config(
@@ -205,6 +202,22 @@ def _handle_incoming(incoming: dict | object) -> bool:
     return False
 
 
+def _render_status_bar(api_key: str, mysql_enabled: bool, mysql_ok: bool, mysql_detail: str) -> None:
+    c1, c2 = st.columns(2)
+    with c1:
+        if api_key:
+            st.success("Clé OpenRouter : configurée (Secrets)")
+        else:
+            st.error("Clé OpenRouter : manquante")
+    with c2:
+        if mysql_enabled and mysql_ok:
+            st.success("MySQL : connecté (sauvegarde directe Streamlit)")
+        elif mysql_enabled:
+            st.warning(f"MySQL : {mysql_detail}")
+        else:
+            st.info("MySQL : ajoutez MYSQL_* dans Secrets Streamlit")
+
+
 def run_simulator(
     html_path: Path,
     *,
@@ -242,7 +255,8 @@ def run_simulator(
         mysql_detail = str(st.session_state.mysql_detail or "")
 
     config = _build_streamlit_config(api_key, mysql_enabled, mysql_ok, extra_config)
-    _sync_component_pages(config)
+    html_content = _build_html_content(html_path, config)
+    content_key = _content_key(html_path, config)
 
     st.markdown(
         """
@@ -255,12 +269,12 @@ def run_simulator(
         unsafe_allow_html=True,
     )
 
-    if mysql_enabled and not mysql_ok:
-        st.warning(f"MySQL configuré mais inaccessible : {mysql_detail}")
+    _render_status_bar(api_key, mysql_enabled, mysql_ok, mysql_detail)
 
     incoming = simulator_frame(
-        page=_page_stem(html_path),
+        html_content=html_content,
         config=config,
+        content_key=content_key,
         height=iframe_height,
         key="simulator_frame",
     )
