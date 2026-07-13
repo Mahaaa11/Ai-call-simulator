@@ -1,0 +1,2359 @@
+{
+  "source_audio": "/Users/macbookpro/Documents/agent conversation/AI_Call_Simulator/data/reference_recordings/ADEMARD_Joffrey_AGT_2809_IND_353037_TEL_4376_TIME_105502.wav",
+  "duration": 1962.1,
+  "turn_count": 392,
+  "turns": [
+    {
+      "role": "agent",
+      "text": "Ogini, bonjour.",
+      "start": 0.0,
+      "end": 7.86
+    },
+    {
+      "role": "prospect",
+      "text": "Oui bonjour, excusez-moi.",
+      "start": 0.0,
+      "end": 7.86
+    },
+    {
+      "role": "agent",
+      "text": "Vous m'avez contacté... Oui monsieur, c'est Yann de la société Ogini et je vous appelle pour la vérification de votre consommation",
+      "start": 0.0,
+      "end": 12.28
+    },
+    {
+      "role": "prospect",
+      "text": "d'électricité. C'est vous qui gérer ? Oui.",
+      "start": 12.28,
+      "end": 20.76
+    },
+    {
+      "role": "agent",
+      "text": "D'accord monsieur, parfait.",
+      "start": 12.28,
+      "end": 20.76
+    },
+    {
+      "role": "prospect",
+      "text": "Vous",
+      "start": 12.28,
+      "end": 20.76
+    },
+    {
+      "role": "agent",
+      "text": "êtes chez quel fournisseur ?",
+      "start": 20.76,
+      "end": 34.38
+    },
+    {
+      "role": "prospect",
+      "text": "Je suis chez Engie. D'accord, parfait.",
+      "start": 20.76,
+      "end": 34.38
+    },
+    {
+      "role": "agent",
+      "text": "Vous payez",
+      "start": 20.76,
+      "end": 34.38
+    },
+    {
+      "role": "prospect",
+      "text": "combien c'est ?",
+      "start": 34.46,
+      "end": 41.94
+    },
+    {
+      "role": "agent",
+      "text": "De tête, je crois que c'est autour des 149 euros par mois.",
+      "start": 34.46,
+      "end": 41.94
+    },
+    {
+      "role": "prospect",
+      "text": "Combien c'est",
+      "start": 34.46,
+      "end": 41.94
+    },
+    {
+      "role": "agent",
+      "text": "?",
+      "start": 41.94,
+      "end": 50.78
+    },
+    {
+      "role": "prospect",
+      "text": "Pardon ?",
+      "start": 41.94,
+      "end": 50.78
+    },
+    {
+      "role": "agent",
+      "text": "149 euros par mois.",
+      "start": 41.94,
+      "end": 50.78
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord, 149 euros par mois.",
+      "start": 41.94,
+      "end": 50.78
+    },
+    {
+      "role": "agent",
+      "text": "D'accord monsieur. Vous pensez que vous consommez au plus cher ?",
+      "start": 41.94,
+      "end": 59.97
+    },
+    {
+      "role": "prospect",
+      "text": "Pour moi, c'est correct. C'est correct.",
+      "start": 50.78,
+      "end": 59.97
+    },
+    {
+      "role": "agent",
+      "text": "Ça n'a pas beaucoup changé par rapport à un petit peu quand même.",
+      "start": 59.97,
+      "end": 64.97
+    },
+    {
+      "role": "prospect",
+      "text": "Non, c'est",
+      "start": 59.97,
+      "end": 64.97
+    },
+    {
+      "role": "agent",
+      "text": "pas pour le changement monsieur, c'est pour la vérification.",
+      "start": 64.97,
+      "end": 70.74
+    },
+    {
+      "role": "prospect",
+      "text": "Ah, si je consomme",
+      "start": 64.97,
+      "end": 70.74
+    },
+    {
+      "role": "agent",
+      "text": "comme d'habitude ? Oui, vous consommez comme d'habitude au moins cher ou plus cher ?",
+      "start": 70.78,
+      "end": 76.93
+    },
+    {
+      "role": "prospect",
+      "text": "Non, non, comme d'habitude à peu près.",
+      "start": 70.78,
+      "end": 82.02
+    },
+    {
+      "role": "agent",
+      "text": "D'accord monsieur, est-ce que le prix est fixe",
+      "start": 76.93,
+      "end": 82.02
+    },
+    {
+      "role": "prospect",
+      "text": "ou réel ?",
+      "start": 82.02,
+      "end": 92.56
+    },
+    {
+      "role": "agent",
+      "text": "C'est, comment dire, c'est...",
+      "start": 82.02,
+      "end": 92.56
+    },
+    {
+      "role": "prospect",
+      "text": "Par exemple... J'ai des possibilités",
+      "start": 82.02,
+      "end": 92.56
+    },
+    {
+      "role": "agent",
+      "text": "préventives et puis à la fin des deux derniers mois, j'ai des fois des ajustements",
+      "start": 92.56,
+      "end": 97.56
+    },
+    {
+      "role": "prospect",
+      "text": "à faire mais c'est pas grand chose.",
+      "start": 97.56,
+      "end": 100.56
+    },
+    {
+      "role": "agent",
+      "text": "Des fois, on me redonne de l'argent et des fois, on me redonne de la consommation.",
+      "start": 97.56,
+      "end": 107.42
+    },
+    {
+      "role": "prospect",
+      "text": "Par exemple, à la fin d'année, vous",
+      "start": 100.6,
+      "end": 107.42
+    },
+    {
+      "role": "agent",
+      "text": "rajoutez ou bien vous êtes remboursé ?",
+      "start": 107.42,
+      "end": 113.5
+    },
+    {
+      "role": "prospect",
+      "text": "Souvent je suis remboursé. D'accord, très bien, très bien.",
+      "start": 107.42,
+      "end": 119.64
+    },
+    {
+      "role": "agent",
+      "text": "On va lancer un test comparatif pour vérifier votre consommation, d'accord monsieur ?",
+      "start": 113.5,
+      "end": 125.5
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. D'accord, merci pour votre temps.",
+      "start": 119.64,
+      "end": 125.5
+    },
+    {
+      "role": "agent",
+      "text": "Vous avez l'électricité ou l'égas ?",
+      "start": 125.5,
+      "end": 131.83
+    },
+    {
+      "role": "prospect",
+      "text": "J'ai que l'électricité. D'accord",
+      "start": 125.5,
+      "end": 131.83
+    },
+    {
+      "role": "agent",
+      "text": "monsieur, pardon. Vous entendez ? Monsieur, allô ?",
+      "start": 131.87,
+      "end": 199.82
+    },
+    {
+      "role": "prospect",
+      "text": "Ah oui, je vous entends depuis. Non, je suis là.",
+      "start": 131.87,
+      "end": 212.53
+    },
+    {
+      "role": "agent",
+      "text": "Monsieur, vous pouvez donner ton adresse et maitre ? Mon adresse et maitre, c'est ça ?",
+      "start": 199.82,
+      "end": 218.56
+    },
+    {
+      "role": "prospect",
+      "text": "Oui, c'est votre adresse et maitre. Oui, c'est Ademar, A-D-E-M-A-R-D. D'accord, A-D-E-M-A-R-D.",
+      "start": 212.53,
+      "end": 231.31
+    },
+    {
+      "role": "agent",
+      "text": "J'offrais avec un J, donc J-O-2-F-R-E-Y.",
+      "start": 223.64,
+      "end": 231.31
+    },
+    {
+      "role": "prospect",
+      "text": "Pardon",
+      "start": 223.64,
+      "end": 231.31
+    },
+    {
+      "role": "agent",
+      "text": "monsieur ?",
+      "start": 231.35,
+      "end": 238.29
+    },
+    {
+      "role": "prospect",
+      "text": "Ademar, Joffrais avec un J, donc J-O-2-F-R-E-Y. R-E-Y. D'accord",
+      "start": 231.35,
+      "end": 238.29
+    },
+    {
+      "role": "agent",
+      "text": "monsieur, parfait. D'accord monsieur. Alors monsieur, reconfirmez avec moi l'adresse et maitre s'il vous plaît ?",
+      "start": 247.34,
+      "end": 359.38
+    },
+    {
+      "role": "prospect",
+      "text": "Ademar, Joffrais, A-D-E-M-A-R-D J-O-2-F-R-E-Y. J-O-2-F-R-E-Y. D'accord.",
+      "start": 353.94,
+      "end": 364.42
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 359.42,
+      "end": 364.42
+    },
+    {
+      "role": "prospect",
+      "text": "J-O-2-F-R-E-Y. D'accord.",
+      "start": 372.01,
+      "end": 378.9
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 372.01,
+      "end": 378.9
+    },
+    {
+      "role": "prospect",
+      "text": "J-O-2-F-R-E-Y. D'accord.",
+      "start": 378.9,
+      "end": 438.06
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 378.9,
+      "end": 438.06
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 438.06,
+      "end": 444.99
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 438.06,
+      "end": 444.99
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord. J comme Julien, O-2-F-R-E-Y. D'accord.",
+      "start": 438.06,
+      "end": 455.73
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 445.03,
+      "end": 455.73
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 455.73,
+      "end": 463.46
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 455.73,
+      "end": 463.46
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 463.46,
+      "end": 470.06
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 463.46,
+      "end": 470.06
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 470.06,
+      "end": 485.14
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 470.06,
+      "end": 485.14
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 485.14,
+      "end": 490.7
+    },
+    {
+      "role": "agent",
+      "text": "J comme Julien, O-2-F-R-E-Y.",
+      "start": 485.14,
+      "end": 490.7
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 490.74,
+      "end": 494.22
+    },
+    {
+      "role": "agent",
+      "text": "D'accord, monsieur. Alors, sachez que l'appel est enregistré pour des raisons de qualité",
+      "start": 494.22,
+      "end": 500.59
+    },
+    {
+      "role": "prospect",
+      "text": "et vous avez le droit de vous y opposer. D'accord ? Non, ça va. D'accord.",
+      "start": 500.59,
+      "end": 513.98
+    },
+    {
+      "role": "agent",
+      "text": "Je vous passe mon responsable pour bien expliquer. Monsieur Adémar, bonjour.",
+      "start": 506.78,
+      "end": 516.59
+    },
+    {
+      "role": "prospect",
+      "text": "Oui, bonjour.",
+      "start": 516.59,
+      "end": 517.59
+    },
+    {
+      "role": "agent",
+      "text": "Oui, bonjour, monsieur.",
+      "start": 517.59,
+      "end": 518.59
+    },
+    {
+      "role": "prospect",
+      "text": "Alors, là, vous étiez en communication avec le conseiller.",
+      "start": 518.59,
+      "end": 521.59
+    },
+    {
+      "role": "agent",
+      "text": "Alors, mais apparemment, il n'a pas bien noté votre adresse mail. Vous pouvez me la confirmer, s'il vous plaît ?",
+      "start": 521.59,
+      "end": 527.31
+    },
+    {
+      "role": "prospect",
+      "text": "E-M-A-R-D-J-O-2-F-R-E-Y. Alors, un instant, s'il vous plaît.",
+      "start": 527.35,
+      "end": 535.43
+    },
+    {
+      "role": "agent",
+      "text": "Geoffrey, ça s'écrit J-O-2-F...",
+      "start": 535.43,
+      "end": 539.18
+    },
+    {
+      "role": "prospect",
+      "text": "C'est ça. J-O-2-F-R-E-Y.",
+      "start": 539.18,
+      "end": 542.98
+    },
+    {
+      "role": "agent",
+      "text": "F2 France, c'est ça.",
+      "start": 542.98,
+      "end": 546.98
+    },
+    {
+      "role": "prospect",
+      "text": "Excusez-moi ?",
+      "start": 546.98,
+      "end": 548.16
+    },
+    {
+      "role": "agent",
+      "text": "Geoffrey avec F2 France.",
+      "start": 548.16,
+      "end": 550.34
+    },
+    {
+      "role": "prospect",
+      "text": "C'est ça, c'est ça. D'accord.",
+      "start": 550.34,
+      "end": 553.42
+    },
+    {
+      "role": "agent",
+      "text": "Alors, dites-moi, monsieur, vous avez le gaz ?",
+      "start": 553.42,
+      "end": 558.51
+    },
+    {
+      "role": "prospect",
+      "text": "Non.",
+      "start": 558.51,
+      "end": 559.75
+    },
+    {
+      "role": "agent",
+      "text": "Il n'y a pas de gaz, d'accord. Et vous payez combien, monsieur ?",
+      "start": 559.75,
+      "end": 564.61
+    },
+    {
+      "role": "prospect",
+      "text": "Alors, j'ai des mensualités de 148 euros par mois, à peu près. 149. 148, 149, d'accord. C'est une mensualité fixe ?",
+      "start": 564.65,
+      "end": 574.97
+    },
+    {
+      "role": "agent",
+      "text": "Oui, et puis à la fin, on doit l'avoir ajusté, mais...",
+      "start": 574.97,
+      "end": 580.48
+    },
+    {
+      "role": "prospect",
+      "text": "Par exemple, l'année dernière, j'ai dû redonner... Oui, il m'a redonné l'argent.",
+      "start": 580.48,
+      "end": 586.5
+    },
+    {
+      "role": "agent",
+      "text": "Après, il y a une mensualité.",
+      "start": 586.5,
+      "end": 587.5
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord, d'accord.",
+      "start": 587.5,
+      "end": 588.5
+    },
+    {
+      "role": "agent",
+      "text": "Alors, dites-moi, chemin des avoux, c'est votre adresse ?",
+      "start": 588.5,
+      "end": 594.82
+    },
+    {
+      "role": "prospect",
+      "text": "Coteau des avoux, oui. D'accord.",
+      "start": 594.82,
+      "end": 598.44
+    },
+    {
+      "role": "agent",
+      "text": "Et c'est quoi, le numéro exactement ?",
+      "start": 598.44,
+      "end": 600.44
+    },
+    {
+      "role": "prospect",
+      "text": "Le 11 lotissement, le coteau des avoux.",
+      "start": 600.44,
+      "end": 603.78
+    },
+    {
+      "role": "agent",
+      "text": "11 lotissements ? Le coteau, c'est ça ?",
+      "start": 603.82,
+      "end": 611.39
+    },
+    {
+      "role": "prospect",
+      "text": "Oui, le coteau, c-o-t-e-a-u.",
+      "start": 611.39,
+      "end": 615.87
+    },
+    {
+      "role": "agent",
+      "text": "Plus loin des avoux, av-o-x.",
+      "start": 615.87,
+      "end": 621.85
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord. Dagneux, d'accord. C'est une maison ? Une maison, oui.",
+      "start": 621.85,
+      "end": 637.83
+    },
+    {
+      "role": "agent",
+      "text": "D'accord, elle fait combien de mètres carrés, monsieur ?",
+      "start": 637.83,
+      "end": 639.83
+    },
+    {
+      "role": "prospect",
+      "text": "Centaines de mètres carrés. D'accord.",
+      "start": 639.83,
+      "end": 642.63
+    },
+    {
+      "role": "agent",
+      "text": "Vous avez votre point de livraison, monsieur ?",
+      "start": 642.63,
+      "end": 654.82
+    },
+    {
+      "role": "prospect",
+      "text": "Comment ? Mon point de...",
+      "start": 654.82,
+      "end": 658.41
+    },
+    {
+      "role": "agent",
+      "text": "Point de livraison, PDL, qui est... C'est une référence sur la facture d'électricité. Le point de relèvement de mesure, c'est ça, PRL ?",
+      "start": 658.41,
+      "end": 676.6
+    },
+    {
+      "role": "prospect",
+      "text": "Exactement, oui, PRM. 199. 199. 059. 059. 333. 333. 966. 966. 28. 28.",
+      "start": 676.64,
+      "end": 698.7
+    },
+    {
+      "role": "agent",
+      "text": "Alors, monsieur, voilà. Il y a combien de personnes qui habitent, monsieur ?",
+      "start": 698.7,
+      "end": 703.21
+    },
+    {
+      "role": "prospect",
+      "text": "Deux adultes et un enfant. D'accord. C'est votre résidence principale ? Oui. D'accord.",
+      "start": 703.21,
+      "end": 716.14
+    },
+    {
+      "role": "agent",
+      "text": "Et vous êtes propriétaire ?",
+      "start": 716.14,
+      "end": 717.77
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. D'accord.",
+      "start": 717.81,
+      "end": 719.89
+    },
+    {
+      "role": "agent",
+      "text": "Et l'âge de votre logement, il fait plus de deux ans, bien moins de deux ans ?",
+      "start": 719.89,
+      "end": 723.67
+    },
+    {
+      "role": "prospect",
+      "text": "Plus de deux ans. D'accord.",
+      "start": 723.67,
+      "end": 727.22
+    },
+    {
+      "role": "agent",
+      "text": "Et vous, vous êtes toute la journée chez vous, bien que les soirs et les week-ends ?",
+      "start": 727.22,
+      "end": 731.98
+    },
+    {
+      "role": "prospect",
+      "text": "Que les soirs et les week-ends, à peu près. D'accord. Alors, par rapport au chauffage... Je fais du télétravail, mais... Ah, d'accord.",
+      "start": 731.98,
+      "end": 740.85
+    },
+    {
+      "role": "agent",
+      "text": "Mais la plupart du temps, vous êtes que les soirs et les week-ends.",
+      "start": 740.85,
+      "end": 745.51
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 745.51,
+      "end": 746.51
+    },
+    {
+      "role": "agent",
+      "text": "Alors, pour le chauffage, monsieur, c'est quelle énergie ?",
+      "start": 746.51,
+      "end": 750.21
+    },
+    {
+      "role": "prospect",
+      "text": "Pour la chaleur.",
+      "start": 750.21,
+      "end": 751.21
+    },
+    {
+      "role": "agent",
+      "text": "Et le chauffe-eau ?",
+      "start": 751.21,
+      "end": 753.66
+    },
+    {
+      "role": "prospect",
+      "text": "Le chauffe-eau électrique.",
+      "start": 753.66,
+      "end": 755.86
+    },
+    {
+      "role": "agent",
+      "text": "Et vous cuisinez avec des plaques électriques ? Vous n'avez que l'électrique ?",
+      "start": 755.86,
+      "end": 761.94
+    },
+    {
+      "role": "prospect",
+      "text": "Non, d'accord.",
+      "start": 761.94,
+      "end": 764.66
+    },
+    {
+      "role": "agent",
+      "text": "Alors vous, vous êtes avec quelle fournisseur ?",
+      "start": 764.66,
+      "end": 770.39
+    },
+    {
+      "role": "prospect",
+      "text": "Henni. Ah, Henni, d'accord. Des Italiens. D'accord.",
+      "start": 770.39,
+      "end": 776.5
+    },
+    {
+      "role": "agent",
+      "text": "Vous avez normalement une idée par rapport au prix du kWh de Henni ?",
+      "start": 776.5,
+      "end": 782.53
+    },
+    {
+      "role": "prospect",
+      "text": "Le bonnement, c'est à 9 kVa.",
+      "start": 782.53,
+      "end": 798.9
+    },
+    {
+      "role": "agent",
+      "text": "Et le prix du kWh ?",
+      "start": 798.9,
+      "end": 800.94
+    },
+    {
+      "role": "prospect",
+      "text": "Le prix de terre.",
+      "start": 800.94,
+      "end": 805.06
+    },
+    {
+      "role": "agent",
+      "text": "La pression, c'est 0,49... 0,49 euros par kWh.",
+      "start": 805.06,
+      "end": 831.78
+    },
+    {
+      "role": "prospect",
+      "text": "En heure creuse et 0,2 euros en heure pleine. Ah, d'accord.",
+      "start": 831.82,
+      "end": 840.74
+    },
+    {
+      "role": "agent",
+      "text": "Alors, c'est 0,20 euros pleine et 0,14 euros creuse.",
+      "start": 840.74,
+      "end": 848.5
+    },
+    {
+      "role": "prospect",
+      "text": "Voilà, 0,49 euros. 0,49 euros. Exactement, oui. Voilà.",
+      "start": 848.5,
+      "end": 854.81
+    },
+    {
+      "role": "agent",
+      "text": "Alors, monsieur, d'après l'analyse de votre dossier énergétique,",
+      "start": 854.81,
+      "end": 859.19
+    },
+    {
+      "role": "prospect",
+      "text": "alors, je trouve que normalement,",
+      "start": 859.19,
+      "end": 862.5
+    },
+    {
+      "role": "agent",
+      "text": "vous consommez la moyenne de 5300 kWh, d'accord ?",
+      "start": 862.5,
+      "end": 865.5
+    },
+    {
+      "role": "prospect",
+      "text": "Entre 5300 et 5900, c'est votre consommation annuelle. Voilà.",
+      "start": 865.5,
+      "end": 872.83
+    },
+    {
+      "role": "agent",
+      "text": "Alors, bien sûr, normalement, vous savez que vous avez",
+      "start": 872.83,
+      "end": 876.84
+    },
+    {
+      "role": "prospect",
+      "text": "les heures creuses de 1h30 à 7h et de midi à 14h.",
+      "start": 876.84,
+      "end": 882.22
+    },
+    {
+      "role": "agent",
+      "text": "Alors, ce que je vous propose aujourd'hui, monsieur, un prix du kWh qui est moins cher, d'accord ?",
+      "start": 882.22,
+      "end": 889.87
+    },
+    {
+      "role": "prospect",
+      "text": "Qui est beaucoup moins cher par rapport à ce que vous avez avec Henni.",
+      "start": 889.87,
+      "end": 893.87
+    },
+    {
+      "role": "agent",
+      "text": "Alors, normalement, ça sera 0,18 pour les heures pleines",
+      "start": 893.87,
+      "end": 898.3
+    },
+    {
+      "role": "prospect",
+      "text": "et 0,13 pour les heures creuses.",
+      "start": 898.3,
+      "end": 901.3
+    },
+    {
+      "role": "agent",
+      "text": "Ce tarif-là, ça sera bloqué pour 2 ans,",
+      "start": 901.34,
+      "end": 904.97
+    },
+    {
+      "role": "prospect",
+      "text": "pour 24 mois.",
+      "start": 904.97,
+      "end": 905.97
+    },
+    {
+      "role": "agent",
+      "text": "Il n'y aura pas d'augmentation, d'accord ? Alors là, bien sûr, c'est proposé par le fournisseur",
+      "start": 905.97,
+      "end": 913.54
+    },
+    {
+      "role": "prospect",
+      "text": "Homme Énergie.",
+      "start": 913.54,
+      "end": 914.54
+    },
+    {
+      "role": "agent",
+      "text": "Et pour la mensualité maximale, monsieur,",
+      "start": 914.54,
+      "end": 917.65
+    },
+    {
+      "role": "prospect",
+      "text": "c'est proposé à 116 euros.",
+      "start": 917.65,
+      "end": 919.65
+    },
+    {
+      "role": "agent",
+      "text": "Et le plus avantageux, monsieur, avec ce fournisseur,",
+      "start": 919.65,
+      "end": 926.83
+    },
+    {
+      "role": "prospect",
+      "text": "c'est qu'il y a la possibilité de payer le Riel.",
+      "start": 926.83,
+      "end": 929.83
+    },
+    {
+      "role": "agent",
+      "text": "C'est-à-dire, chaque mois, vous allez payer ce que vous consommez.",
+      "start": 929.83,
+      "end": 933.01
+    },
+    {
+      "role": "prospect",
+      "text": "À la fin de l'année, il n'y a pas de régularisation.",
+      "start": 933.01,
+      "end": 936.09
+    },
+    {
+      "role": "agent",
+      "text": "Et ça, vous pouvez le faire dès le 1er mois, d'accord ?",
+      "start": 936.13,
+      "end": 940.87
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 940.87,
+      "end": 943.55
+    },
+    {
+      "role": "agent",
+      "text": "Alors là, c'est proposé par le fournisseur Homme Énergie. C'est parmi les meilleurs fournisseurs en France. C'est un fournisseur 100% français, d'accord ? Un fournisseur correct.",
+      "start": 943.55,
+      "end": 954.74
+    },
+    {
+      "role": "prospect",
+      "text": "Déjà, la mensualité estimée, c'est moins cher.",
+      "start": 954.74,
+      "end": 957.78
+    },
+    {
+      "role": "agent",
+      "text": "Et bien sûr, à la fin de l'année, vous n'allez pas recevoir une facture de régularisation.",
+      "start": 957.78,
+      "end": 963.78
+    },
+    {
+      "role": "prospect",
+      "text": "Ça marche ?",
+      "start": 966.62,
+      "end": 968.24
+    },
+    {
+      "role": "agent",
+      "text": "Très bien, oui, oui.",
+      "start": 968.24,
+      "end": 969.24
+    },
+    {
+      "role": "prospect",
+      "text": "Voilà.",
+      "start": 969.24,
+      "end": 970.24
+    },
+    {
+      "role": "agent",
+      "text": "Alors, monsieur, est-ce que je vais vous faire bénéficier parce que c'est plus avantageux par rapport à ce que vous avez ?",
+      "start": 970.24,
+      "end": 978.17
+    },
+    {
+      "role": "prospect",
+      "text": "Bah, aujourd'hui, à vrai dire, je suis plutôt satisfait de mon...",
+      "start": 978.17,
+      "end": 986.19
+    },
+    {
+      "role": "agent",
+      "text": "Pardon ? Je suis plutôt satisfait de mon fournisseur actuel. Parce qu'au bout des 2 ans, il se passe quoi, en fait ?",
+      "start": 984.19,
+      "end": 993.47
+    },
+    {
+      "role": "prospect",
+      "text": "C'est illit. Oui. Non, non, mais chez Homme Énergie,",
+      "start": 993.47,
+      "end": 998.7
+    },
+    {
+      "role": "agent",
+      "text": "au bout des 2 ans, qu'est-ce qui se passe ? Ça veut dire qu'il est habité de monter le contrat.",
+      "start": 998.7,
+      "end": 1003.73
+    },
+    {
+      "role": "prospect",
+      "text": "Ah, non, non.",
+      "start": 1003.73,
+      "end": 1004.73
+    },
+    {
+      "role": "agent",
+      "text": "Parce qu'après 2 ans, monsieur, les prix seront revisés.",
+      "start": 1004.73,
+      "end": 1007.73
+    },
+    {
+      "role": "prospect",
+      "text": "À l'essence, bien sûr.",
+      "start": 1007.73,
+      "end": 1008.73
+    },
+    {
+      "role": "agent",
+      "text": "Ils sont toujours avant l'entrée en vigueur des nouveaux prix.",
+      "start": 1008.77,
+      "end": 1012.04
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ?",
+      "start": 1012.04,
+      "end": 1013.04
+    },
+    {
+      "role": "agent",
+      "text": "Et avec la possibilité de refuser 15 jours,",
+      "start": 1013.04,
+      "end": 1015.04
+    },
+    {
+      "role": "prospect",
+      "text": "ce qui entraînera la résilience.",
+      "start": 1015.04,
+      "end": 1017.04
+    },
+    {
+      "role": "agent",
+      "text": "Et il y a la possibilité aussi de négocier les tarifs. Et puisque nous, on est des comparateurs,",
+      "start": 1017.04,
+      "end": 1023.04
+    },
+    {
+      "role": "prospect",
+      "text": "on essaie toujours de garder le même prix. D'accord ?",
+      "start": 1023.04,
+      "end": 1027.04
+    },
+    {
+      "role": "agent",
+      "text": "C'est-à-dire après 2 ans, on va essayer de garder le même tarif pour vous.",
+      "start": 1027.04,
+      "end": 1032.83
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord. Voilà.",
+      "start": 1032.83,
+      "end": 1035.07
+    },
+    {
+      "role": "agent",
+      "text": "Et bien sûr, par rapport à Elie,",
+      "start": 1035.07,
+      "end": 1038.07
+    },
+    {
+      "role": "prospect",
+      "text": "toutes les démarches administratives,",
+      "start": 1038.07,
+      "end": 1040.07
+    },
+    {
+      "role": "agent",
+      "text": "soit pour la résilience, soit pour la souscription,",
+      "start": 1040.11,
+      "end": 1043.51
+    },
+    {
+      "role": "prospect",
+      "text": "ça sera gratuit. Ça sera gratuit. Voilà.",
+      "start": 1043.51,
+      "end": 1048.34
+    },
+    {
+      "role": "agent",
+      "text": "Parce qu'aussi au niveau de qualité, monsieur,",
+      "start": 1056.1,
+      "end": 1059.34
+    },
+    {
+      "role": "prospect",
+      "text": "Elie, par rapport à Home Energy,",
+      "start": 1060.49,
+      "end": 1063.24
+    },
+    {
+      "role": "agent",
+      "text": "ce n'est pas vraiment un fournisseur",
+      "start": 1063.24,
+      "end": 1066.24
+    },
+    {
+      "role": "prospect",
+      "text": "qui est vraiment fort. Alors, voilà. Ok. Au niveau de... Oui ?",
+      "start": 1066.24,
+      "end": 1074.71
+    },
+    {
+      "role": "agent",
+      "text": "Je vais juste vous demander.",
+      "start": 1074.71,
+      "end": 1077.5
+    },
+    {
+      "role": "prospect",
+      "text": "Ok, non, c'est très bien.",
+      "start": 1077.5,
+      "end": 1082.97
+    },
+    {
+      "role": "agent",
+      "text": "On va s'occuper de tout, pourquoi pas.",
+      "start": 1083.01,
+      "end": 1085.82
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord. Alors, pour vous, bien sûr,",
+      "start": 1085.82,
+      "end": 1087.82
+    },
+    {
+      "role": "agent",
+      "text": "est-ce que ça vous arrange le 5 de chaque mois comme date de prélèvement ?",
+      "start": 1087.82,
+      "end": 1090.82
+    },
+    {
+      "role": "prospect",
+      "text": "Très bien. D'accord. Alors, bien sûr,",
+      "start": 1090.82,
+      "end": 1097.28
+    },
+    {
+      "role": "agent",
+      "text": "on va juste arrêter les prélèvements de Elie.",
+      "start": 1097.28,
+      "end": 1099.28
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ?",
+      "start": 1099.28,
+      "end": 1100.28
+    },
+    {
+      "role": "agent",
+      "text": "Vous serez avec Home Energy le mois prochain.",
+      "start": 1100.28,
+      "end": 1102.9
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ?",
+      "start": 1102.9,
+      "end": 1104.3
+    },
+    {
+      "role": "agent",
+      "text": "Et dans ce cas-là, il ne reste que de vérifier avec vous la référence IBAN.",
+      "start": 1104.3,
+      "end": 1108.3
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 1108.3,
+      "end": 1111.78
+    },
+    {
+      "role": "agent",
+      "text": "Et ça, je la trouve où ?",
+      "start": 1111.78,
+      "end": 1112.78
+    },
+    {
+      "role": "prospect",
+      "text": "Sur l'application de votre banque. Ah, ok.",
+      "start": 1112.78,
+      "end": 1131.62
+    },
+    {
+      "role": "agent",
+      "text": "Prenez tout votre temps. Vous trouvez ça horrible, non ?",
+      "start": 1131.62,
+      "end": 1158.89
+    },
+    {
+      "role": "prospect",
+      "text": "Sur quoi ?",
+      "start": 1158.93,
+      "end": 1161.02
+    },
+    {
+      "role": "agent",
+      "text": "Sur un RIB, non ?",
+      "start": 1161.02,
+      "end": 1162.02
+    },
+    {
+      "role": "prospect",
+      "text": "Exactement, oui.",
+      "start": 1162.02,
+      "end": 1163.02
+    },
+    {
+      "role": "agent",
+      "text": "En fait, c'est du RIB.",
+      "start": 1163.02,
+      "end": 1164.02
+    },
+    {
+      "role": "prospect",
+      "text": "Ah, d'accord.",
+      "start": 1164.02,
+      "end": 1165.06
+    },
+    {
+      "role": "agent",
+      "text": "IBAN, ok, j'avais compris.",
+      "start": 1165.06,
+      "end": 1167.06
+    },
+    {
+      "role": "prospect",
+      "text": "Voilà. Ok, ok, excusez-moi. Euh... Oui ? FR 76. Oui ? 1780. 1780. 6606. 6606. 4404. 4404. 4404. 4405. 4405. 4405. 1441. 1441. 74. 74. 41. Oui ? 858. 858. D'accord. D'accord.",
+      "start": 1167.06,
+      "end": 1223.47
+    },
+    {
+      "role": "agent",
+      "text": "Alors, maintenant, on va vérifier les informations.",
+      "start": 1223.47,
+      "end": 1225.47
+    },
+    {
+      "role": "prospect",
+      "text": "Comme ça, vous trouvez... Alors, le nom de famille, c'est bien Adéma.",
+      "start": 1225.47,
+      "end": 1231.44
+    },
+    {
+      "role": "agent",
+      "text": "Le prénom, c'est ?",
+      "start": 1231.44,
+      "end": 1238.75
+    },
+    {
+      "role": "prospect",
+      "text": "Ah, d'accord.",
+      "start": 1238.75,
+      "end": 1244.25
+    },
+    {
+      "role": "agent",
+      "text": "Il y a un prénom de...",
+      "start": 1244.25,
+      "end": 1245.25
+    },
+    {
+      "role": "prospect",
+      "text": "C'est juste ça. Oui, il y a ma conjointe.",
+      "start": 1245.25,
+      "end": 1249.05
+    },
+    {
+      "role": "agent",
+      "text": "C'est un conjoint commun qui s'appelle Samuel de Jessica.",
+      "start": 1249.05,
+      "end": 1252.13
+    },
+    {
+      "role": "prospect",
+      "text": "Ah, d'accord.",
+      "start": 1252.13,
+      "end": 1253.4
+    },
+    {
+      "role": "agent",
+      "text": "Alors, en fait, on ne garde que votre nom ?",
+      "start": 1253.4,
+      "end": 1256.63
+    },
+    {
+      "role": "prospect",
+      "text": "Non, vous pouvez mettre les deux aussi.",
+      "start": 1256.63,
+      "end": 1257.63
+    },
+    {
+      "role": "agent",
+      "text": "Pardon ? Vous pouvez mettre les deux.",
+      "start": 1257.63,
+      "end": 1260.69
+    },
+    {
+      "role": "prospect",
+      "text": "C'est bien mieux. D'accord.",
+      "start": 1260.69,
+      "end": 1262.69
+    },
+    {
+      "role": "agent",
+      "text": "On va mettre les deux. Et on va ajouter votre femme comme un cotutulaire.",
+      "start": 1262.69,
+      "end": 1270.26
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ? D'accord, oui. Voilà.",
+      "start": 1270.26,
+      "end": 1289.87
+    },
+    {
+      "role": "agent",
+      "text": "En fait, Geoffrey, ça s'écrit G de janvier, O de Oscar,",
+      "start": 1289.87,
+      "end": 1292.87
+    },
+    {
+      "role": "prospect",
+      "text": "de Zès de France, R de Renard, E de Éric, Y de Yann. C'est ça. D'accord.",
+      "start": 1292.87,
+      "end": 1312.13
+    },
+    {
+      "role": "agent",
+      "text": "Bien sûr, on va vous envoyer le tout sur votre boîte mail.",
+      "start": 1312.13,
+      "end": 1316.42
+    },
+    {
+      "role": "prospect",
+      "text": "Voilà. Alors, votre femme, le nom, c'est Adéma ? Non, c'est 2 Jésus Pires.",
+      "start": 1316.42,
+      "end": 1330.86
+    },
+    {
+      "role": "agent",
+      "text": "Donc D, E, plus loin, Jésus, J, E, S, U, S,",
+      "start": 1330.86,
+      "end": 1334.38
+    },
+    {
+      "role": "prospect",
+      "text": "plus loin, Pires, P, I, R, E, S.",
+      "start": 1334.38,
+      "end": 1337.38
+    },
+    {
+      "role": "agent",
+      "text": "Et le prénom ?",
+      "start": 1337.42,
+      "end": 1338.7
+    },
+    {
+      "role": "prospect",
+      "text": "Samuel, avec F, ça se termine...",
+      "start": 1338.7,
+      "end": 1342.62
+    },
+    {
+      "role": "agent",
+      "text": "Non, Samuel, S, A, M, U, E, deux L, E.",
+      "start": 1342.62,
+      "end": 1345.67
+    },
+    {
+      "role": "prospect",
+      "text": "A, M, U, E, deux L, E. C'est ça. D'accord. Voilà.",
+      "start": 1345.67,
+      "end": 1360.73
+    },
+    {
+      "role": "agent",
+      "text": "Ça sera une œuvre en fixe.",
+      "start": 1360.73,
+      "end": 1361.73
+    },
+    {
+      "role": "prospect",
+      "text": "Deux ans après l'acte.",
+      "start": 1361.73,
+      "end": 1364.06
+    },
+    {
+      "role": "agent",
+      "text": "Bien sûr, monsieur, avant de continuer,",
+      "start": 1364.06,
+      "end": 1402.98
+    },
+    {
+      "role": "prospect",
+      "text": "je tiens à vous informer que selon la réglementation française,",
+      "start": 1402.98,
+      "end": 1405.98
+    },
+    {
+      "role": "agent",
+      "text": "on doit accrocher vos rappelés pour confirmer votre souscription.",
+      "start": 1405.98,
+      "end": 1409.1
+    },
+    {
+      "role": "prospect",
+      "text": "Cela vous permet de prendre le temps de réfléchir à cette heure.",
+      "start": 1409.1,
+      "end": 1412.18
+    },
+    {
+      "role": "agent",
+      "text": "Et c'est aussi que vous avez un délai de rétractation de 14 jours",
+      "start": 1412.22,
+      "end": 1415.22
+    },
+    {
+      "role": "prospect",
+      "text": "que vous pouvez l'utiliser pour réfléchir à la proposition",
+      "start": 1415.22,
+      "end": 1418.26
+    },
+    {
+      "role": "agent",
+      "text": "si vous voyez que la proposition vous convient. Vous pouvez renoncer à votre droit et vous pouvez bien évidemment résilier votre contrat",
+      "start": 1418.26,
+      "end": 1425.34
+    },
+    {
+      "role": "prospect",
+      "text": "quand vous le souhaitez,",
+      "start": 1425.34,
+      "end": 1427.34
+    },
+    {
+      "role": "agent",
+      "text": "vu que le marché de l'énergie est libéré depuis 2007, d'accord ?",
+      "start": 1427.34,
+      "end": 1430.34
+    },
+    {
+      "role": "prospect",
+      "text": "Voilà. Alors, maintenant, je vais vérifier",
+      "start": 1430.34,
+      "end": 1434.83
+    },
+    {
+      "role": "agent",
+      "text": "si vous avez bien reçu le mail sur votre boîte mail. Je vais regarder ça.",
+      "start": 1434.83,
+      "end": 1452.79
+    },
+    {
+      "role": "prospect",
+      "text": "Voilà.",
+      "start": 1452.79,
+      "end": 1453.79
+    },
+    {
+      "role": "agent",
+      "text": "Alors, est-ce que vous m'autorisez pour valider votre contrat ?",
+      "start": 1453.79,
+      "end": 1455.79
+    },
+    {
+      "role": "prospect",
+      "text": "Ta, ta, ta...",
+      "start": 1455.83,
+      "end": 1460.7
+    },
+    {
+      "role": "agent",
+      "text": "Pardon ?",
+      "start": 1460.7,
+      "end": 1466.3
+    },
+    {
+      "role": "prospect",
+      "text": "Parce que pour le mail, maintenant, vous...",
+      "start": 1466.3,
+      "end": 1469.51
+    },
+    {
+      "role": "agent",
+      "text": "vous n'allez rien faire.",
+      "start": 1469.51,
+      "end": 1471.51
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 1471.51,
+      "end": 1474.34
+    },
+    {
+      "role": "agent",
+      "text": "Et du coup, sur le contrat, il y a... Ce n'est pas marqué, l'abonnement ? Ce n'est pas marqué quoi ?",
+      "start": 1474.34,
+      "end": 1481.38
+    },
+    {
+      "role": "prospect",
+      "text": "L'abonnement que vous m'avez présenté. Non, il y a... C'est marqué sur la grille tarifaire. D'accord. Ok, ok. Voilà. Alors, pour la validation,",
+      "start": 1481.38,
+      "end": 1495.42
+    },
+    {
+      "role": "agent",
+      "text": "je vais juste vous envoyer un code de quatre chiffres,",
+      "start": 1495.42,
+      "end": 1498.42
+    },
+    {
+      "role": "prospect",
+      "text": "d'accord, par SMS.",
+      "start": 1498.42,
+      "end": 1516.42
+    },
+    {
+      "role": "agent",
+      "text": "Pardon ?",
+      "start": 1516.42,
+      "end": 1517.98
+    },
+    {
+      "role": "prospect",
+      "text": "Oui, merci de me confirmer le code, s'il vous plaît. 5714.",
+      "start": 1518.02,
+      "end": 1523.02
+    },
+    {
+      "role": "agent",
+      "text": "Votre date de naissance, s'il vous plaît.",
+      "start": 1523.02,
+      "end": 1553.89
+    },
+    {
+      "role": "prospect",
+      "text": "C'est le 15-11-1985. 85, d'accord.",
+      "start": 1553.89,
+      "end": 1560.19
+    },
+    {
+      "role": "agent",
+      "text": "Alors, je vous informe, monsieur,",
+      "start": 1560.19,
+      "end": 1563.58
+    },
+    {
+      "role": "prospect",
+      "text": "que pour le premier mois,",
+      "start": 1563.58,
+      "end": 1564.58
+    },
+    {
+      "role": "agent",
+      "text": "vous n'allez payer que 48 euros, d'accord ?",
+      "start": 1564.58,
+      "end": 1567.58
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord.",
+      "start": 1567.58,
+      "end": 1569.2
+    },
+    {
+      "role": "agent",
+      "text": "Le 5 de janvier. Alors, monsieur, bien sûr,",
+      "start": 1569.2,
+      "end": 1588.66
+    },
+    {
+      "role": "prospect",
+      "text": "en tant qu'abonné au génie,",
+      "start": 1588.66,
+      "end": 1589.66
+    },
+    {
+      "role": "agent",
+      "text": "vous avez profité",
+      "start": 1589.66,
+      "end": 1590.66
+    },
+    {
+      "role": "prospect",
+      "text": "d'un comparatif gratuit des prix de l'énergie",
+      "start": 1590.66,
+      "end": 1592.66
+    },
+    {
+      "role": "agent",
+      "text": "suite à quoi on a proposé le nouveau fournisseur en énergie, d'accord ? Et pour valider votre contrat,",
+      "start": 1592.66,
+      "end": 1600.52
+    },
+    {
+      "role": "prospect",
+      "text": "je dois réaliser un régime existif",
+      "start": 1600.52,
+      "end": 1602.52
+    },
+    {
+      "role": "agent",
+      "text": "de ce que je viens de vous présenter. Alors, monsieur, m'autorisez-vous",
+      "start": 1602.52,
+      "end": 1607.0
+    },
+    {
+      "role": "prospect",
+      "text": "à des fins de conformité",
+      "start": 1607.0,
+      "end": 1608.0
+    },
+    {
+      "role": "agent",
+      "text": "d'enregistrer les minutes qui viennent. Sachez que vous avez le droit de refuser.",
+      "start": 1608.0,
+      "end": 1613.74
+    },
+    {
+      "role": "prospect",
+      "text": "Ok, pour moi. D'accord. Alors, pour rappel,",
+      "start": 1613.74,
+      "end": 1617.53
+    },
+    {
+      "role": "agent",
+      "text": "moi, c'est Cathy, de la société Eugenie.",
+      "start": 1617.53,
+      "end": 1619.53
+    },
+    {
+      "role": "prospect",
+      "text": "On vous a contacté aujourd'hui",
+      "start": 1619.53,
+      "end": 1621.7
+    },
+    {
+      "role": "agent",
+      "text": "pour vous proposer un contrat de fourniture d'électricité, de home énergie, d'accord ?",
+      "start": 1621.7,
+      "end": 1629.25
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. Voilà. Alors, pouvez-vous me confirmer",
+      "start": 1629.25,
+      "end": 1632.39
+    },
+    {
+      "role": "agent",
+      "text": "les coordonnées communiquées préalablement ? Vous êtes bien, monsieur Adhemar Joffrey ?",
+      "start": 1632.39,
+      "end": 1635.43
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. L'adresse postale, c'est bien en chemin des avoux,",
+      "start": 1635.43,
+      "end": 1640.79
+    },
+    {
+      "role": "agent",
+      "text": "01120 à Daigneux ?",
+      "start": 1640.79,
+      "end": 1642.79
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. D'accord. Alors, l'adresse exacte, c'est 11 lotissements,",
+      "start": 1642.79,
+      "end": 1650.43
+    },
+    {
+      "role": "agent",
+      "text": "le coteau des avoux.",
+      "start": 1650.43,
+      "end": 1651.43
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord. D'accord. Et l'adresse mail, c'est bien Adhemar ? C'est bien Adhemar, oui. Joffrey. Joffrey. www.aurobe.gmail.com D'accord.",
+      "start": 1651.43,
+      "end": 1676.0
+    },
+    {
+      "role": "agent",
+      "text": "Vous me confirmez, monsieur,",
+      "start": 1676.0,
+      "end": 1680.28
+    },
+    {
+      "role": "prospect",
+      "text": "que vous avez plus de 18 ans",
+      "start": 1680.28,
+      "end": 1681.28
+    },
+    {
+      "role": "agent",
+      "text": "ou de 75 ans. Vous n'êtes ni si tutelle, ni si curatelle ?",
+      "start": 1681.28,
+      "end": 1684.28
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. Oui, je confirme. D'accord.",
+      "start": 1684.28,
+      "end": 1688.5
+    },
+    {
+      "role": "agent",
+      "text": "Vous me confirmez, monsieur,",
+      "start": 1688.5,
+      "end": 1689.5
+    },
+    {
+      "role": "prospect",
+      "text": "que vous avez autorisé Home Energy",
+      "start": 1689.5,
+      "end": 1691.5
+    },
+    {
+      "role": "agent",
+      "text": "à accéder à vos données de consommation annuelles,",
+      "start": 1691.5,
+      "end": 1694.5
+    },
+    {
+      "role": "prospect",
+      "text": "à votre puissance ou speed",
+      "start": 1694.5,
+      "end": 1696.5
+    },
+    {
+      "role": "agent",
+      "text": "et à votre option tarifaire ?",
+      "start": 1696.5,
+      "end": 1697.5
+    },
+    {
+      "role": "prospect",
+      "text": "Oui. D'accord.",
+      "start": 1697.5,
+      "end": 1701.07
+    },
+    {
+      "role": "agent",
+      "text": "L'offre que je vous ai choisie,",
+      "start": 1701.07,
+      "end": 1702.07
+    },
+    {
+      "role": "prospect",
+      "text": "c'est la pro-homme, fixe deux ans,",
+      "start": 1702.07,
+      "end": 1704.07
+    },
+    {
+      "role": "agent",
+      "text": "heure plein, heure creuse.",
+      "start": 1704.07,
+      "end": 1705.07
+    },
+    {
+      "role": "prospect",
+      "text": "Bien sûr, vous trouverez toutes les caractéristiques",
+      "start": 1705.07,
+      "end": 1707.41
+    },
+    {
+      "role": "agent",
+      "text": "dont la grille tarifaire",
+      "start": 1707.41,
+      "end": 1708.41
+    },
+    {
+      "role": "prospect",
+      "text": "présente de l'e-mail",
+      "start": 1708.41,
+      "end": 1709.41
+    },
+    {
+      "role": "agent",
+      "text": "que vous allez recevoir",
+      "start": 1709.41,
+      "end": 1710.41
+    },
+    {
+      "role": "prospect",
+      "text": "à la suite de notre appel.",
+      "start": 1710.41,
+      "end": 1712.41
+    },
+    {
+      "role": "agent",
+      "text": "Et vous avez indiqué",
+      "start": 1712.41,
+      "end": 1713.41
+    },
+    {
+      "role": "prospect",
+      "text": "choisir l'option",
+      "start": 1713.41,
+      "end": 1714.65
+    },
+    {
+      "role": "agent",
+      "text": "heure plein, heure creuse. Et vous me confirmez",
+      "start": 1714.65,
+      "end": 1716.65
+    },
+    {
+      "role": "prospect",
+      "text": "que la puissance ou speed",
+      "start": 1716.69,
+      "end": 1717.77
+    },
+    {
+      "role": "agent",
+      "text": "est de 9 kVa.",
+      "start": 1717.77,
+      "end": 1718.77
+    },
+    {
+      "role": "prospect",
+      "text": "C'est bien ça. C'est bien ça.",
+      "start": 1718.77,
+      "end": 1720.77
+    },
+    {
+      "role": "agent",
+      "text": "Je vous rappelle également que le prix du kWh,",
+      "start": 1720.77,
+      "end": 1723.86
+    },
+    {
+      "role": "prospect",
+      "text": "c'est... Euh... Un instant. Bien sûr, c'est 0,18 pour les heures pleines",
+      "start": 1723.86,
+      "end": 1732.74
+    },
+    {
+      "role": "agent",
+      "text": "et 0,13 pour les heures creuses.",
+      "start": 1732.74,
+      "end": 1734.74
+    },
+    {
+      "role": "prospect",
+      "text": "Et pour le prix de l'abonnement, c'est 13 euros",
+      "start": 1734.74,
+      "end": 1737.74
+    },
+    {
+      "role": "agent",
+      "text": "hors de vie à taxer contribution.",
+      "start": 1737.74,
+      "end": 1739.74
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ? D'accord. Euh...",
+      "start": 1739.74,
+      "end": 1744.46
+    },
+    {
+      "role": "agent",
+      "text": "Excusez-moi, monsieur.",
+      "start": 1744.46,
+      "end": 1757.67
+    },
+    {
+      "role": "prospect",
+      "text": "Excusez-moi, je suis là.",
+      "start": 1757.67,
+      "end": 1758.67
+    },
+    {
+      "role": "agent",
+      "text": "Alors, monsieur, le contrat est conclu",
+      "start": 1758.67,
+      "end": 1760.67
+    },
+    {
+      "role": "prospect",
+      "text": "pour une durée déterminée de deux ans. D'accord ?",
+      "start": 1760.67,
+      "end": 1763.67
+    },
+    {
+      "role": "agent",
+      "text": "Votre contrat",
+      "start": 1763.71,
+      "end": 1764.71
+    },
+    {
+      "role": "prospect",
+      "text": "est sans engagement.",
+      "start": 1766.23,
+      "end": 1767.23
+    },
+    {
+      "role": "agent",
+      "text": "Et je vous rappelle",
+      "start": 1767.23,
+      "end": 1768.23
+    },
+    {
+      "role": "prospect",
+      "text": "que vous disposez",
+      "start": 1768.23,
+      "end": 1769.23
+    },
+    {
+      "role": "agent",
+      "text": "d'un délai de rétraction",
+      "start": 1769.23,
+      "end": 1770.23
+    },
+    {
+      "role": "prospect",
+      "text": "de 14 jours. D'accord ? D'accord.",
+      "start": 1770.23,
+      "end": 1773.92
+    },
+    {
+      "role": "agent",
+      "text": "Alors, monsieur, vous me confirmez",
+      "start": 1773.92,
+      "end": 1776.22
+    },
+    {
+      "role": "prospect",
+      "text": "avoir bien compris que l'activation",
+      "start": 1776.22,
+      "end": 1778.22
+    },
+    {
+      "role": "agent",
+      "text": "de votre contrat",
+      "start": 1778.22,
+      "end": 1779.22
+    },
+    {
+      "role": "prospect",
+      "text": "interviendra",
+      "start": 1779.22,
+      "end": 1780.22
+    },
+    {
+      "role": "agent",
+      "text": "à partir de 19 janvier 2025.",
+      "start": 1780.22,
+      "end": 1782.22
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ? J'ai bien compris.",
+      "start": 1782.22,
+      "end": 1785.26
+    },
+    {
+      "role": "agent",
+      "text": "Et vous me confirmez",
+      "start": 1785.26,
+      "end": 1786.66
+    },
+    {
+      "role": "prospect",
+      "text": "avoir compris",
+      "start": 1786.66,
+      "end": 1787.66
+    },
+    {
+      "role": "agent",
+      "text": "que le premier prélément",
+      "start": 1787.66,
+      "end": 1788.66
+    },
+    {
+      "role": "prospect",
+      "text": "correspondant au pourata",
+      "start": 1788.66,
+      "end": 1790.66
+    },
+    {
+      "role": "agent",
+      "text": "de votre première mensualité",
+      "start": 1790.66,
+      "end": 1791.66
+    },
+    {
+      "role": "prospect",
+      "text": "soit réalisé 14 jours avant l'activation",
+      "start": 1791.66,
+      "end": 1794.74
+    },
+    {
+      "role": "agent",
+      "text": "de votre contrat.",
+      "start": 1794.74,
+      "end": 1795.74
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ? D'accord.",
+      "start": 1795.74,
+      "end": 1799.16
+    },
+    {
+      "role": "agent",
+      "text": "Et monsieur, vous me confirmez",
+      "start": 1799.16,
+      "end": 1801.16
+    },
+    {
+      "role": "prospect",
+      "text": "avoir compris que vous changez",
+      "start": 1801.16,
+      "end": 1803.16
+    },
+    {
+      "role": "agent",
+      "text": "de fournisseur",
+      "start": 1803.16,
+      "end": 1804.16
+    },
+    {
+      "role": "prospect",
+      "text": "pour rejoindre Home Energy",
+      "start": 1804.16,
+      "end": 1805.16
+    },
+    {
+      "role": "agent",
+      "text": "à la date d'activation",
+      "start": 1805.16,
+      "end": 1806.16
+    },
+    {
+      "role": "prospect",
+      "text": "de votre compteur. Oui, je me confirme. D'accord.",
+      "start": 1806.16,
+      "end": 1810.68
+    },
+    {
+      "role": "agent",
+      "text": "Et vous me confirmez",
+      "start": 1810.68,
+      "end": 1811.68
+    },
+    {
+      "role": "prospect",
+      "text": "avoir compris",
+      "start": 1811.68,
+      "end": 1812.68
+    },
+    {
+      "role": "agent",
+      "text": "que vous ne devez pas résilier votre contrat",
+      "start": 1812.68,
+      "end": 1814.73
+    },
+    {
+      "role": "prospect",
+      "text": "actuel par vos soins",
+      "start": 1814.73,
+      "end": 1815.73
+    },
+    {
+      "role": "agent",
+      "text": "pour ne pas risque",
+      "start": 1815.73,
+      "end": 1816.73
+    },
+    {
+      "role": "prospect",
+      "text": "une interruption de service à votre activation chez Home Energy. D'accord ? Je me confirme.",
+      "start": 1816.73,
+      "end": 1823.88
+    },
+    {
+      "role": "agent",
+      "text": "Et vous me confirmez monsieur, est-ce que vous avez",
+      "start": 1823.88,
+      "end": 1826.88
+    },
+    {
+      "role": "prospect",
+      "text": "reçu les quatre mails",
+      "start": 1826.88,
+      "end": 1828.12
+    },
+    {
+      "role": "agent",
+      "text": "relatives à votre souscription ?",
+      "start": 1828.12,
+      "end": 1829.12
+    },
+    {
+      "role": "prospect",
+      "text": "En fait, les trois mails.",
+      "start": 1829.12,
+      "end": 1830.12
+    },
+    {
+      "role": "agent",
+      "text": "Les mails de bienvenue.",
+      "start": 1830.16,
+      "end": 1831.16
+    },
+    {
+      "role": "prospect",
+      "text": "Oui, c'est ça. D'accord.",
+      "start": 1831.16,
+      "end": 1837.8
+    },
+    {
+      "role": "agent",
+      "text": "Et les pièces jointes.",
+      "start": 1837.8,
+      "end": 1838.8
+    },
+    {
+      "role": "prospect",
+      "text": "Très bien. Les pièces jointes, CGV, CPV",
+      "start": 1838.8,
+      "end": 1841.8
+    },
+    {
+      "role": "agent",
+      "text": "et la gris tarifaire.",
+      "start": 1841.8,
+      "end": 1844.58
+    },
+    {
+      "role": "prospect",
+      "text": "C'est ça. Voilà.",
+      "start": 1844.58,
+      "end": 1846.58
+    },
+    {
+      "role": "agent",
+      "text": "Vous me confirmez, monsieur,",
+      "start": 1846.58,
+      "end": 1848.58
+    },
+    {
+      "role": "prospect",
+      "text": "nous avoir fourni tous les éléments permettant d'établir au mieux votre visualité",
+      "start": 1848.58,
+      "end": 1856.01
+    },
+    {
+      "role": "agent",
+      "text": "et avoir été informé",
+      "start": 1856.01,
+      "end": 1857.01
+    },
+    {
+      "role": "prospect",
+      "text": "de montants de votre mensualité. Alors, c'est estimé à 116",
+      "start": 1857.01,
+      "end": 1860.01
+    },
+    {
+      "role": "agent",
+      "text": "et vous allez payer le réel.",
+      "start": 1860.01,
+      "end": 1861.01
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ? Voilà. Et reconnaître",
+      "start": 1861.01,
+      "end": 1865.91
+    },
+    {
+      "role": "agent",
+      "text": "que vous vous engagez",
+      "start": 1865.91,
+      "end": 1866.91
+    },
+    {
+      "role": "prospect",
+      "text": "à payer ce montant. Chaque mois. Voilà.",
+      "start": 1866.91,
+      "end": 1871.45
+    },
+    {
+      "role": "agent",
+      "text": "Je vous informe",
+      "start": 1871.49,
+      "end": 1872.49
+    },
+    {
+      "role": "prospect",
+      "text": "que vous pouvez",
+      "start": 1872.49,
+      "end": 1873.49
+    },
+    {
+      "role": "agent",
+      "text": "vous inscrire gratuitement",
+      "start": 1873.49,
+      "end": 1874.49
+    },
+    {
+      "role": "prospect",
+      "text": "à la liste de position blockchain. D'accord ? Voilà. Alors, normalement,",
+      "start": 1874.49,
+      "end": 1881.97
+    },
+    {
+      "role": "agent",
+      "text": "vous avez deux connotés. Je vais vous donner le numéro du service client",
+      "start": 1881.97,
+      "end": 1889.74
+    },
+    {
+      "role": "prospect",
+      "text": "d'Homme Energy. Vas-y. Alors, c'est 09 70 70 21 25.",
+      "start": 1889.74,
+      "end": 1903.07
+    },
+    {
+      "role": "agent",
+      "text": "09 70 70 21 25.",
+      "start": 1903.07,
+      "end": 1908.84
+    },
+    {
+      "role": "prospect",
+      "text": "25.",
+      "start": 1908.84,
+      "end": 1909.84
+    },
+    {
+      "role": "agent",
+      "text": "Il faut juste me suivre",
+      "start": 1909.84,
+      "end": 1910.84
+    },
+    {
+      "role": "prospect",
+      "text": "le mois de janvier et contacter",
+      "start": 1910.84,
+      "end": 1912.84
+    },
+    {
+      "role": "agent",
+      "text": "le service client.",
+      "start": 1912.84,
+      "end": 1915.46
+    },
+    {
+      "role": "prospect",
+      "text": "D'accord ?",
+      "start": 1915.46,
+      "end": 1916.46
+    },
+    {
+      "role": "agent",
+      "text": "Pour vérifier la consomm...",
+      "start": 1916.46,
+      "end": 1917.46
+    },
+    {
+      "role": "prospect",
+      "text": "Pardon ? Ah oui, d'accord.",
+      "start": 1917.46,
+      "end": 1919.57
+    },
+    {
+      "role": "agent",
+      "text": "Vous m'avez dit",
+      "start": 1919.57,
+      "end": 1920.57
+    },
+    {
+      "role": "prospect",
+      "text": "que ça... Exactement.",
+      "start": 1920.61,
+      "end": 1922.61
+    },
+    {
+      "role": "agent",
+      "text": "Pour confirmer avec eux",
+      "start": 1922.61,
+      "end": 1923.61
+    },
+    {
+      "role": "prospect",
+      "text": "la facturation réelle. D'accord ? D'accord.",
+      "start": 1923.61,
+      "end": 1927.7
+    },
+    {
+      "role": "agent",
+      "text": "Voilà, monsieur.",
+      "start": 1927.7,
+      "end": 1928.81
+    },
+    {
+      "role": "prospect",
+      "text": "Sinon,",
+      "start": 1928.81,
+      "end": 1929.81
+    },
+    {
+      "role": "agent",
+      "text": "il y a déjà",
+      "start": 1929.81,
+      "end": 1930.81
+    },
+    {
+      "role": "prospect",
+      "text": "le mail pour l'espace client pour créer votre espace client.",
+      "start": 1930.81,
+      "end": 1935.94
+    },
+    {
+      "role": "agent",
+      "text": "Il y a aussi",
+      "start": 1935.94,
+      "end": 1936.94
+    },
+    {
+      "role": "prospect",
+      "text": "l'application. Voilà. D'accord.",
+      "start": 1936.94,
+      "end": 1941.54
+    },
+    {
+      "role": "agent",
+      "text": "J'espère que tout est bon par rapport à votre contrat, monsieur.",
+      "start": 1941.54,
+      "end": 1945.26
+    },
+    {
+      "role": "prospect",
+      "text": "Ça a l'air d'être pas mal.",
+      "start": 1945.26,
+      "end": 1946.26
+    },
+    {
+      "role": "agent",
+      "text": "Voilà, monsieur.",
+      "start": 1946.26,
+      "end": 1947.26
+    },
+    {
+      "role": "prospect",
+      "text": "Merci beaucoup pour votre temps, votre confiance. Bienvenue avec Homme Energy. Et votre confiance ce sera jamais",
+      "start": 1947.26,
+      "end": 1954.26
+    },
+    {
+      "role": "agent",
+      "text": "placé, monsieur.",
+      "start": 1954.3,
+      "end": 1958.39
+    },
+    {
+      "role": "prospect",
+      "text": "Merci. Au revoir. Bonne journée. Au revoir. Au revoir.",
+      "start": 1958.39,
+      "end": 1963.39
+    }
+  ]
+}

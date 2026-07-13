@@ -1,0 +1,15 @@
+{
+  "calls_transcrits": 3,
+  "dialogue_pairs": 289,
+  "knowledge_pairs": 63,
+  "total_pairs": 352,
+  "modelfile_examples": 75,
+  "jsonl": "/Users/macbookpro/Documents/agent conversation/AI_Call_Simulator/data/training/prospect_pairs.jsonl",
+  "alpaca_jsonl": "/Users/macbookpro/Documents/agent conversation/AI_Call_Simulator/data/training/prospect_alpaca.jsonl",
+  "modelfile": "/Users/macbookpro/Documents/agent conversation/AI_Call_Simulator/data/training/Modelfile.prospect-energie",
+  "calls": [
+    "ABDELLI___Nadia_AGT_3571_IND_262669_TEL_50000033765275428_TIME_123510",
+    "ADEMARD_Joffrey_AGT_2809_IND_353037_TEL_4376_TIME_105502",
+    "AHMED__Absoyad_AGT_3365_IND_4414_TEL_50000033651460919_TIME_144904"
+  ]
+}

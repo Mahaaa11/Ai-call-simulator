@@ -1,0 +1,3169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur d'Appels Sortants v1 — Lead and Connect</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --dark: #1f2937;
+            --light-bg: #f8fafc;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--light-bg);
+            color: var(--dark);
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+        }
+        header h1 { margin: 0; color: var(--primary); font-size: 24px; }
+        header p { margin: 5px 0 0 0; font-style: italic; color: #64748b; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .card h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        label { display: block; margin-top: 10px; font-weight: 600; font-size: 14px; }
+        select, input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus { outline: 2px solid var(--primary); }
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+        #stopBtn { background: var(--danger); }
+        #stopBtn:hover { background: #b91c1c; }
+        #log {
+            height: 380px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            padding: 15px;
+            background: #ffffff;
+            border-radius: 6px;
+        }
+        .agent-msg {
+            margin: 12px 0;
+            padding: 12px;
+            background: #eff6ff;
+            border-left: 5px solid var(--primary);
+            border-radius: 4px;
+        }
+        .prospect-msg {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f0fdf4;
+            border-left: 5px solid var(--success);
+            border-radius: 4px;
+        }
+        #evaluation {
+            display: none;
+            background: #ffffff;
+            border-left: 6px solid #eab308;
+            margin-top: 20px;
+        }
+        .eval-header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #e2e8f0; }
+        .eval-score-badge { display: inline-flex; flex-direction: column; align-items: center; min-width: 110px; padding: 14px 18px; border-radius: 12px; color: white; font-weight: bold; }
+        .eval-level-excellent { background: #16a34a; }
+        .eval-level-bon { background: #2563eb; }
+        .eval-level-ameliorer { background: #eab308; color: #1f2937; }
+        .eval-level-coaching { background: #dc2626; }
+        .score-num { font-size: 28px; line-height: 1; }
+        .score-label { font-size: 13px; margin-top: 4px; opacity: 0.95; }
+        .eval-title { margin: 0 0 4px 0; color: var(--primary); }
+        .eval-subtitle { margin: 0; color: #64748b; font-size: 14px; }
+        .eval-table-wrap { overflow-x: auto; margin: 16px 0; }
+        .eval-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .eval-table th, .eval-table td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; vertical-align: top; }
+        .eval-table th { background: #f1f5f9; font-weight: 600; }
+        .eval-table .section-row td { background: #eff6ff; font-weight: 700; color: #1e40af; }
+        .eval-table .col-score, .eval-table .col-max { text-align: center; white-space: nowrap; width: 90px; }
+        .eval-section { margin-top: 18px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .eval-section h4 { margin: 0 0 8px 0; font-size: 15px; }
+        .eval-section ul { margin: 0; padding-left: 20px; }
+        .eval-interpretation { margin-top: 16px; font-size: 13px; color: #64748b; }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+        .status-idle { background: #e2e8f0; color: #475569; }
+        .status-listening { background: #dbeafe; color: #2563eb; }
+        .status-thinking { background: #fef9c3; color: #854d0e; }
+        .hint { font-size: 13px; color: #64748b; margin: 4px 0 0 0; }
+        #recordTimer { font-size: 13px; color: #dc2626; font-weight: bold; min-height: 18px; }
+        .text-row { display: flex; gap: 8px; }
+        .text-row input { flex: 1; margin: 0; }
+        .text-row button { width: auto; min-width: 100px; margin: 0; }
+        #voiceToggle { width: auto; margin: 8px 0; }
+        #testVoiceBtn { background: #64748b; width: auto; margin: 0 auto 8px auto; display: block; }
+        #ttsStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; }
+        #dbStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>CAHIER DE DÉVELOPPEMENT — AGENT IA</h1>
+        <p>VERSION 1 — LEAD AND CONNECT (SIMULATEUR D'APPELS SORTANTS)</p>
+    </header>
+
+    <div class="card">
+        <h3>1. Paramètres de Formation</h3>
+        <div id="apiKeySection">
+            <label for="apiKey">Clé API OpenRouter :</label>
+            <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+        </div>
+        <p class="hint" id="apiKeyStatus" style="display:none;color:#16a34a;">✅ Clé API configurée par l'administrateur</p>
+        <p class="hint" id="apiHint">OpenRouter : <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> · Modèle NVIDIA Nemotron · <strong id="appUrlLabel"></strong></p>
+
+        <label for="nvidiaModelSelect">Modèle NVIDIA (OpenRouter) :</label>
+        <select id="nvidiaModelSelect">
+            <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit) — recommandé</option>
+            <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
+            <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
+        </select>
+
+        <div class="grid">
+            <div>
+                <label for="profileSelect">Scénario / Profil de Prospect :</label>
+                <select id="profileSelect">
+                    <option value="agressif">Profil 1 — Prospect agressif (Objection: Ça ne m'intéresse pas)</option>
+                    <option value="presse">Profil 2 — Prospect pressé (Objection: Je suis occupé / Pas le temps)</option>
+                    <option value="mefiant_fournisseur">Profil 3 — Prospect méfiant (Objection: Je ne veux pas changer de fournisseur)</option>
+                    <option value="mefiant_rgpd">Profil 4 — Prospect méfiant avancé (Objection: Comment avez-vous eu mon nom ?)</option>
+                    <option value="curieux">Profil 5 — Prospect curieux (Pose des questions, ouvert à la vente)</option>
+                </select>
+            </div>
+            <div>
+                <label for="levelSelect">Niveau de Difficulté Pédagogique :</label>
+                <select id="levelSelect">
+                    <option value="debutant">Débutant (Réactions et validation faciles)</option>
+                    <option value="intermediaire">Intermédiaire (Objections multiples et interruptions)</option>
+                    <option value="avance">Avancé (Forte pression, agressivité et sautes d'humeur)</option>
+                </select>
+            </div>
+        </div>
+        <label style="display:block;margin:10px 0 4px;font-weight:normal;font-size:13px;color:#475569;">
+            <input type="checkbox" id="calibrationToggle"> Calibration par scripts (cocher pour forcer les objections prédéfinies — décoché = réponses 100&nbsp;% LLM)
+        </label>
+        <button type="button" id="startBtn">INITIALISER ET DÉCROCHER L'APPEL</button>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>2. Console de Contrôle Audio</h3>
+            <div style="text-align: center; padding: 20px 0;">
+                <div id="status" class="status-badge status-idle">Ligne inactive</div>
+                <div id="recordTimer"></div>
+                <button type="button" id="talkBtn" disabled style="height: 60px; font-size: 18px; margin-bottom: 8px;">🎤 Cliquer pour parler</button>
+                <p class="hint">Cliquez 🎤, parlez, puis recliquez ⏹ Arrêter pour envoyer. Sinon utilisez le texte.</p>
+                <label for="textInput" style="text-align:left;">Ou tapez votre réplique :</label>
+                <div class="text-row">
+                    <input type="text" id="textInput" placeholder="Ex : Bonjour, je suis…" disabled>
+                    <button type="button" id="sendTextBtn" disabled>Envoyer</button>
+                </div>
+                <button type="button" id="testVoiceBtn">🔊 Tester la voix du prospect</button>
+                <p class="hint" id="ttsStatus">Vérification voix…</p>
+                <p class="hint" id="dbStatus">Vérification MySQL…</p>
+                <label style="text-align:left;font-weight:normal;font-size:13px;">
+                    <input type="checkbox" id="voiceToggle" checked> Voix du prospect (serveur local)
+                </label>
+                <button type="button" id="stopBtn" disabled>📴 Raccrocher et Lancer l'Évaluation</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>3. Transcription de l'Échange (Temps Réel)</h3>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <div id="evaluation" class="card">
+        <h3>4. Rapport Pédagogique — Évaluation de l'Agent (/100)</h3>
+        <div id="evalContent"></div>
+        <button type="button" id="retryEvalBtn" style="display:none;margin-top:12px;">🔄 Relancer l'évaluation IA</button>
+    </div>
+
+    <script>
+    (function () {
+        const PROFILES = {
+            agressif: {
+                prompt: "Tu es un prospect AGRESSIF et sec. Tu commences hostile (« ça ne m'intéresse pas ») mais tu peux t'ouvrir si l'agent est bon. Tu parles court, tu coupes parfois la parole.",
+                start: "Oui bonjour ?",
+                fallbacks: {
+                    debutant: [
+                        "Ça ne m'intéresse pas.",
+                        "Bon, c'est pour quoi exactement ?",
+                        "D'accord, on peut faire la vérification.",
+                        "Bon, allez-y, on verra."
+                    ],
+                    intermediaire: [
+                        "Ça ne m'intéresse pas.",
+                        "Vous appelez tout le temps, c'est insupportable.",
+                        "Pourquoi moi ? Pourquoi vous m'appelez ?",
+                        "Je ne suis pas convaincu. Vous n'avez pas répondu à ma question.",
+                        "Bon… d'accord, on verra, mais je ne suis pas convaincu."
+                    ],
+                    avance: [
+                        "Arrêtez de m'appeler !",
+                        "Ça ne m'intéresse pas, laissez-moi tranquille !",
+                        "Vous êtes des arnaqueurs, j'en suis sûr.",
+                        "Vous perdez votre temps avec moi.",
+                        "Je raccroche si vous continuez.",
+                        "Non, je ne change pas. Point final."
+                    ]
+                }
+            },
+            presse: {
+                prompt: "Tu es un prospect PRESSÉ. Tu manques de temps, tu parles vite, tu rappelles régulièrement que tu es pressé. Tu peux aller jusqu'à la vente si l'agent est efficace et respecte ton temps.",
+                start: "Oui bonjour ?",
+                fallbacks: {
+                    debutant: [
+                        "Je suis pressé, j'ai deux minutes. C'est pour quoi ?",
+                        "D'accord, allez-y rapidement.",
+                        "Oui, on peut vérifier, faites court.",
+                        "D'accord, on avance, faites vite."
+                    ],
+                    intermediaire: [
+                        "Je suis pressé, faites vite.",
+                        "Je suis satisfait de mon fournisseur actuel.",
+                        "Je n'ai pas envie de faire des démarches.",
+                        "Je veux voir l'offre avant de m'engager.",
+                        "D'accord, si c'est rapide on peut avancer."
+                    ],
+                    avance: [
+                        "Je suis pressé, j'ai pas le temps !",
+                        "Franchement ça ne m'intéresse pas.",
+                        "Rappelez-moi un autre jour.",
+                        "Je n'ai pas ma facture sous la main.",
+                        "Attendez, je n'ai pas tout suivi — faites plus court.",
+                        "Là je dois partir, j'ai une réunion."
+                    ]
+                }
+            },
+            mefiant_fournisseur: {
+                prompt: "Tu es un prospect MÉFIANT. Ton objection : 'Je ne veux pas changer de fournisseur'.",
+                start: "Oui bonjour ?",
+                fallbacks: {
+                    debutant: [
+                        "Je suis chez EDF, pourquoi vous m'appelez ?",
+                        "D'accord, si c'est juste pour vérifier le prix…",
+                        "Bon, je veux bien écouter le comparatif.",
+                        "Oui, on peut regarder si je paie trop cher."
+                    ],
+                    intermediaire: [
+                        "Je ne veux pas changer de fournisseur.",
+                        "Je suis satisfait de mon fournisseur actuel.",
+                        "Vous êtes sûr que je paie trop cher ?",
+                        "Ah d'accord, dans ce cas je veux bien vérifier."
+                    ],
+                    avance: [
+                        "Je ne changerai JAMAIS de fournisseur !",
+                        "Vous croyez que je vais changer comme ça ?!",
+                        "Non, je suis bien chez mon fournisseur, point final.",
+                        "Arrêtez avec vos comparatifs, je n'ai pas confiance !"
+                    ]
+                }
+            },
+            mefiant_rgpd: {
+                prompt: "Tu es un prospect MÉFIANT sur les données personnelles (RGPD). Tu poses des questions sur l'origine de l'appel, la protection des données, l'accès à ta consommation et l'IBAN. Tu ne fais confiance qu'avec des explications claires.",
+                start: "Oui bonjour ?",
+                fallbacks: {
+                    debutant: [
+                        "Comment avez-vous eu mon numéro ?",
+                        "D'accord, si mes données sont protégées je vous écoute.",
+                        "Oui, on peut faire la vérification.",
+                        "D'accord, on avance."
+                    ],
+                    intermediaire: [
+                        "Qui êtes-vous exactement ?",
+                        "Comment avez-vous eu mes données ?",
+                        "Pourquoi voulez-vous accéder à ma consommation ?",
+                        "Pourquoi mon IBAN ?",
+                        "D'accord, si tout est clair on peut avancer."
+                    ],
+                    avance: [
+                        "Je ne donne pas mes données personnelles.",
+                        "Qui vous mandate pour m'appeler ?",
+                        "C'est une arnaque ou quoi ?",
+                        "Pourquoi mon IBAN ? Je ne fais pas confiance.",
+                        "Je veux réfléchir, je ne décide pas maintenant.",
+                        "Non, je refuse. Ne me rappelez plus."
+                    ]
+                }
+            },
+            curieux: {
+                prompt: "Tu es un prospect CURIEUX et ouvert. Tu coopères (fournisseur, facture, identité) mais tu poses des questions naturelles pour comprendre : comparatif, qualité de l'électricité, gratuité, prochaines étapes. Ton amical, jamais agressif.",
+                start: "Oui bonjour ?",
+                fallbacks: {
+                    debutant: [
+                        "Par curiosité, comment savez-vous si un fournisseur est mieux positionné qu'un autre ?",
+                        "Je suis chez EDF, depuis un peu plus de 3 ans.",
+                        "Est-ce que la qualité de l'électricité reste la même si on change de fournisseur ?",
+                        "Le comparatif est vraiment gratuit ? Ça ne m'engage à rien ?",
+                        "Parfait, j'aimerais voir ce que vous proposez. Quelle est la prochaine étape ?"
+                    ],
+                    intermediaire: [
+                        "Pourquoi Home Energie en particulier ?",
+                        "Comment est-ce que vous me faites économiser concrètement ?",
+                        "Pourquoi deux ans de contrat, c'est obligatoire ?",
+                        "Pourquoi mon IBAN, c'est pour quoi exactement ?",
+                        "D'accord, si tout est clair je peux avancer."
+                    ],
+                    avance: [
+                        "Je compare plusieurs offres en ce moment.",
+                        "J'ai des questions techniques : puissance, kWh, tarif base ou heures pleines ?",
+                        "Quelles garanties proposez-vous exactement ?",
+                        "Et la rétractation, c'est combien de jours ?",
+                        "Pourquoi vous avez besoin de mon IBAN maintenant ?"
+                    ]
+                }
+            }
+        };
+
+        const PROFILE_LEVEL_PROMPTS = {
+            agressif: {
+                debutant: `PROFIL AGRESSIF — NIVEAU DÉBUTANT :
+- 1 seule objection : « Ça ne m'intéresse pas » — sec mais poli, pas de cris.
+- Si l'agent répond bien (objet clair, professionnel), tu t'ouvres et tu coopères.
+- Tu réponds aux questions (fournisseur, facture, identité) sans menacer de raccrocher.
+- Fin attendue : VENTE POSSIBLE si l'agent convainc.`,
+                intermediaire: `PROFIL AGRESSIF — NIVEAU INTERMÉDIAIRE :
+- Ton sec, tu coupes parfois la parole. Pas de vulgarité extrême.
+- ÉCOUTE d'abord ce que dit l'agent, puis réponds avec l'objection ADAPTÉE au contexte (pas une liste mécanique).
+- Exemples : pitch commercial → « Ça ne m'intéresse pas » ; agent parle d'appels → « Vous appelez tout le temps » ; agent ne répond pas → « Pourquoi moi ? » ; agent demande le mail → réponds sur le mail.
+- Ne mentionne JAMAIS l'IBAN tant que l'agent ne le demande pas explicitement.
+- Tu ne cèdes qu'après des réponses solides. Pas de raccrochage facile.
+- Fin attendue : VENTE DIFFICILE — tu hésites longtemps avant d'accepter.`,
+                avance: `PROFIL AGRESSIF — NIVEAU AVANCÉ :
+- Très agressif, tu menaces de raccrocher souvent. Tu peux crier (« Arrêtez ! », « Stop ! »).
+- 6 objections dans l'ordre : arrêtez de m'appeler → pas intéressé → arnaqueurs → perdez votre temps → je raccroche → refus final.
+- Ne mentionne l'IBAN que si l'agent le demande explicitement — sinon reste sur tes objections agressives.
+- Tu refuses de coopérer. Pas de comparatif, pas de données personnelles.
+- Fin attendue : REFUS ou RACCROCHAGE — pas de vente sauf agent exceptionnel (rare).`
+            },
+            presse: {
+                debutant: `PROFIL PRESSÉ — NIVEAU DÉBUTANT :
+- 1 seule objection au début : « Je suis pressé / faites court » — UNE FOIS SEULEMENT.
+- Ensuite tu COOPÈRES TOTALEMENT : nom, prénom, adresse, PDL, facture, IBAN si demandé.
+- INTERDIT en débutant : refuser le PDL, refuser l'adresse, raccrocher, « ne m'appelez plus », refuser un rappel.
+- Tu rappelles « faites vite » mais tu avances dans la simulation/comparatif jusqu'à la vente.`,
+                intermediaire: `PROFIL PRESSÉ — NIVEAU INTERMÉDIAIRE :
+- Reste pressé TOUT l'appel (« faites vite », « j'ai pas le temps ») mais reste coopératif.
+- 4 objections dans l'ordre : 1) Je suis pressé  2) Satisfait de mon fournisseur  3) Pas envie de démarches  4) Je veux voir l'offre d'abord.
+- Ne mentionne l'IBAN que si l'agent le demande au closing — jamais avant.
+- Tu ne cèdes qu'après des réponses convaincantes. Pas de cris, pas de raccrochage.
+- Fin attendue : VENTE si l'agent gère bien tes objections.`,
+                avance: `PROFIL PRESSÉ — NIVEAU AVANCÉ :
+- Coupe la parole, impatient, menace de raccrocher (« j'ai une réunion », « je dois partir »).
+- 5+ objections dans l'ordre : pressé → pas intéressé → rappelez-moi → pas ma facture → pas tout suivi → je dois partir.
+- Tu peux proposer un RAPPEL ou RACCROCHER si l'agent est mauvais.
+- Fin possible : VENTE (agent excellent), RAPPEL ou RACCROCHAGE.`
+            },
+            mefiant_rgpd: {
+                debutant: `PROFIL MÉFIANT (DONNÉES) — NIVEAU DÉBUTANT :
+- 1 seule objection : « Comment avez-vous eu mon numéro ? »
+- Tu te rassures facilement si l'agent explique clairement (RGPD, source légale, protection des données).
+- Ensuite tu coopères (fournisseur, facture, identité) sans bloquer.
+- Fin attendue : VENTE si l'agent rassure bien.`,
+                intermediaire: `PROFIL MÉFIANT (DONNÉES) — NIVEAU INTERMÉDIAIRE :
+- Tu poses BEAUCOUP de questions, ton prudent et interrogatif.
+- Objections dans l'ordre : 1) Qui êtes-vous ?  2) Comment avez-vous eu mes données ?  3) Pourquoi accéder à ma consommation ?  4) Pourquoi mon IBAN ?
+- Tu ne cèdes qu'après des explications détaillées et rassurantes.
+- Fin attendue : VENTE après explications complètes.`,
+                avance: `PROFIL MÉFIANT (DONNÉES) — NIVEAU AVANCÉ :
+- Très prudent, tu protèges tes données. Pas agressif mais ferme.
+- 6 objections dans l'ordre : je ne donne pas mes données → qui vous mandate → arnaque ? → pourquoi IBAN → je veux réfléchir → refus.
+- Tu ne donnes aucune info personnelle tant que ce n'est pas clair.
+- Fin attendue : REFUS ou RAPPEL — pas de vente facile.`
+            },
+            curieux: {
+                debutant: `PROFIL CURIEUX — NIVEAU DÉBUTANT (exemple de ton) :
+- Tu es COOPÉRATIF et curieux. Tu réponds aux questions de l'agent (fournisseur, durée, facture, identité).
+- Tu poses 1 à 2 questions naturelles au fil de l'appel, par exemple :
+  • « Comment savez-vous si un fournisseur est mieux positionné ? »
+  • « La qualité de l'électricité reste la même si on change ? »
+  • « Le comparatif est gratuit ? Ça ne m'engage à rien ? »
+- Après les explications, tu acceptes le comparatif et demandes la prochaine étape (adresse, facture).
+- INTERDIT : didascalies, « je reste dans le personnage », mention du profil ou du niveau.
+- Fin attendue : VENTE — « J'aimerais voir ce que vous proposez, quelle est la prochaine étape ? »`,
+                intermediaire: `PROFIL CURIEUX — NIVEAU INTERMÉDIAIRE :
+- Tu poses BEAUCOUP de questions, ton curieux et analytique.
+- Questions dans l'ordre : 1) Pourquoi Home ?  2) Comment économisez-vous ?  3) Pourquoi deux ans ?  4) Pourquoi IBAN ?
+- Tu restes ouvert, tu ne refuses pas. Tu veux comprendre avant de signer.
+- Fin attendue : VENTE après réponses complètes et convaincantes.`,
+                avance: `PROFIL CURIEUX — NIVEAU AVANCÉ :
+- Très analytique : tu compares, tu creuses les détails techniques et contractuels.
+- 5 questions dans l'ordre : compare offres → questions techniques → garanties → rétractation → IBAN.
+- Tu prends ton temps, tu notes mentalement les réponses.
+- Fin attendue : VENTE si l'agent est excellent, sinon RÉFLEXION (« je veux comparer encore »).`
+            }
+        };
+
+        const LEVEL_PROMPTS = {
+            debutant: `NIVEAU DÉBUTANT — FACILE (PRIORITAIRE SUR LE PROFIL) :
+- Même si le profil est agressif ou méfiant, tu restes COOPÉRATIF et patient.
+- 1 seule petite objection au 1er échange de l'agent, puis tu t'ouvres vite.
+- Tu réponds aux questions (fournisseur, ancienneté, électricité/gaz) sans refuser.
+- Tu acceptes facilement la proposition/comparatif en 3-4 échanges.
+- INTERDIT en débutant : "ne m'appelez plus", "raccrochez", "je ne veux rien changer", menaces de raccrocher.`,
+            intermediaire: `NIVEAU INTERMÉDIAIRE — OBJECTIONS :
+- Tu poses 2 à 4 objections réparties sur l'appel (profil, temps, confiance, fournisseur).
+- Tu ne cèdes qu'après des réponses convaincantes de l'agent.
+- Tu peux hésiter avant la proposition, mais tu restes au téléphone.
+- Pas de cris extrêmes. Raccrochage rare, seulement si l'agent est mauvais.`,
+            avance: `NIVEAU AVANCÉ — TRÈS DIFFICILE (PRIORITAIRE SUR LE PROFIL) :
+- Tu refuses, tu es agacé : "ça ne m'intéresse pas", "ne m'appelez plus", "raccrochez".
+- Tu menaces de RACCROCHER souvent. Tu peux crier ("Écoutez !", "Arrêtez !", "Stop !").
+- Minimum 5-6 objections fortes avant d'envisager la proposition.
+- Tu refuses de parler de ton contrat. Proposition seulement si l'agent est excellent.`,
+        };
+
+        const CALL_STRUCTURE = `STRUCTURE DE L'APPEL :
+1. ACCROCHE — écoute ou refuse
+2. BUT — comprends pourquoi on appelle
+3. DÉCOUVERTE — fournisseur/facture (seulement si l'agent demande)
+4. PROPOSITION — comparatif (plus facile en débutant)
+5. CLOSING — seulement si proposition bien menée`;
+
+        const PROSPECT_FACTS = `TON MÉNAGE — FAITS FIXES (ne les contredis JAMAIS, même si tu es agressif ou méfiant) :
+- Particulier en France : tu as DE L'ÉLECTRICITÉ à domicile (logement normal).
+- Fournisseur actuel : EDF, électricité SEULEMENT (pas de gaz).
+- Ancienneté : plusieurs années chez EDF.
+- Facture électricité : environ 70 €/mois.
+- Mail d'augmentation : non, tu ne l'as pas reçu.
+- PDL (14 chiffres) : 12345678901234 — tu l'as sur ta facture ; tu peux le donner si demandé.
+- Adresse : 25 rue de la Montagne Sainte-Catherine, 75003 Paris.
+- Identité : Jean Dupont (prénom Jean, nom Dupont) — ce n'est PAS toi si l'agent se présente (Émilie, Eugénie, Génie…).
+- INTERDIT : te présenter avec le prénom/nom de l'AGENT. Tu es le CLIENT, pas le commercial.
+- INTERDIT : dire que tu n'as pas de PDL, pas d'électricité, ou inventer des personnes (« appelez Elsa », etc.).
+- Si tu n'as pas la facture sous les yeux → « Je ne l'ai pas sous la main » (PAS « je n'ai pas de PDL »).
+- Si l'agent propose 60 € au lieu de 70 € → réagis au prix en français (« 60 euros ? D'accord, expliquez-moi »).
+- UNIQUEMENT en français naturel. JAMAIS d'anglais (« stop speaking », etc.).
+- Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.`;
+
+        const EVAL_GRID = [
+            { section: "1. Accroche et prise de contact", max: 15, items: [
+                { name: "Présentation claire (nom, entreprise, objet de l'appel)", max: 5 },
+                { name: "Accroche efficace et engageante", max: 5 },
+                { name: "Ton professionnel et dynamique", max: 3 },
+                { name: "Respect du temps client", max: 2 }
+            ]},
+            { section: "2. Découverte des besoins", max: 20, items: [
+                { name: "Questions ouvertes et pertinentes", max: 6 },
+                { name: "Écoute active (pas d'interruption)", max: 5 },
+                { name: "Reformulation des besoins", max: 4 },
+                { name: "Identification des freins et motivations", max: 5 }
+            ]},
+            { section: "3. Argumentation commerciale", max: 20, items: [
+                { name: "Adaptation au discours client", max: 6 },
+                { name: "Mise en avant des bénéfices", max: 6 },
+                { name: "Structuration claire des arguments", max: 4 },
+                { name: "Maîtrise du produit", max: 4 }
+            ]},
+            { section: "4. Gestion des objections", max: 15, items: [
+                { name: "Écoute sans confrontation", max: 4 },
+                { name: "Réponses adaptées et argumentées", max: 5 },
+                { name: "Transformation des objections en opportunités", max: 4 },
+                { name: "Ton calme et professionnel", max: 2 }
+            ]},
+            { section: "5. Closing", max: 15, items: [
+                { name: "Proposition claire", max: 5 },
+                { name: "Technique de closing naturelle", max: 5 },
+                { name: "Obtention d'un engagement", max: 5 }
+            ]},
+            { section: "6. Communication et attitude", max: 10, items: [
+                { name: "Ton de voix (énergie, assurance)", max: 4 },
+                { name: "Clarté du langage", max: 3 },
+                { name: "Empathie et relationnel", max: 3 }
+            ]},
+            { section: "7. Organisation de l'appel", max: 5, items: [
+                { name: "Respect de la structure", max: 3 },
+                { name: "Fluidité globale", max: 2 }
+            ]}
+        ];
+
+        const EVALUATION_PROMPT = `GRILLE DE NOTATION (/100) — note UNIQUEMENT l'AGENT COMMERCIAL (messages AGENT), PAS le prospect.
+
+${EVAL_GRID.map(g => g.section + " (/"+g.max+") : " + g.items.map(i => i.name+" ("+i.max+" pts)").join(" · ")).join("\n")}
+
+INTERPRÉTATION : 85-100 Excellent | 70-84 Bon | 50-69 À améliorer | <50 Coaching nécessaire
+
+Réponds UNIQUEMENT en JSON valide (sans markdown) :
+{
+  "score_total": <number 0-100>,
+  "niveau": "<Excellent|Bon|À améliorer|Coaching nécessaire>",
+  "sections": [
+    {
+      "name": "<nom section>",
+      "score": <number>,
+      "max": <number>,
+      "items": [
+        { "name": "<sous-critère>", "score": <number>, "max": <number>, "comment": "<commentaire concret sur l'agent>" }
+      ]
+    }
+  ],
+  "points_forts": ["...", "...", "..."],
+  "axes_amelioration": ["...", "...", "..."],
+  "recommandations": ["...", "..."]
+}
+
+RÈGLES : score_total = somme des scores ; chaque commentaire cite un moment CONCRET de l'agent ; varie les notes selon la qualité réelle.`;
+
+        const COMPACT_EVAL_PROMPT = `Évalue UNIQUEMENT l'agent commercial (/100). Réponds en JSON valide SANS markdown.
+Grille: 1.Accroche/15 2.Découverte/20 3.Argumentation/20 4.Objections/15 5.Closing/15 6.Communication/10 7.Organisation/5
+Format: {"score_total":N,"niveau":"Excellent|Bon|À améliorer|Coaching nécessaire","sections":[{"name":"1. Accroche...","score":N,"max":15,"items":[{"name":"...","score":N,"max":N,"comment":"citation concrète agent"}]}],"points_forts":["","",""],"axes_amelioration":["","",""],"recommandations":["",""]}
+Commentaires = citations ou moments précis de l'agent. Pas de commentaire générique.`;
+
+        const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+        const OPENROUTER_FALLBACK_MODELS = [
+            "nvidia/nemotron-3-super-120b-a12b:free",
+            "nvidia/nemotron-3-nano-30b-a3b",
+            "nvidia/nemotron-3-super-120b-a12b"
+        ];
+        function getServiceUrl(localPort, prodPath) {
+            const host = location.hostname;
+            if (host === "localhost" || host === "127.0.0.1") {
+                return "http://127.0.0.1:" + localPort;
+            }
+            return location.origin + prodPath;
+        }
+        const TTS_SERVER = getServiceUrl(8765, "/tts");
+        const CONVERSATION_API = getServiceUrl(8766, "/conv-api");
+        const synth = window.speechSynthesis;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let speechRecAvailable = false;
+        try {
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = "fr-FR";
+                speechRecAvailable = true;
+            }
+        } catch (_) {
+            speechRecAvailable = false;
+        }
+
+        const startBtn = document.getElementById('startBtn');
+        const talkBtn = document.getElementById('talkBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const sendTextBtn = document.getElementById('sendTextBtn');
+        const textInput = document.getElementById('textInput');
+        const statusText = document.getElementById('status');
+        const recordTimer = document.getElementById('recordTimer');
+        const logDiv = document.getElementById('log');
+        const evaluationDiv = document.getElementById('evaluation');
+        const evalContent = document.getElementById('evalContent');
+
+        let systemPromptText = "";
+        let compactSystemPromptText = "";
+        let chatTurns = [];
+        let callLevel = "debutant";
+        let callActive = false;
+        let isListening = false;
+        let speechTranscript = "";
+        let prospectPersona = {
+            firstName: "Jean", lastName: "Dupont",
+            gaveFirst: false, gaveLast: false,
+            pdl: "12345678901234", gavePdl: false,
+            address: "25 rue de la Montagne Sainte-Catherine, 75003 Paris",
+            gaveAddress: false
+        };
+
+        let agentPersona = { firstNames: [], lastNames: [], tokens: [] };
+
+        function rememberAgentFromMessage(text) {
+            if (!text) return;
+            const t = text.toLowerCase();
+            const intro = text.match(/je suis\s+([A-Za-zÀ-ÿ\-]+)(?:\s+([A-Za-zÀ-ÿ\-]+))?/i);
+            if (intro) {
+                pushAgentToken(intro[1]);
+                if (intro[2]) pushAgentToken(intro[2]);
+            }
+            for (const w of ["émilie", "emilie", "eugénie", "eugenie", "génie", "genie", "dogénie", "dogenie", "ogénie", "ogenie"]) {
+                if (t.includes(w)) pushAgentToken(w);
+            }
+        }
+
+        function pushAgentToken(token) {
+            if (!token || token.length < 3) return;
+            const norm = token.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+            if (!agentPersona.tokens.includes(norm)) agentPersona.tokens.push(norm);
+        }
+
+        function normalizeToken(text) {
+            return (text || "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+        }
+
+        function isProspectRoleViolation(reply) {
+            if (!reply) return false;
+            const r = normalizeToken(reply);
+            if (/\b(je vous appellerai|je suis emilie|je suis eugenie|notre comparateur|je vous contacte)\b/i.test(reply)) return true;
+            for (const tok of agentPersona.tokens) {
+                if (tok.length >= 4 && r.includes(tok)) return true;
+            }
+            if (agentAskedIdentity() && /\b(emilie|eugenie|genie|dogenie|ogenie)\b/i.test(r)) return true;
+            return false;
+        }
+
+        function isProspectStaleReply(reply) {
+            if (!reply) return false;
+            if (isSameAsLastProspectReply(reply)) return true;
+            if (prospectAlreadyGavePdl() && /\bpdl\b|12345678901234/.test(reply) &&
+                (agentInOfferStage() || agentAskedClosing())) {
+                return true;
+            }
+            if (prospectPersona.gaveFirst && agentAskedIdentity() && isProspectRoleViolation(reply)) return true;
+            return false;
+        }
+
+        function createProspectPersona(profileKey) {
+            if (profileKey === "curieux") {
+                return {
+                    firstName: "Thomas", lastName: "Bernard",
+                    gaveFirst: false, gaveLast: false,
+                    pdl: "12345678901234", gavePdl: false,
+                    address: "12 avenue des Champs, 69003 Lyon",
+                    gaveAddress: false
+                };
+            }
+            return {
+                firstName: "Jean", lastName: "Dupont",
+                gaveFirst: false, gaveLast: false,
+                pdl: "12345678901234", gavePdl: false,
+                address: "25 rue de la Montagne Sainte-Catherine, 75003 Paris",
+                gaveAddress: false
+            };
+        }
+        let frenchVoice = null;
+        let lastProspectAudio = null;
+        let ttsServerOk = false;
+        let dbServerOk = false;
+        let callStartedAt = null;
+        let audioUnlocked = false;
+
+        function unlockAudioPlayback() {
+            if (audioUnlocked) return;
+            try {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (Ctx) {
+                    const ctx = new Ctx();
+                    if (ctx.state === "suspended") ctx.resume();
+                }
+                const ping = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhBAAAAAA=");
+                ping.volume = 0.01;
+                ping.play().catch(() => {});
+                audioUnlocked = true;
+            } catch (_) {}
+        }
+
+        function getInjectedApiKey() {
+            const cfg = window.__SIMULATOR_CONFIG__ || {};
+            return (cfg.openrouterApiKey || window.__INJECTED_OPENROUTER_KEY__ || "").trim();
+        }
+
+        function isHostedMode() {
+            const cfg = window.__SIMULATOR_CONFIG__ || {};
+            return !!(cfg.hostedOnStreamlit || cfg.openrouterApiKey || window.__INJECTED_OPENROUTER_KEY__);
+        }
+
+        function applyHostedConfig() {
+            const key = getInjectedApiKey();
+            if (!key) return;
+            const input = document.getElementById("apiKey");
+            if (input) input.value = key;
+            const section = document.getElementById("apiKeySection");
+            const status = document.getElementById("apiKeyStatus");
+            if (section) section.style.display = "none";
+            if (status) status.style.display = "block";
+        }
+
+        function getApiKey() {
+            const injected = getInjectedApiKey();
+            if (injected) return injected;
+            return document.getElementById('apiKey').value.trim();
+        }
+
+        function validateApiKey(key) {
+            if (!key) return "Veuillez saisir votre clé API OpenRouter.";
+            if (!key.startsWith("sk-or-")) return "La clé OpenRouter doit commencer par sk-or-v1-...";
+            return null;
+        }
+
+        function getLevel() {
+            return callLevel || document.getElementById("levelSelect").value;
+        }
+
+        function getLevelTemperature() {
+            return { debutant: 0.72, intermediaire: 0.85, avance: 0.93 }[getLevel()] || 0.85;
+        }
+
+        function countAgentTurns() {
+            return chatTurns.filter(t => t.role === "user").length;
+        }
+
+        function lastAgentText() {
+            const turns = chatTurns.filter(t => t.role === "user");
+            return turns.length ? turns[turns.length - 1].content : "";
+        }
+
+        function isHardObjection(text) {
+            return /\b(intéresse pas|occupé|pas le temps|raccroch|jamais|marre|arrête|stop|laissez|cris|crier|pieds|tranquille)\b/i.test(text || "");
+        }
+
+        function isCooperativeReply(text) {
+            return /\b(d'accord|volontiers|bien sûr|comparatif|vérifier|écoute|expliquez|allez-y|pas de souci|on peut)\b/i.test(text || "");
+        }
+
+        function countProspectObjections() {
+            return chatTurns.filter(t => t.role === "assistant" && isHardObjection(t.content)).length;
+        }
+
+        function agentMentionedProposition() {
+            return /\b(comparatif|simulation|proposition|offre|vérifier|économ|facture|tarif|mail d'augmentation)\b/i.test(lastAgentText());
+        }
+
+        function getProfileKey() {
+            return document.getElementById("profileSelect").value;
+        }
+
+        function isProfileCalibrationEnabled() {
+            const el = document.getElementById("calibrationToggle");
+            return !!(el && el.checked);
+        }
+
+        function getProfileFallbacks(level) {
+            const profile = PROFILES[getProfileKey()];
+            const lv = level || getLevel();
+            const fb = profile.fallbacks;
+            if (Array.isArray(fb)) return fb;
+            return fb[lv] || fb.debutant || PROFILES.agressif.fallbacks.debutant;
+        }
+
+        function getMefiantRgpdObjectionMarkers(list) {
+            return list.map(o => {
+                if (/comment avez-vous eu mon num/i.test(o)) return /comment avez-vous eu mon num|eu mon numéro|eu mon numero/i;
+                if (/qui êtes-vous/i.test(o)) return /qui êtes-vous|qui es-tu|c'est qui/i;
+                if (/eu mes données/i.test(o)) return /eu mes données|eu mes donnees|mes données personnelles/i;
+                if (/consommation/i.test(o)) return /consommation|accéder à ma conso|données de conso/i;
+                if (/iban/i.test(o)) return /iban|rib|coordonnées bancaires/i;
+                if (/je ne donne pas mes données/i.test(o)) return /je ne donne pas mes données|donne pas mes/i;
+                if (/mandate/i.test(o)) return /mandate|mandat|autorisé à m'appeler/i;
+                if (/arnaque/i.test(o)) return /arnaque|escroc|fraude/i;
+                if (/réfléchir/i.test(o)) return /réfléchir|reflechir|ne décide pas/i;
+                if (/je refuse/i.test(o)) return /je refuse|ne me rappelez plus|refus/i;
+                return new RegExp(o.slice(0, 16).replace(/[?.!,']/g, ""), "i");
+            });
+        }
+
+        function getMefiantRgpdObjectionCount(level) {
+            return { debutant: 1, intermediaire: 4, avance: 6 }[level] || 1;
+        }
+
+        function countMefiantRgpdObjectionsUsed(list) {
+            const level = getLevel();
+            list = list || getProfileFallbacks(level);
+            const n = getMefiantRgpdObjectionCount(level);
+            const markers = getMefiantRgpdObjectionMarkers(list.slice(0, n));
+            let count = 0;
+            for (let i = 0; i < markers.length; i++) {
+                if (chatTurns.some(t => t.role === "assistant" && markers[i].test(t.content))) count++;
+                else break;
+            }
+            return count;
+        }
+
+        function agentAskedConsommation() {
+            return /\b(consommation|kwh|puissance|relevé de conso|données de conso|accès.*conso)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedPdl() {
+            return /\b(pdl|point de livraison|14 chiffres|numéro du compteur|localiser le compteur|compteur à distance)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedPostalAddress() {
+            const t = lastAgentText();
+            return /\b(adresse postale|votre adresse|quelle adresse|rue |avenue |boulevard |code postal|\d{5}\s+\w+)\b/i.test(t);
+        }
+
+        function isTooAggressiveForDebutant(text) {
+            return /\b(raccroch|ne m'appelez plus|ne me rappelez|je ne donne pas|trop risqué|risque|je ne programmerai|envoyez un (e-?)?mail|je dois partir|je n'ai pas 5 minutes|je n'ai pas le temps de chercher|je suis en retard|appels commerciaux|courrier sécurisé|espace client en ligne|je ne peux rien faire)\b/i.test(text || "");
+        }
+
+        function debutantCooperating(profile) {
+            if (getLevel() !== "debutant") return false;
+            const turns = countAgentTurns();
+            if (turns <= 1) return false;
+            if (profile === "presse") {
+                return prospectAlreadyAcceptedComparatif() || turns >= 2;
+            }
+            return turns >= 2;
+        }
+
+        function agentCheckingPresence() {
+            return /\b(toujours là|toujours la|vous m'entendez|allô|allo)\b/i.test(lastAgentText());
+        }
+
+        function applyDebutantCooperation(profile, reply) {
+            if (getLevel() !== "debutant") return null;
+
+            const cooperating = debutantCooperating(profile);
+
+            if (agentCheckingPresence() && cooperating) {
+                const userTurns = chatTurns.filter(t => t.role === "user");
+                const prevAgent = userTurns.length >= 2 ? userTurns[userTurns.length - 2].content : "";
+                if (isPastDataCollectionStage()) {
+                    return "Oui, je suis là. On avance ?";
+                }
+                if (/\bpdl|compteur|adresse|facture|consommation\b/i.test(prevAgent) || /\bpdl|compteur|adresse|facture\b/i.test(lastAgentText())) {
+                    return "Oui, je suis là. Le PDL c'est 12345678901234. Faites vite.";
+                }
+                return "Oui, je vous écoute. Allez-y, faites court.";
+            }
+
+            if (cooperating || isTooAggressiveForDebutant(reply)) {
+                if (agentInOfferStage()) {
+                    const offer = getOfferStageReply();
+                    if (offer) return offer;
+                }
+                if (profile === "presse" && isPastDataCollectionStage()) {
+                    const sales = getPresseSalesStageReply(getLevel());
+                    if (sales) return sales;
+                }
+                if (!prospectAlreadyGavePdl() && (agentAskedPdl() || agentRequestingConsommationAccess())) {
+                    if (agentAskedFacture() || /\bfacture\b/i.test(lastAgentText())) {
+                        return "Je n'ai pas la facture sous la main, mais le PDL c'est 12345678901234. Faites vite.";
+                    }
+                    return "Le PDL c'est 12345678901234. Allez-y, faites court.";
+                }
+                if (agentAskedPostalAddress() || (/\badresse\b/i.test(lastAgentText()) && !agentAskedIban())) {
+                    return "12 rue de la République, 59000 Lille. Faites vite, s'il vous plaît.";
+                }
+                if (agentAskedIban() && !prospectAlreadyGaveIban()) {
+                    return "D'accord : FR76 3000 6000 0112 3456 7890 123. On avance ?";
+                }
+                if (agentProposedRappel()) {
+                    return "D'accord, demain 19h, mais promettez que ce sera rapide.";
+                }
+                if (agentAskedEmailOrAddress() && /\bmail\b/i.test(lastAgentText())) {
+                    return "claire.dubois@example.com — allez-y, faites court.";
+                }
+                if (agentAskedClosing() || agentAskedProposition()) {
+                    return profile === "presse"
+                        ? "D'accord, on avance, faites vite."
+                        : "D'accord, on peut faire la vérification.";
+                }
+                if (isTooAggressiveForDebutant(reply)) {
+                    return "D'accord, je vous écoute. Faites vite, s'il vous plaît.";
+                }
+            }
+
+            if (profile === "presse" && countAgentTurns() === 1 && agentAskedMailOnly()) {
+                return null;
+            }
+
+            return null;
+        }
+
+        function agentAskedWhoAreYou() {
+            return /\b(qui êtes-vous|qui es-tu|votre entreprise|quelle société|vous représentez qui)\b/i.test(lastAgentText());
+        }
+
+        function getCurieuxObjectionMarkers(list) {
+            return list.map(o => {
+                if (/comment ça fonctionne/i.test(o)) return /comment ça fonctionne|comment ca fonctionne|ça marche comment/i;
+                if (/home energie|home en particulier/i.test(o)) return /home energie|home énergie|pourquoi home/i;
+                if (/économiser/i.test(o)) return /économiser|économies|economiser|economies/i;
+                if (/deux ans/i.test(o)) return /deux ans|2 ans|durée.*contrat|engagement/i;
+                if (/iban/i.test(o)) return /iban|rib|coordonnées bancaires/i;
+                if (/compare plusieurs offres/i.test(o)) return /compare plusieurs|plusieurs offres|je compare/i;
+                if (/questions techniques/i.test(o)) return /questions techniques|puissance|kwh|kWh|heures pleines|tarif base/i;
+                if (/garanties/i.test(o)) return /garanties|garantie/i;
+                if (/rétractation/i.test(o)) return /rétractation|retractation|délai de rétractation/i;
+                return new RegExp(o.slice(0, 16).replace(/[?.!,']/g, ""), "i");
+            });
+        }
+
+        function getCurieuxObjectionCount(level) {
+            return { debutant: 1, intermediaire: 4, avance: 5 }[level] || 1;
+        }
+
+        function countCurieuxObjectionsUsed(list) {
+            const level = getLevel();
+            list = list || getProfileFallbacks(level);
+            const n = getCurieuxObjectionCount(level);
+            const markers = getCurieuxObjectionMarkers(list.slice(0, n));
+            let count = 0;
+            for (let i = 0; i < markers.length; i++) {
+                if (chatTurns.some(t => t.role === "assistant" && markers[i].test(t.content))) count++;
+                else break;
+            }
+            return count;
+        }
+
+        function agentMentionedHome() {
+            return /\b(home energie|home énergie|homeenergie)\b/i.test(lastAgentText());
+        }
+
+        function agentMentionedContractDuration() {
+            return /\b(deux ans|2 ans|24 mois|engagement|durée du contrat)\b/i.test(lastAgentText());
+        }
+
+        function agentSaidFreeNoEngagement() {
+            return /\b(gratuit|sans engagement|ne vous engage|pas d'engagement|totalement gratuit)\b/i.test(lastAgentText());
+        }
+
+        function agentExplainedElectricityQuality() {
+            return /\b(gestionnaire de réseau|réseau|même qualité|qualité.*identique|enedis|facturation)\b/i.test(lastAgentText());
+        }
+
+        function getAgressifObjectionMarkers(list) {
+            return list.map(o => {
+                if (/arrêtez de m'appeler/i.test(o)) return /arrêtez de m'appeler|ne m'appelez plus|appelez plus/i;
+                if (/intéresse pas/i.test(o)) return /intéresse pas/i;
+                if (/appelez tout le temps/i.test(o)) return /appelez tout le temps|tout le temps|encore un appel|beaucoup d'appels/i;
+                if (/pourquoi moi/i.test(o)) return /pourquoi moi|pourquoi vous m'appelez/i;
+                if (/arnaqueur/i.test(o)) return /arnaqueur|escroc|arnaque/i;
+                if (/perdez votre temps/i.test(o)) return /perdez votre temps|perte de temps/i;
+                if (/je raccroche si/i.test(o)) return /je raccroche|raccroch/i;
+                if (/iban/i.test(o)) return /iban|rib|coordonnées bancaires|donne pas.*iban|refuse.*iban/i;
+                return new RegExp(o.slice(0, 16).replace(/[?.!,']/g, ""), "i");
+            });
+        }
+
+        function getAgressifObjectionCount(level) {
+            return { debutant: 1, intermediaire: 4, avance: 6 }[level] || 1;
+        }
+
+        function countAgressifObjectionsUsed(list) {
+            const level = getLevel();
+            list = list || getProfileFallbacks(level);
+            const n = getAgressifObjectionCount(level);
+            const markers = getAgressifObjectionMarkers(list.slice(0, n));
+            let count = 0;
+            for (let i = 0; i < markers.length; i++) {
+                if (chatTurns.some(t => t.role === "assistant" && markers[i].test(t.content))) count++;
+                else break;
+            }
+            return count;
+        }
+
+        function getPresseObjectionMarkers(list) {
+            return list.map(o => {
+                if (/pressé/i.test(o)) return /pressé/i;
+                if (/satisfait/i.test(o)) return /satisfait.*fournisseur|bien chez mon fournisseur/i;
+                if (/démarches/i.test(o)) return /démarches|paperasse|formalités/i;
+                if (/iban/i.test(o)) return /iban|coordonnées bancaires|rib/i;
+                if (/intéresse pas/i.test(o)) return /intéresse pas/i;
+                if (/rappelez/i.test(o)) return /rappelez|rappel/i;
+                if (/facture sous la main/i.test(o)) return /facture sous la main|pas ma facture/i;
+                if (/dois partir|réunion/i.test(o)) return /dois partir|réunion|je raccroche/i;
+                return new RegExp(o.slice(0, 16).replace(/[?.!,']/g, ""), "i");
+            });
+        }
+
+        function countPresseObjectionsUsed(list) {
+            list = list || getProfileFallbacks();
+            const markers = getPresseObjectionMarkers(list);
+            let n = 0;
+            for (let i = 0; i < markers.length; i++) {
+                if (chatTurns.some(t => t.role === "assistant" && markers[i].test(t.content))) n++;
+                else break;
+            }
+            return n;
+        }
+
+        function prospectAlreadySaidPhrase(pattern) {
+            return chatTurns.some(t => t.role === "assistant" && pattern.test(t.content));
+        }
+
+        function prospectAlreadyGavePdl() {
+            return chatTurns.some(t => t.role === "assistant" && /12345678901234|\d{14}/.test(t.content));
+        }
+
+        function prospectAlreadyGaveIban() {
+            return chatTurns.some(t => t.role === "assistant" && /FR\d{2}[\s\d]{10,}|iban.*FR/i.test(t.content));
+        }
+
+        function isPastDataCollectionStage() {
+            return prospectAlreadyGavePdl() || prospectAlreadyGaveIban() ||
+                (prospectPersona.gaveFirst && prospectAlreadyAcceptedComparatif());
+        }
+
+        function agentPresentingOffer() {
+            const t = lastAgentText();
+            return /\b(j'ai trouvé|offre moins cher|passer chez|hom(e|me)\s*(énergie|energie|nrj)|8000\s*kwh|kilowatt-heure|au lieu de (?:payer )?\d+|passer à \d+\s*€|payer\s+(?:que )?\d+\s*€|moins cher.*\d+\s*€|\d+\s*€.*(\d+\s*€|\d+\b))\b/i.test(t);
+        }
+
+        function agentAskedOfferAcceptance() {
+            return /\b(ça vous va|ca vous va|vous intéresse|est-ce que ça vous|est-ce que vous en pensez|vous en pensez|d'accord pour|on y va|qu'?est-ce que vous en pensez|vous en pensez quoi|que pensez-vous)\b/i.test(lastAgentText());
+        }
+
+        function agentInOfferStage() {
+            return agentPresentingOffer() || agentAskedOfferAcceptance();
+        }
+
+        function agentRequestingConsommationAccess() {
+            const t = lastAgentText();
+            if (agentInOfferStage()) return false;
+            if (/\b(j'ai vu|nous avons|j'ai pu accéder|accédé|accès|votre consommation|consommation de \d|avec une puissance|\d+\s*kwh|\d+\s*kw\/h)\b/i.test(t)) return false;
+            return /\b(accès.*consommation|accéder.*données|donner l'accès|autorisez|motorisez|consentement.*conso)\b/i.test(t);
+        }
+
+        function getOfferStageReply() {
+            if (!agentInOfferStage()) return null;
+            const profile = getProfileKey();
+            const level = getLevel();
+            if (profile === "presse") {
+                return getPresseSalesStageReply(level) ||
+                    (level === "debutant" ? "Oui, si c'est vraiment moins cher, on avance. Faites court." : "D'accord, montrez-moi l'offre.");
+            }
+            if (profile === "agressif") {
+                if (level === "debutant") return "Bon, 60 euros au lieu de 70, ça m'intéresse. Expliquez-moi.";
+                if (level === "intermediaire") return "60 euros au lieu de 70 ? Bon, expliquez-moi comment ça marche.";
+                return "Bon, si c'est vraiment 60 euros, continuez, mais je ne signe rien tout de suite.";
+            }
+            if (profile === "mefiant_rgpd" || profile === "mefiant_fournisseur") {
+                return "D'accord, mais j'ai besoin de comprendre les conditions avant de m'engager.";
+            }
+            if (profile === "curieux") {
+                return "Intéressant, 60 euros. Et la qualité de l'électricité, c'est pareil ?";
+            }
+            return "Bon, si c'est vraiment 60 euros, vous m'expliquez les conditions ?";
+        }
+
+        function isProspectWrongName(reply) {
+            if (!reply) return false;
+            const m = reply.match(/je m'appelle\s+([A-Za-zÀ-ÿ\-]+)\s+([A-Za-zÀ-ÿ\-]+)/i)
+                || reply.match(/^([A-Za-zÀ-ÿ\-]+)\s+([A-Za-zÀ-ÿ\-]+)\.?$/);
+            if (!m) return false;
+            return normalizeToken(m[1]) !== normalizeToken(prospectPersona.firstName) ||
+                normalizeToken(m[2]) !== normalizeToken(prospectPersona.lastName);
+        }
+
+        function enforceConversationStage(reply) {
+            const offer = getOfferStageReply();
+            if (offer && (agentInOfferStage() || (prospectAlreadyGavePdl() && /\bpdl\b|12345678901234/.test(reply || "")))) {
+                if (agentInOfferStage() && (/\bpdl\b|12345678901234/.test(reply || "") || isSameAsLastProspectReply(reply))) {
+                    return offer;
+                }
+            }
+            if (agentAskedIdentity() && (isProspectWrongName(reply) || isProspectRoleViolation(reply))) {
+                return getIdentityReply();
+            }
+            if (isProspectStaleReply(reply)) {
+                return getRealisticProspectFallback();
+            }
+            return reply;
+        }
+
+        function getPresseSalesStageReply(level) {
+            if (agentAskedIban() && !prospectAlreadyGaveIban()) {
+                return "D'accord : FR76 3000 6000 0112 3456 7890 123. On avance ?";
+            }
+            if (agentAskedOfferAcceptance() || agentAskedClosing() || agentPresentingOffer()) {
+                if (level === "debutant") return "D'accord, si c'est rapide, on avance. Faites vite.";
+                if (level === "intermediaire") return "D'accord, si l'offre tient la route, on peut avancer.";
+                return pickNextUnusedLine(getProfileFallbacks(level), l => /avance|offre/i.test(l)) || "D'accord, on avance.";
+            }
+            if (agentMentionedHome() && /\b(entendu parler|connaissez|connais)\b/i.test(lastAgentText())) {
+                return level === "debutant" ? "Non, pas vraiment. Allez à l'essentiel." : "Non, pas vraiment connu. Expliquez vite.";
+            }
+            if (agentPresentingOffer() || /\b(intéresse|ça vous va)\b/i.test(lastAgentText())) {
+                return level === "debutant" ? "Oui, si c'est vraiment moins cher, on avance. Faites court." : "D'accord, montrez-moi l'offre.";
+            }
+            return null;
+        }
+
+        function sanitizeRepeatedFactuals(reply) {
+            if (!reply) return reply;
+            const profile = getProfileKey();
+            const level = getLevel();
+
+            if (prospectAlreadyGavePdl() && /12345678901234|\bpdl\b/i.test(reply)) {
+                const sales = getOfferStageReply() || (getProfileKey() === "presse" ? getPresseSalesStageReply(level) : null);
+                if (sales && !isSameAsLastProspectReply(sales)) return sales;
+                if (agentInOfferStage()) {
+                    return sales || getRealisticProspectFallback();
+                }
+                if (getProfileKey() === "presse") {
+                    return "Oui, vous l'avez déjà. Allez-y, faites court.";
+                }
+                return reply.replace(/[^.!?]*\bpdl\b[^.!?]*[.!?]?\s*/gi, "").trim() || "D'accord.";
+            }
+
+            if (prospectAlreadyGaveIban() && !agentAskedIban() && /\bFR\d{2}|iban/i.test(reply)) {
+                const sales = profile === "presse" ? getPresseSalesStageReply(level) : null;
+                return sales || "D'accord, on avance.";
+            }
+
+            if (isSameAsLastProspectReply(reply) && /12345678901234/.test(reply)) {
+                const sales = profile === "presse" ? getPresseSalesStageReply(level) : null;
+                if (sales) return sales;
+                const alt = pickNextUnusedLine(getProfileFallbacks(level), l => /avance|intéresse|offre/i.test(l));
+                if (alt) return alt;
+            }
+
+            return reply;
+        }
+
+        function agentAskedIban() {
+            return /\b(iban|rib|coordonnées bancaires|relevé d'identité bancaire|numéro de compte)\b/i.test(lastAgentText());
+        }
+
+        function stripPrematureIban(reply) {
+            if (!reply || agentAskedIban()) return reply;
+            if (!/\biban\b|\brib\b|\bcoordonnées bancaires\b/i.test(reply)) return reply;
+            const profile = getProfileKey();
+            if (profile === "agressif") {
+                return "Je ne suis pas convaincu. Vous n'avez pas répondu à ma question.";
+            }
+            if (profile === "presse") {
+                return "Je suis pressé — allez droit au but, s'il vous plaît.";
+            }
+            const cleaned = reply.replace(/[^.!?]*\biban\b[^.!?]*[.!?]?\s*/gi, "").trim();
+            return cleaned || fallbackProspectReply();
+        }
+
+        function agentAskedFacture() {
+            return /\b(facture|relevé|justificatif|numéro de contrat|document|pdf)\b/i.test(lastAgentText());
+        }
+
+        function agentProposedRappel() {
+            return /\b(rappel|rappeler|recontacter|créneau|creneau|demain|plus tard|autre moment)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedClosing() {
+            return /\b(on signe|signature|valider|passer chez|changer de fournisseur|on avance|procédons|clôturer|cloturer|finaliser|ça vous va|ca vous va|d'accord pour)\b/i.test(lastAgentText());
+        }
+
+        function pickFallbackIndex(list) {
+            return Math.min(countAgentTurns(), list.length - 1);
+        }
+
+        function isRefusalReply(text) {
+            return /\b(intéresse pas|ne veux rien|ne m'appelez|raccroch|arrêtez|arrêter|perdez pas|laissez-moi|tranquille|pas envie|ne veux pas parler|ne suis pas intéress|bien comme je suis|ne veux rien changer)\b/i.test(text || "");
+        }
+
+        function agentSaidGoodbye() {
+            return /\b(au revoir|bonne journée|bonne soirée|à bientôt|je vous souhaite)\b/i.test(lastAgentText());
+        }
+
+        function prospectAlreadySaidSupplier() {
+            return chatTurns.some(t => t.role === "assistant" && /\b(edf|engie|total|ekwateur|mint|happ)/i.test(t.content));
+        }
+
+        function agentAskedSupplier() {
+            const t = lastAgentText();
+            if (/\b(lancer|comparatif|simulation|proposition|positionné|bon prix|mail d'augmentation|campagne)\b/i.test(t)) return false;
+            return /\b(chez quel fournisseur|quel fournisseur|quelle compagnie|quel opérateur|vous êtes chez qui|chez qui (êtes|vous)|êtes chez quel|actuellement chez|quel est votre fournisseur)\b/i.test(t);
+        }
+
+        function agentAskedDuration() {
+            return /\b(depuis combien|depuis quand|combien de temps (vous êtes|que vous|depuis)|depuis combien de temps)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedEnergyType() {
+            const t = lastAgentText();
+            return /\b(gaz et|électricité et|gaz ou|duo|les deux|gaz.*électricité|électricité.*gaz|vous avez (le )?gaz|pour l'?électricité|l'?électricité chez|et pour l'?électricité|gaz électricité)\b/i.test(t);
+        }
+
+        function agentAskedBillAmount() {
+            return /\b(combien (vous )?payez|payez combien|montant|euros par (mois|trimestre)|facture.*combien)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedProposition() {
+            return /\b(lancer (un )?comparatif|faire (un )?comparatif|on peut lancer|simulation|proposition commerciale|vérifier si vous (êtes )?bien positionné|payez le bon prix)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedFirstName() {
+            return /\b(prénom|prenom|nom et prénom|nom et votre prénom|à qui ai-je|comment vous appelez)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedLastName() {
+            const t = lastAgentText();
+            if (/\b(nom de famille|nom familial|le nom de famille|et le nom)\b/i.test(t)) return true;
+            if (/\b(prénom|prenom|nom et prénom|nom et votre prénom)\b/i.test(t)) return false;
+            return /\b(quel est|votre|le)\s+nom\b/i.test(t);
+        }
+
+        function agentAskedIdentity() {
+            return agentAskedFirstName() || agentAskedLastName() ||
+                /\b(c'est quoi votre nom|quel est votre nom|votre nom et prénom)\b/i.test(lastAgentText());
+        }
+
+        function prospectAlreadyAcceptedComparatif() {
+            return chatTurns.some(t => t.role === "assistant" &&
+                /\b(d'accord.*(comparatif|vérification|allez-y|écoute)|on peut faire la vérification)\b/i.test(t.content));
+        }
+
+        function getIdentityReply() {
+            if (agentAskedLastName() || (prospectPersona.gaveFirst && /\bnom\b/i.test(lastAgentText()))) {
+                return prospectPersona.lastName + ".";
+            }
+            if (/\bnom et prénom|nom et votre prénom\b/i.test(lastAgentText())) {
+                return "Je m'appelle " + prospectPersona.firstName + " " + prospectPersona.lastName + ".";
+            }
+            return "Je m'appelle " + prospectPersona.firstName + ".";
+        }
+
+        function syncPersonaFromReply(reply) {
+            if (!reply) return;
+            const full = reply.match(/je m'appelle\s+([A-Za-zÀ-ÿ\-]+)\s+([A-Za-zÀ-ÿ\-]+)/i);
+            if (full) {
+                prospectPersona.firstName = full[1];
+                prospectPersona.lastName = full[2];
+                prospectPersona.gaveFirst = true;
+                prospectPersona.gaveLast = true;
+                return;
+            }
+            const plain = reply.match(/^([A-Za-zÀ-ÿ\-]+)\s+([A-Za-zÀ-ÿ\-]+)\.?$/);
+            if (plain && agentAskedIdentity()) {
+                if (isProspectRoleViolation(plain[1] + " " + plain[2])) return;
+                prospectPersona.firstName = plain[1];
+                prospectPersona.lastName = plain[2];
+                prospectPersona.gaveFirst = true;
+                prospectPersona.gaveLast = true;
+                return;
+            }
+            const m = reply.match(/je m'appelle\s+([A-Za-zÀ-ÿ\-]+)/i);
+            if (m) { prospectPersona.firstName = m[1]; prospectPersona.gaveFirst = true; }
+            if (/^[A-Za-zÀ-ÿ\-]{2,25}\.?$/.test(reply.trim()) && agentAskedLastName()) {
+                prospectPersona.lastName = reply.trim().replace(/\.$/, "");
+                prospectPersona.gaveLast = true;
+            }
+            if (prospectPersona.pdl && reply.includes(prospectPersona.pdl)) prospectPersona.gavePdl = true;
+            if (/\b7500[0-9]\b|\brue\b|\bavenue\b/i.test(reply) && /\bparis\b|\blyon\b/i.test(reply)) {
+                prospectPersona.gaveAddress = true;
+            }
+        }
+
+        function agentAskedMailOnly() {
+            const t = lastAgentText();
+            return /\b(mail|courrier|courriel)\b/i.test(t) && /\b(augmentation|tarif|reçu)\b/i.test(t) && !agentAskedSupplier();
+        }
+
+        function prospectAlreadySaidLine(line) {
+            if (!line) return false;
+            const frag = line.slice(0, 20).replace(/[?.!,'"]/g, "").trim();
+            return prospectAlreadySaidPhrase(new RegExp(frag, "i"));
+        }
+
+        function findUnusedFallback(list, matcher, defaultText) {
+            if (!list || !list.length) return defaultText || null;
+            for (const line of list) {
+                if (matcher(line) && !prospectAlreadySaidLine(line)) return line;
+            }
+            if (defaultText && !prospectAlreadySaidLine(defaultText)) return defaultText;
+            return pickNextUnusedLine(list) || null;
+        }
+
+        function isUsableLlmReply(reply) {
+            return !!(reply && !isBadProspectReply(reply) && !isMetaLeak(reply) && reply.length >= 8);
+        }
+
+        function shouldGiveFactualAnswer() {
+            if (agentAskedIban()) return false;
+            return agentAskedSupplier() || agentAskedDuration() || agentAskedBillAmount() ||
+                agentAskedEnergyType() || agentAskedMailOnly() || agentAskedFacture();
+        }
+
+        function agentIsCommercialPitch() {
+            const t = lastAgentText();
+            if (!t.trim()) return false;
+            if (shouldGiveFactualAnswer()) return false;
+            if (agentAskedIdentity()) return false;
+            return /\b(contacte|appel|facture|énergie|génie|comparatif|positionné|fournisseur|augmentation|proposition|vérifier|économ|bon prix|situation|tarif)\b/i.test(t);
+        }
+
+        function agentMentionsCallFrequency() {
+            return /\b(sollicit|appelez|appel|téléphone|commercial|dérang|occupé|tout le temps|encore un appel)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedWhyMe() {
+            return /\b(pourquoi moi|comment avez-vous|d'où|d'ou|eu mon num|mes coordonnées|pourquoi vous m'appelez|pourquoi l'appel)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedDataOrPrivacy() {
+            return /\b(rgpd|données personnelles|données perso|confidential|protég|consommation|accès.*conso|pdl|point de livraison)\b/i.test(lastAgentText());
+        }
+
+        function agentAskedEmailOrAddress() {
+            return /\b(adresse e-?mail|e-?mail|mail pour|votre mail|adresse postale|adresse exacte|rue |code postal)\b/i.test(lastAgentText());
+        }
+
+        function lastProspectText() {
+            const turns = chatTurns.filter(t => t.role === "assistant");
+            return turns.length ? turns[turns.length - 1].content : "";
+        }
+
+        function normalizeReply(text) {
+            return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
+        }
+
+        function isSameAsLastProspectReply(text) {
+            const last = lastProspectText();
+            if (!text || !last) return false;
+            const a = normalizeReply(text);
+            const b = normalizeReply(last);
+            return a === b || (a.length > 18 && b.includes(a.slice(0, 28)));
+        }
+
+        function pickNextUnusedLine(list, preferMatcher) {
+            if (!list || !list.length) return null;
+            if (preferMatcher) {
+                const preferred = findUnusedFallback(list, preferMatcher);
+                if (preferred && !isSameAsLastProspectReply(preferred)) return preferred;
+            }
+            for (const line of list) {
+                if (!prospectAlreadySaidLine(line) && !isSameAsLastProspectReply(line)) return line;
+            }
+            return list[list.length - 1];
+        }
+
+        function agentAnsweredProspectQuestion() {
+            const prev = lastProspectText();
+            const t = lastAgentText();
+            if (!prev || !t) return false;
+            if (/c'est pour quoi|pour quoi exactement|pourquoi cet appel|pour quoi \?/i.test(prev)) {
+                return /\b(comparatif|simulation|vérifier|positionné|bon prix|économ|fournisseur|lancer|factures? d'énergie|mail d'augmentation|tarif|moins cher|rapide)\b/i.test(t);
+            }
+            if (/pourquoi moi|pourquoi vous m'appelez/i.test(prev)) {
+                return /\b(parce|car |c'est que|le but|justement|simplement|afin|campagne|comparateur|génie|vérifier|positionné)\b/i.test(t);
+            }
+            return false;
+        }
+
+        function prospectAskedPurposeAlready() {
+            return chatTurns.some(t => t.role === "assistant" && /c'est pour quoi|pour quoi exactement/i.test(t.content));
+        }
+
+        function applyPresseProgression(level) {
+            const list = getProfileFallbacks(level);
+            if (isPastDataCollectionStage()) {
+                const sales = getPresseSalesStageReply(level);
+                if (sales && !isSameAsLastProspectReply(sales)) return sales;
+                return pickNextUnusedLine(list, l => /avance|avancer|offre/i.test(l)) || null;
+            }
+            if (prospectAlreadyAcceptedComparatif()) {
+                return pickNextUnusedLine(list, l => /avance|avancer/i.test(l)) || "D'accord, on avance, faites vite.";
+            }
+            if (agentAnsweredProspectQuestion() || (agentAskedProposition() && countAgentTurns() >= 3)) {
+                return pickNextUnusedLine(list, l => /vérifier|allez-y|on peut|avancer|rapidement/i.test(l))
+                    || (level === "debutant" ? "Oui, on peut vérifier, faites court." : "D'accord, si c'est rapide on peut avancer.");
+            }
+            if (agentAskedProposition() && prospectAlreadySaidSupplier() && prospectAlreadySaidPhrase(/euro|€|70/i)) {
+                return pickNextUnusedLine(list, l => /vérifier|avancer|rapidement/i.test(l)) || "D'accord, allez-y rapidement.";
+            }
+            return null;
+        }
+
+        function agentIgnoredProspectQuestion() {
+            if (agentAnsweredProspectQuestion()) return false;
+            const prev = lastProspectText();
+            if (!prev) return false;
+            const t = lastAgentText();
+            if (/c'est pour quoi|pour quoi exactement|pourquoi cet appel|pourquoi vous m'appelez/i.test(prev)) {
+                return agentIsCommercialPitch() &&
+                    !/\b(comparatif|simulation|vérifier|positionné|lancer|factures? d'énergie|mail d'augmentation|moins cher|rapide)\b/i.test(t);
+            }
+            if (/pourquoi moi|pourquoi vous m'appelez/i.test(prev)) {
+                return agentIsCommercialPitch() && !/\b(parce|car |c'est que|le but|justement|simplement|afin|numéro|base légale|fichier|consentement|comparatif|vérifier)\b/i.test(t);
+            }
+            if (/intéresse pas|convaincu|données|iban/i.test(prev)) {
+                return agentIsCommercialPitch() && !/\b(expliqu|précis|rassur|protég|gratuit|sans engagement|comparatif|simulation|vérifier)\b/i.test(t);
+            }
+            return false;
+        }
+
+        function replyAddressesAgent(reply) {
+            const r = (reply || "").toLowerCase();
+            const t = lastAgentText().toLowerCase();
+            if (agentAskedMailOnly()) return /mail|reçu|pas reçu|courrier|augmentation/i.test(r);
+            if (agentAskedSupplier()) return /edf|engie|total|fournisseur|chez/i.test(r);
+            if (agentAskedBillAmount()) return /euro|€|paye|facture|montant|\d+/i.test(r);
+            if (agentAskedDuration()) return /an|année|depuis|mois/i.test(r);
+            if (agentAskedWhyMe() || /pourquoi/i.test(t)) return /pourquoi|parce|car |c'est|justement|numéro|appel/i.test(r);
+            if (agentAskedIban()) return /iban|rib|compte|donne pas|confiance/i.test(r);
+            if (agentAskedWhoAreYou()) return /qui|entreprise|société|génie|comparateur/i.test(r);
+            if (agentAskedProposition() || agentMentionedProposition()) {
+                return /comparatif|vérifier|positionné|prix|intéresse|convaincu|d'accord|offre|propos/i.test(r);
+            }
+            if (agentAskedOfferAcceptance() || agentPresentingOffer()) {
+                return /d'accord|intéresse|oui|offre|avance|moins cher|passer|chez|home|€|euro/i.test(r);
+            }
+            if (agentMentionsCallFrequency()) return /appelez|appel|sollicit|insupportable|occupé|temps/i.test(r);
+            return r.length >= 12;
+        }
+
+        function getMaxObjections(level) {
+            return { debutant: 1, intermediaire: 4, avance: 6 }[level] || 2;
+        }
+
+        function canCooperateNow(profile, level) {
+            const turns = countAgentTurns();
+            const objections = countProspectObjections();
+            const max = getMaxObjections(level);
+            if (profile === "curieux") return objections >= 1 || turns >= 4;
+            if (profile === "presse") {
+                if (agentAnsweredProspectQuestion()) return true;
+                if (level === "debutant" && agentAskedProposition() && turns >= 2) return true;
+                if (agentAskedProposition() && turns >= 4) return true;
+            }
+            if (level === "debutant") return (objections >= 1 || turns >= 3) && (agentAskedProposition() || agentAnsweredProspectQuestion() || turns >= 4);
+            if (agentAskedClosing()) return objections >= Math.max(1, max - 1) || turns >= 8;
+            return objections >= max && (agentAskedProposition() || agentMentionedProposition() || turns >= 7);
+        }
+
+        function tryFactualAnswer(profile, level) {
+            if (agentAskedSupplier() && !prospectAlreadySaidSupplier()) {
+                if (profile === "curieux" && level === "debutant") return "Je suis chez EDF, depuis un peu plus de 3 ans.";
+                if (profile === "presse") return "EDF, mais faites vite.";
+                if (profile === "agressif" && level !== "debutant") return "EDF. Et alors ?";
+                if (profile === "mefiant_fournisseur") return "Je suis chez EDF, pourquoi vous m'appelez ?";
+                return "Je suis chez EDF.";
+            }
+            if (agentAskedDuration()) {
+                if (profile === "presse") {
+                    if (agentAskedEnergyType()) return "Plusieurs années. Électricité seulement, allez à l'essentiel.";
+                    return "Plusieurs années, allez à l'essentiel.";
+                }
+                if (profile === "curieux" && level === "debutant") return "Un peu plus de 3 ans.";
+                return "Ça fait plusieurs années.";
+            }
+            if (agentAskedBillAmount()) {
+                if (profile === "presse") return "Environ 70 euros, pourquoi ?";
+                if (profile === "curieux" && level === "debutant") return "Je paie environ 90 euros par mois.";
+                if (profile === "agressif") return "Environ 70 euros. Vous voulez quoi ?";
+                if (profile === "mefiant_rgpd" && level !== "debutant") return "Environ 70 euros. Pourquoi vous demandez ça ?";
+                return "Environ 70 euros par mois.";
+            }
+            if (agentAskedEnergyType()) {
+                if (profile === "curieux" && level === "debutant") return "Oui, j'ai uniquement l'électricité chez EDF.";
+                return "Électricité seulement.";
+            }
+            if (agentAskedMailOnly()) {
+                if (profile === "agressif") return "Non, je n'ai pas reçu de mail. C'est pour quoi ?";
+                if (profile === "presse") return "Non, pas à ma connaissance. Allez-y, faites court.";
+                if (profile === "mefiant_rgpd") return "Je ne me souviens pas. Comment avez-vous eu mon numéro d'ailleurs ?";
+                if (profile === "mefiant_fournisseur") return "Non, pas reçu. Je suis chez EDF, pourquoi cet appel ?";
+                return "Non, je n'ai pas reçu de mail récemment. C'est pour quoi exactement ?";
+            }
+            if (agentAskedFacture() && profile === "presse" && level === "avance") {
+                return findUnusedFallback(getProfileFallbacks(level), l => /facture/i.test(l), "Je n'ai pas ma facture sous la main.");
+            }
+            return null;
+        }
+
+        function getContextualObjection(profile, level) {
+            const list = getProfileFallbacks(level);
+            const closing = list[list.length - 1];
+
+            if (level === "debutant" && debutantCooperating(profile)) {
+                return null;
+            }
+
+            if (canCooperateNow(profile, level)) {
+                if (agentAskedClosing() || (agentAskedProposition() && !agentAskedIban())) {
+                    return closing;
+                }
+                if (agentProposedRappel() && (profile === "presse" || profile === "mefiant_rgpd") && level === "avance") {
+                    return profile === "presse"
+                        ? "D'accord, rappelez-moi demain en fin de journée."
+                        : "D'accord, rappelez-moi la semaine prochaine, je réfléchirai.";
+                }
+                return null;
+            }
+
+            if (agentAskedIban()) {
+                return findUnusedFallback(list, l => /iban/i.test(l),
+                    profile === "agressif" ? "Pourquoi l'IBAN ? Je ne fais pas confiance." : "Pourquoi vous avez besoin de mon IBAN ?");
+            }
+
+            if (profile === "mefiant_rgpd") {
+                if (agentAskedWhoAreYou()) return findUnusedFallback(list, l => /qui êtes-vous/i.test(l), "Qui êtes-vous exactement ?");
+                if (agentAskedDataOrPrivacy() || agentAskedConsommation()) {
+                    return findUnusedFallback(list, l => /consommation|données/i.test(l), "Pourquoi voulez-vous accéder à ma consommation ?");
+                }
+                if (agentAskedEmailOrAddress() && level !== "debutant") {
+                    return findUnusedFallback(list, l => /données|donne pas/i.test(l), "Je ne donne pas mes données comme ça.");
+                }
+                if (agentIsCommercialPitch() || agentIgnoredProspectQuestion()) {
+                    return findUnusedFallback(list, l => /eu mon num|eu mes données|comment avez/i.test(l), list[0]);
+                }
+            }
+
+            if (profile === "mefiant_fournisseur") {
+                if (agentAskedProposition() || agentMentionedProposition()) {
+                    return findUnusedFallback(list, l => /changer de fournisseur|satisfait|paie trop/i.test(l), list[0]);
+                }
+                if (agentIsCommercialPitch()) {
+                    return findUnusedFallback(list, l => /changer|satisfait|confiance/i.test(l), list[0]);
+                }
+            }
+
+            if (profile === "agressif") {
+                if (level === "avance" && (agentAskedClosing() || agentAskedIdentity() || agentPushyWithoutAnswer())) {
+                    return findUnusedFallback(list, l => /raccroch|arnaque|arrêtez|perdez/i.test(l), "Je raccroche si vous continuez.");
+                }
+                if (agentIgnoredProspectQuestion() || agentAskedWhyMe()) {
+                    return findUnusedFallback(list, l => /pourquoi moi/i.test(l), "Pourquoi moi ? Pourquoi vous m'appelez ?");
+                }
+                if (agentMentionsCallFrequency() && /\b(compris|excuse|désolé|madame|monsieur|sollicit)\b/i.test(lastAgentText())) {
+                    return findUnusedFallback(list, l => /appelez tout le temps|insupportable/i.test(l), "Vous appelez tout le temps, c'est insupportable.");
+                }
+                if (agentAskedProposition() && level !== "debutant") {
+                    return findUnusedFallback(list, l => /convaincu|pas répondu/i.test(l), "Je ne suis pas convaincu. Vous n'avez pas répondu à ma question.");
+                }
+                if (agentIsCommercialPitch()) {
+                    return findUnusedFallback(list, l => /intéresse pas/i.test(l), "Ça ne m'intéresse pas.");
+                }
+            }
+
+            if (profile === "presse") {
+                if (isPastDataCollectionStage() && (agentPresentingOffer() || agentAskedOfferAcceptance() || agentAskedClosing())) {
+                    return null;
+                }
+                if (level === "debutant" && debutantCooperating("presse")) {
+                    return null;
+                }
+                if (agentProposedRappel() && level === "avance") {
+                    return "D'accord, rappelez-moi demain en fin de journée.";
+                }
+                if (prospectAskedPurposeAlready() && (agentAskedProposition() || agentAnsweredProspectQuestion())) {
+                    return pickNextUnusedLine(list, l => /vérifier|allez-y|on peut|avancer|rapidement/i.test(l));
+                }
+                if (agentIgnoredProspectQuestion()) {
+                    return pickNextUnusedLine(list, l => /pressé|pas le temps|intéresse pas/i.test(l) && !/c'est pour quoi/i.test(l))
+                        || pickNextUnusedLine(list, l => /pressé|pas le temps/i.test(l))
+                        || "D'accord, allez-y rapidement.";
+                }
+                if (agentAskedProposition() && level !== "debutant") {
+                    return pickNextUnusedLine(list, l => /démarches|offre|satisfait/i.test(l));
+                }
+                if ((agentIsCommercialPitch() || agentMentionsCallFrequency()) && !prospectAskedPurposeAlready()) {
+                    return pickNextUnusedLine(list, l => /pressé/i.test(l) && !/c'est pour quoi/i.test(l))
+                        || pickNextUnusedLine(list, l => /pressé/i.test(l));
+                }
+            }
+
+            if (profile === "curieux") {
+                if (agentMentionedHome()) return findUnusedFallback(list, l => /home/i.test(l), "Pourquoi Home Énergie en particulier ?");
+                if (agentMentionedContractDuration()) return findUnusedFallback(list, l => /deux ans|2 ans/i.test(l), "Pourquoi deux ans de contrat ?");
+                if (agentAskedIban()) return findUnusedFallback(list, l => /iban/i.test(l), "Pourquoi mon IBAN, c'est pour quoi exactement ?");
+                if (agentMentionedProposition() && agentExplainedElectricityQuality()) {
+                    return "Et justement, la qualité de l'électricité reste la même ?";
+                }
+                return null;
+            }
+
+            if (agentIsCommercialPitch()) {
+                return findUnusedFallback(list, l => /intéresse pas|pressé|changer|données/i.test(l), list[0]);
+            }
+            return null;
+        }
+
+        function applyContextualCalibration(reply, profile) {
+            const level = getLevel();
+            const list = getProfileFallbacks(level);
+
+            if (agentSaidGoodbye()) return "Au revoir.";
+
+            if (agentAskedIdentity()) {
+                if (profile === "mefiant_rgpd" && level === "avance" && !canCooperateNow(profile, level)) {
+                    return findUnusedFallback(list, l => /données|nom tant/i.test(l), "Je ne donne pas mon nom tant que ce n'est pas clair.");
+                }
+                if (/vérification|comparatif|on peut faire/i.test(reply) || isBadProspectReply(reply)) {
+                    return getIdentityReply();
+                }
+                return reply;
+            }
+
+            const factual = tryFactualAnswer(profile, level);
+            if (factual) return factual;
+
+            if (profile === "presse" && isPastDataCollectionStage()) {
+                const sales = getPresseSalesStageReply(level);
+                if (sales && !isSameAsLastProspectReply(sales)) return sales;
+            }
+
+            const debutantCoop = applyDebutantCooperation(profile, reply);
+            if (debutantCoop) return debutantCoop;
+
+            if (profile === "presse") {
+                const presseNext = applyPresseProgression(level);
+                if (presseNext && !isSameAsLastProspectReply(presseNext)) return presseNext;
+            }
+
+            const contextual = getContextualObjection(profile, level);
+            if (contextual) {
+                const llmUsable = isUsableLlmReply(reply);
+                if (isSameAsLastProspectReply(contextual)) {
+                    const alt = pickNextUnusedLine(list);
+                    if (alt && !isSameAsLastProspectReply(alt)) return alt;
+                    if (llmUsable) return reply;
+                }
+                const mustObject = isBadProspectReply(reply) ||
+                    (isCooperativeReply(reply) && !canCooperateNow(profile, level) && isHardObjection(contextual));
+                const llmMissesContext = llmUsable && !replyAddressesAgent(reply) &&
+                    agentIgnoredProspectQuestion() && !prospectAlreadySaidLine(contextual);
+                if (mustObject || !llmUsable) {
+                    if (!prospectAlreadySaidLine(contextual) && !isSameAsLastProspectReply(contextual)) {
+                        return contextual;
+                    }
+                    const alt = pickNextUnusedLine(list);
+                    if (alt && !isSameAsLastProspectReply(alt)) return alt;
+                    if (llmUsable) return reply;
+                    return contextual;
+                }
+                if (llmMissesContext) return contextual;
+            }
+
+            if (profile === "presse" && (agentAskedProposition() || agentAnsweredProspectQuestion()) && isSameAsLastProspectReply(reply)) {
+                const presseNext = applyPresseProgression(level);
+                if (presseNext) return presseNext;
+            }
+
+            if (profile === "curieux" && level === "debutant") {
+                return applyCurieuxDebutantFlow(reply);
+            }
+
+            const debutantFinal = applyDebutantCooperation(profile, reply);
+            if (debutantFinal) return debutantFinal;
+
+            if (getLevel() === "debutant" && isTooAggressiveForDebutant(reply)) {
+                return "D'accord, je vous écoute. Faites vite.";
+            }
+
+            if (isSameAsLastProspectReply(reply)) {
+                const alt = pickNextUnusedLine(list);
+                if (alt) return alt;
+            }
+
+            return reply;
+        }
+
+        function applyCurieuxDebutantFlow(reply) {
+            if (agentSaidFreeNoEngagement() && !prospectAlreadySaidPhrase(/prochaine étape|proposer/i)) {
+                return "Parfait, dans ce cas ça me convient. J'aimerais bien voir ce que vous pouvez me proposer. Quelle est la prochaine étape ?";
+            }
+            if (agentAskedProposition() && prospectAlreadySaidPhrase(/m'appelle|bernard|thomas/i) && !prospectAlreadySaidPhrase(/gratuit|engage/i)) {
+                return "Par contre, le comparatif est vraiment gratuit ? Et si au final je décide de ne rien changer, ça ne m'engage à rien ?";
+            }
+            if (prospectAlreadySaidSupplier() && !prospectAlreadySaidPhrase(/mieux positionné|comparez uniquement/i) && !agentAskedBillAmount() && !agentAskedEnergyType()) {
+                return "Par curiosité, comment savez-vous si un fournisseur est mieux positionné qu'un autre ?";
+            }
+            if (agentAskedClosing() || (agentSaidFreeNoEngagement() && countAgentTurns() >= 4)) {
+                return "Parfait, j'aimerais voir ce que vous proposez. Quelle est la prochaine étape ?";
+            }
+            return reply;
+        }
+
+        function agentPushyWithoutAnswer() {
+            return agentIgnoredProspectQuestion();
+        }
+
+        function getLevelHint() {
+            const level = getLevel();
+            const turns = countAgentTurns();
+            const objections = countProspectObjections();
+            const profile = getProfileKey();
+
+            if (profile === "presse") {
+                const list = getProfileFallbacks();
+                const used = countPresseObjectionsUsed(list);
+                if (level === "debutant") {
+                    if (agentAskedIdentity()) return "RAPPEL PRESSÉ DÉBUTANT : donne ton prénom ou nom, pas une phrase comparatif.";
+                    if (used === 0) return "RAPPEL PRESSÉ DÉBUTANT : une objection « Je suis pressé », puis coopère.";
+                    if (agentAskedProposition()) return "RAPPEL PRESSÉ DÉBUTANT : accepte le comparatif, objectif VENTE.";
+                    return "RAPPEL PRESSÉ DÉBUTANT : coopère, réponds aux questions, reste pressé mais ouvert.";
+                }
+                if (level === "intermediaire") {
+                    if (used < list.length - 1) {
+                        return "RAPPEL PRESSÉ INTER : objection " + (used + 1) + " — « " + list[used] + " ». Reste pressé mais coopératif.";
+                    }
+                    if (agentAskedIban()) return "RAPPEL PRESSÉ INTER : objection IBAN si pas encore dite.";
+                    return "RAPPEL PRESSÉ INTER : tu peux conclure la VENTE si l'agent a bien répondu, en restant pressé.";
+                }
+                if (level === "avance") {
+                    if (used < 5) return "RAPPEL PRESSÉ AVANCÉ : objection " + (used + 1) + "+ — coupe, menace raccrochage. « " + list[Math.min(used, list.length - 1)] + " »";
+                    if (agentProposedRappel()) return "RAPPEL PRESSÉ AVANCÉ : tu peux accepter un RAPPEL.";
+                    return "RAPPEL PRESSÉ AVANCÉ : VENTE, RAPPEL ou RACCROCHAGE selon la qualité de l'agent.";
+                }
+            }
+
+            if (profile === "agressif") {
+                const list = getProfileFallbacks();
+                const used = countAgressifObjectionsUsed(list);
+                const objTotal = getAgressifObjectionCount(level);
+                if (level === "debutant") {
+                    if (agentAskedIdentity()) return "RAPPEL AGRESSIF DÉBUTANT : donne ton prénom ou nom, sec mais poli.";
+                    if (used === 0) return "RAPPEL AGRESSIF DÉBUTANT : une objection « Ça ne m'intéresse pas », puis ouvre-toi.";
+                    if (agentAskedProposition()) return "RAPPEL AGRESSIF DÉBUTANT : vente possible — accepte le comparatif si l'agent est bon.";
+                    return "RAPPEL AGRESSIF DÉBUTANT : sec mais coopératif, pas de menace de raccrocher.";
+                }
+                if (level === "intermediaire") {
+                    if (used < objTotal) {
+                        return "RAPPEL AGRESSIF INTER : objection " + (used + 1) + "/" + objTotal + " — « " + list[used] + " ». Ton sec.";
+                    }
+                    if (agentAskedIban()) return "RAPPEL AGRESSIF INTER : objection IBAN si pas encore dite.";
+                    return "RAPPEL AGRESSIF INTER : vente difficile — tu hésites, tu ne cèdes qu'à la fin.";
+                }
+                if (level === "avance") {
+                    if (used < objTotal) {
+                        return "RAPPEL AGRESSIF AVANCÉ : objection " + (used + 1) + "/" + objTotal + " — très agressif. « " + list[used] + " »";
+                    }
+                    return "RAPPEL AGRESSIF AVANCÉ : REFUS ou RACCROCHAGE — ne donne pas ton IBAN.";
+                }
+            }
+
+            if (profile === "mefiant_rgpd") {
+                const list = getProfileFallbacks();
+                const used = countMefiantRgpdObjectionsUsed(list);
+                const objTotal = getMefiantRgpdObjectionCount(level);
+                if (level === "debutant") {
+                    if (agentAskedIdentity()) return "RAPPEL MÉFIANT DÉBUTANT : donne ton prénom/nom si rassuré sur les données.";
+                    if (used === 0) return "RAPPEL MÉFIANT DÉBUTANT : « Comment avez-vous eu mon numéro ? », puis rassure-toi facilement.";
+                    if (agentAskedProposition()) return "RAPPEL MÉFIANT DÉBUTANT : VENTE — accepte le comparatif si l'agent a bien expliqué.";
+                    return "RAPPEL MÉFIANT DÉBUTANT : coopère une fois rassuré sur la protection des données.";
+                }
+                if (level === "intermediaire") {
+                    if (used < objTotal) {
+                        return "RAPPEL MÉFIANT INTER : question/objection " + (used + 1) + "/" + objTotal + " — « " + list[used] + " ». Pose des questions.";
+                    }
+                    return "RAPPEL MÉFIANT INTER : VENTE après explications — tu peux avancer si tout est clair.";
+                }
+                if (level === "avance") {
+                    if (used < objTotal) {
+                        return "RAPPEL MÉFIANT AVANCÉ : objection " + (used + 1) + "/" + objTotal + " — très prudent. « " + list[used] + " »";
+                    }
+                    if (agentProposedRappel()) return "RAPPEL MÉFIANT AVANCÉ : tu peux accepter un RAPPEL.";
+                    return "RAPPEL MÉFIANT AVANCÉ : REFUS ou RAPPEL — ne donne pas tes données.";
+                }
+            }
+
+            if (profile === "curieux") {
+                const list = getProfileFallbacks();
+                const used = countCurieuxObjectionsUsed(list);
+                const objTotal = getCurieuxObjectionCount(level);
+                if (level === "debutant") {
+                    if (agentAskedIdentity()) return "RAPPEL CURIEUX DÉBUTANT : donne ton nom (Thomas Bernard), coopère.";
+                    if (agentAskedSupplier()) return "RAPPEL CURIEUX DÉBUTANT : EDF, 3 ans — puis une question curieuse si l'agent explique.";
+                    if (agentAskedProposition()) return "RAPPEL CURIEUX DÉBUTANT : demande si c'est gratuit/sans engagement, puis accepte.";
+                    return "RAPPEL CURIEUX DÉBUTANT : coopère, pose une question naturelle, finis par « quelle est la prochaine étape ? »";
+                }
+                if (level === "intermediaire") {
+                    if (used < objTotal) {
+                        return "RAPPEL CURIEUX INTER : question " + (used + 1) + "/" + objTotal + " — « " + list[used] + " ». Curieux et ouvert.";
+                    }
+                    return "RAPPEL CURIEUX INTER : VENTE — tu peux avancer si toutes tes questions ont une réponse.";
+                }
+                if (level === "avance") {
+                    if (used < objTotal) {
+                        return "RAPPEL CURIEUX AVANCÉ : question " + (used + 1) + "/" + objTotal + " — analytique. « " + list[used] + " »";
+                    }
+                    return "RAPPEL CURIEUX AVANCÉ : VENTE si l'agent est excellent, sinon RÉFLEXION.";
+                }
+            }
+
+            if (level === "debutant") {
+                if (agentSaidGoodbye()) return "RAPPEL : l'agent dit au revoir — réponds brièvement « Au revoir ».";
+                if (agentAskedIdentity()) return "RAPPEL DÉBUTANT : réponds par ton prénom ou nom de famille demandé, pas « comparatif ».";
+                if (agentAskedProposition()) return "RAPPEL DÉBUTANT : accepte le comparatif/proposition (« D'accord, on peut vérifier »).";
+                if (agentAskedSupplier()) return "RAPPEL DÉBUTANT : réponds ton fournisseur (ex: EDF), sans refuser.";
+                if (agentAskedDuration()) return "RAPPEL DÉBUTANT : réponds depuis combien de temps, sans objection.";
+                if (agentAskedBillAmount()) return "RAPPEL DÉBUTANT : donne un montant approximatif (ex: 70 euros par mois).";
+                if (turns >= 2 && agentMentionedProposition()) {
+                    return "RAPPEL DÉBUTANT : accepte la proposition/comparatif, reste coopératif.";
+                }
+                if (turns >= 2) return "RAPPEL DÉBUTANT : plus d'objection — tu coopères, tu réponds aux questions.";
+                if (turns >= 1) return "RAPPEL DÉBUTANT : une seule petite objection max, puis ouvre-toi.";
+                return "RAPPEL DÉBUTANT : accueil poli, facile à convaincre.";
+            }
+            if (level === "intermediaire") {
+                if (turns >= 5 && objections >= 2 && agentMentionedProposition()) {
+                    return "RAPPEL NIVEAU : tu peux accepter la proposition si l'agent a bien géré tes objections.";
+                }
+                if (objections < 2) return "RAPPEL NIVEAU : pose une objection du profil avant de céder.";
+                return "RAPPEL NIVEAU : 2-4 objections, ne cède pas trop vite.";
+            }
+            if (turns < 5 || objections < 4) {
+                return "RAPPEL NIVEAU : très difficile — crie, menace de raccrocher, objection forte.";
+            }
+            if (agentMentionedProposition() && objections >= 5) {
+                return "RAPPEL NIVEAU : tu peux à peine envisager la proposition si l'agent a été excellent.";
+            }
+            return "RAPPEL NIVEAU : agressif, impatient, refuse encore.";
+        }
+
+        function applyPresseCalibration(reply) {
+            return applyContextualCalibration(reply, "presse");
+        }
+
+        function applyAgressifCalibration(reply) {
+            return applyContextualCalibration(reply, "agressif");
+        }
+
+        function applyMefiantRgpdCalibration(reply) {
+            return applyContextualCalibration(reply, "mefiant_rgpd");
+        }
+
+        function applyCurieuxCalibration(reply) {
+            return applyContextualCalibration(reply, "curieux");
+        }
+
+        function applyLevelCalibration(reply) {
+            if (!reply || !isProfileCalibrationEnabled()) return reply;
+
+            if (getProfileKey() === "presse") return applyPresseCalibration(reply);
+            if (getProfileKey() === "agressif") return applyAgressifCalibration(reply);
+            if (getProfileKey() === "mefiant_rgpd") return applyMefiantRgpdCalibration(reply);
+            if (getProfileKey() === "curieux") return applyCurieuxCalibration(reply);
+            if (getProfileKey() === "mefiant_fournisseur") return applyContextualCalibration(reply, "mefiant_fournisseur");
+
+            return applyContextualCalibration(reply, getProfileKey());
+        }
+
+        function getNvidiaModel() {
+            return document.getElementById("nvidiaModelSelect").value;
+        }
+
+        function extractOpenRouterText(data) {
+            const msg = data.choices?.[0]?.message;
+            if (!msg) return "";
+            const content = msg.content;
+            if (typeof content === "string" && content.trim()) return content.trim();
+            if (Array.isArray(content)) {
+                const joined = content.map(p => (typeof p === "string" ? p : p.text || "")).join("").trim();
+                if (joined) return joined;
+            }
+            const reasoning = msg.reasoning || msg.reasoning_content;
+            if (typeof reasoning === "string" && reasoning.trim()) return reasoning.trim();
+            if (Array.isArray(msg.reasoning_details)) {
+                const joined = msg.reasoning_details.map(d => d.text || d.content || "").join("").trim();
+                if (joined) return joined;
+            }
+            return "";
+        }
+
+        function isFreeOpenRouterModel(model) {
+            return /:free\b/i.test(model || getNvidiaModel());
+        }
+
+        function getProspectMaxTokens(model) {
+            return isFreeOpenRouterModel(model) ? 200 : 250;
+        }
+
+        function getEvalMaxTokens(model) {
+            return isFreeOpenRouterModel(model) ? 600 : 2500;
+        }
+
+        function parseAffordableMaxTokens(message) {
+            const m = String(message || "").match(/can only afford (\d+)/i);
+            if (!m) return null;
+            return Math.max(32, parseInt(m[1], 10));
+        }
+
+        function isPromptTokenLimitError(message) {
+            return /prompt tokens limit exceeded/i.test(String(message || ""));
+        }
+
+        function formatOpenRouterError(data, status) {
+            const err = data?.error;
+            const raw = typeof err === "string" ? err : (err?.message || "");
+            if (raw) {
+                if (/can only afford/i.test(raw)) {
+                    const n = parseAffordableMaxTokens(raw);
+                    return "Crédit OpenRouter très bas — le modèle gratuit nécessite quand même un petit solde sur openrouter.ai. "
+                        + (n ? "L'app réduit automatiquement les tokens. " : "")
+                        + "Ajoutez ~1$ sur openrouter.ai/settings/credits si ça persiste.";
+                }
+                if (isPromptTokenLimitError(raw)) {
+                    return "Contexte trop long pour votre crédit OpenRouter (" + raw + "). "
+                        + "L'app va réessayer avec un prompt réduit. Ajoutez ~1$ sur openrouter.ai/settings/credits pour éviter ça.";
+                }
+                return raw;
+            }
+            if (status === 401) return "Clé API invalide — vérifiez sur openrouter.ai/keys";
+            if (status === 402) {
+                return "Crédit OpenRouter insuffisant — même les modèles « gratuits » exigent un petit solde (~1$) sur openrouter.ai/settings/credits";
+            }
+            if (status === 429) return "Trop de requêtes — réessayez dans quelques secondes";
+            if (typeof err === "object" && String(err?.message || err).includes("No endpoints found")) {
+                return "Modèle NVIDIA indisponible sur OpenRouter — choisissez Nemotron 3 Super (gratuit) dans la liste";
+            }
+            return `Erreur HTTP ${status}`;
+        }
+
+        async function callOpenRouter(messages, apiKey, model, maxTokens, temperature) {
+            const resolvedModel = model || getNvidiaModel();
+            let tokenLimit = maxTokens || getProspectMaxTokens(resolvedModel);
+            const basePayload = {
+                model: resolvedModel,
+                messages,
+                max_tokens: tokenLimit,
+                temperature: temperature != null ? temperature : getLevelTemperature()
+            };
+            const attempts = [
+                { ...basePayload, reasoning: { effort: "none", exclude: true } },
+                basePayload
+            ];
+            let lastError = null;
+
+            for (const payload of attempts) {
+                try {
+                    const res = await fetch(OPENROUTER_URL, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + apiKey,
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": window.location.origin || "http://localhost:8080",
+                            "X-Title": "Simulateur Appels Sortants"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const raw = await res.text();
+                    let data = {};
+                    try { data = raw ? JSON.parse(raw) : {}; } catch (_) {
+                        throw new Error(`Réponse OpenRouter invalide (${res.status})`);
+                    }
+                    if (!res.ok) {
+                        const msg = formatOpenRouterError(data, res.status);
+                        const affordable = parseAffordableMaxTokens(typeof data?.error === "string" ? data.error : data?.error?.message);
+                        if (res.status === 402 && affordable && payload.max_tokens > affordable) {
+                            return callOpenRouter(messages, apiKey, resolvedModel, affordable, temperature);
+                        }
+                        if (payload.reasoning && (res.status === 400 || res.status === 422)) {
+                            lastError = new Error(msg);
+                            continue;
+                        }
+                        throw new Error(msg);
+                    }
+                    const text = extractOpenRouterText(data);
+                    if (!text) {
+                        console.warn("OpenRouter réponse sans texte:", data);
+                        throw new Error("Réponse vide du modèle — essayez un autre modèle NVIDIA");
+                    }
+                    return text;
+                } catch (e) {
+                    lastError = e;
+                    if (payload.reasoning) continue;
+                    throw e;
+                }
+            }
+            throw lastError || new Error("Erreur OpenRouter");
+        }
+
+        function buildOpenRouterMessages(extraSystem, includeLevelHint, opts) {
+            opts = opts || {};
+            let system = opts.compact ? compactSystemPromptText : systemPromptText;
+            if (includeLevelHint && !opts.compact) system += "\n\n" + getLevelHint();
+            if (extraSystem) system += "\n\n" + extraSystem;
+            let turns = chatTurns;
+            if (opts.maxTurns && turns.length > opts.maxTurns) {
+                turns = turns.slice(-opts.maxTurns);
+            }
+            const trimLen = opts.compact ? 180 : null;
+            return [
+                { role: "system", content: system },
+                ...turns.map(t => ({
+                    role: t.role === "assistant" ? "assistant" : "user",
+                    content: trimLen ? t.content.slice(0, trimLen) : t.content
+                }))
+            ];
+        }
+
+        async function callLLM(apiKey, maxTokens, extraSystem) {
+            const isEval = !!extraSystem;
+            const models = [getNvidiaModel(), ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== getNvidiaModel())];
+            const temp = isEval ? 0.5 : getLevelTemperature();
+            const retryPlans = isFreeOpenRouterModel(getNvidiaModel())
+                ? [
+                    { compact: true, maxTurns: 4, includeHint: false },
+                    { compact: true, maxTurns: 2, includeHint: false },
+                    { compact: true, maxTurns: 1, includeHint: false }
+                ]
+                : [
+                    { compact: false, maxTurns: null, includeHint: !isEval },
+                    { compact: true, maxTurns: 8, includeHint: false },
+                    { compact: true, maxTurns: 4, includeHint: false }
+                ];
+            let lastError = null;
+            const errors = [];
+            for (const model of models) {
+                const modelTokens = maxTokens || (isEval ? getEvalMaxTokens(model) : getProspectMaxTokens(model));
+                let modelFailed = false;
+                for (const plan of retryPlans) {
+                    const messages = buildOpenRouterMessages(extraSystem, plan.includeHint, plan);
+                    try {
+                        return await callOpenRouter(messages, apiKey, model, modelTokens, temp);
+                    } catch (e) {
+                        lastError = e;
+                        const retryable = isPromptTokenLimitError(e.message) || /can only afford/i.test(e.message);
+                        if (!retryable) {
+                            errors.push(model + ": " + e.message);
+                            modelFailed = true;
+                            break;
+                        }
+                        console.warn("OpenRouter retry", model, plan, e.message);
+                    }
+                }
+                if (!modelFailed && lastError) {
+                    errors.push(model + ": " + lastError.message);
+                }
+            }
+            throw new Error((lastError && lastError.message) || errors.join(" | ") || "Erreur OpenRouter");
+        }
+
+        function setStatus(text, cls) {
+            statusText.textContent = text;
+            statusText.className = "status-badge " + cls;
+        }
+
+        function addLogMessage(sender, text, className) {
+            logDiv.insertAdjacentHTML('beforeend',
+                `<div class="${className}"><strong>${sender} :</strong> ${text}</div>`);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function cleanForSpeech(text) {
+            return text
+                .replace(/\([^)]*\)/g, " ")
+                .replace(/\*+/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function ensureVoices() {
+            return new Promise((resolve) => {
+                const pick = () => {
+                    const voices = synth ? synth.getVoices() : [];
+                    frenchVoice = voices.find(v => v.lang === "fr-FR")
+                        || voices.find(v => v.lang && v.lang.startsWith("fr"))
+                        || voices.find(v => /Thomas|Amélie|Audrey|Marie|French/i.test(v.name))
+                        || null;
+                    resolve(voices);
+                };
+                pick();
+                if (synth && synth.getVoices().length === 0 && synth.onvoiceschanged !== undefined) {
+                    synth.onvoiceschanged = pick;
+                    setTimeout(pick, 1000);
+                }
+            });
+        }
+
+        async function checkDbServer() {
+            const el = document.getElementById("dbStatus");
+            try {
+                const ctrl = new AbortController();
+                setTimeout(() => ctrl.abort(), 5000);
+                const r = await fetch(CONVERSATION_API + "/health", { signal: ctrl.signal });
+                const data = await r.json();
+                dbServerOk = r.ok && data.ok;
+                if (dbServerOk) {
+                    el.innerHTML = "✅ MySQL connecté — conversations enregistrées à la fin de l'appel";
+                    el.style.color = "#16a34a";
+                } else {
+                    throw new Error(data.error || "MySQL indisponible");
+                }
+            } catch (e) {
+                dbServerOk = false;
+                if (isHostedMode()) {
+                    el.innerHTML = "ℹ️ Mode hébergé : sauvegarde MySQL désactivée (simulation fonctionnelle)";
+                    el.style.color = "#2563eb";
+                } else {
+                    el.innerHTML = "⚠️ MySQL inactif — lancez : <code>python3 AI_Call_Simulator/web/conversation_api.py</code>";
+                    el.style.color = "#dc2626";
+                }
+                console.warn("DB check:", e.message || e);
+            }
+        }
+
+        async function saveConversationToDb(evaluation) {
+            if (!chatTurns.length) return null;
+            const payload = {
+                profile: document.getElementById("profileSelect").value,
+                level: getLevel(),
+                model: getNvidiaModel(),
+                started_at: callStartedAt,
+                ended_at: new Date().toISOString(),
+                persona: prospectPersona,
+                evaluation: evaluation || null,
+                messages: chatTurns.map(t => ({ role: t.role, content: t.content }))
+            };
+            try {
+                const res = await fetch(CONVERSATION_API + "/api/conversations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw new Error(data.error || ("HTTP " + res.status));
+                dbServerOk = true;
+                const el = document.getElementById("dbStatus");
+                el.innerHTML = "✅ Conversation #" + data.conversation_id + " enregistrée dans MySQL";
+                el.style.color = "#16a34a";
+                return data.conversation_id;
+            } catch (e) {
+                console.warn("Save MySQL:", e);
+                dbServerOk = false;
+                const el = document.getElementById("dbStatus");
+                el.innerHTML = "⚠️ Sauvegarde MySQL échouée : " + (e.message || e);
+                el.style.color = "#dc2626";
+                return null;
+            }
+        }
+
+        async function checkTtsServer() {
+            const el = document.getElementById("ttsStatus");
+            try {
+                const ctrl = new AbortController();
+                setTimeout(() => ctrl.abort(), 8000);
+                const r = await fetch(TTS_SERVER + "/health", { signal: ctrl.signal });
+                if (!r.ok) throw new Error("health " + r.status);
+                ttsServerOk = (await r.text()).trim() === "ok";
+            } catch (_) {
+                try {
+                    const ctrl2 = new AbortController();
+                    setTimeout(() => ctrl2.abort(), 10000);
+                    const r2 = await fetch(TTS_SERVER + "/tts?text=ok", { signal: ctrl2.signal });
+                    if (!r2.ok) throw new Error("tts " + r2.status);
+                    const blob = await r2.blob();
+                    ttsServerOk = blob.size > 500;
+                } catch (e2) {
+                    ttsServerOk = false;
+                    console.warn("TTS check:", e2);
+                }
+            }
+            if (ttsServerOk) {
+                el.innerHTML = "✅ Serveur voix actif (français Denise)";
+                el.style.color = "#16a34a";
+            } else if (isHostedMode()) {
+                el.innerHTML = "ℹ️ Mode hébergé : voix du navigateur (français) utilisée automatiquement";
+                el.style.color = "#2563eb";
+            } else {
+                el.innerHTML = "⚠️ Lancez le serveur voix :<br><code>python3 AI_Call_Simulator/web/tts_server.py</code>";
+                el.style.color = "#dc2626";
+            }
+        }
+
+        async function speakLocalTTS(text) {
+            if (!text) return false;
+            try {
+                if (lastProspectAudio) {
+                    lastProspectAudio.pause();
+                    if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
+                    lastProspectAudio = null;
+                }
+                const url = TTS_SERVER + "/tts?text=" + encodeURIComponent(text.slice(0, 500));
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("TTS HTTP " + res.status);
+                const buf = await res.arrayBuffer();
+                if (buf.byteLength < 500) throw new Error("Audio TTS vide");
+                const mime = res.headers.get("Content-Type") || "audio/mpeg";
+                const blob = new Blob([buf], { type: mime.split(";")[0] || "audio/mpeg" });
+                const blobUrl = URL.createObjectURL(blob);
+                const audio = new Audio(blobUrl);
+                audio._blobUrl = blobUrl;
+                audio.volume = 1;
+                audio.preload = "auto";
+                lastProspectAudio = audio;
+                setStatus("Le prospect parle...", "status-thinking");
+                await new Promise((resolve, reject) => {
+                    audio.onended = () => {
+                        URL.revokeObjectURL(blobUrl);
+                        resolve();
+                    };
+                    audio.onerror = () => reject(new Error("Lecture audio échouée"));
+                    const playPromise = audio.play();
+                    if (playPromise && playPromise.catch) {
+                        playPromise.catch(err => {
+                            if (err.name === "NotAllowedError") {
+                                reject(new Error("Cliquez d'abord sur « Tester la voix » ou « Initialiser » pour autoriser le son"));
+                            } else {
+                                reject(err);
+                            }
+                        });
+                    }
+                });
+                ttsServerOk = true;
+                audioUnlocked = true;
+                return true;
+            } catch (e) {
+                console.warn("TTS local:", e);
+                ttsServerOk = false;
+                checkTtsServer();
+                return false;
+            }
+        }
+
+        function speakBrowser(text) {
+            return new Promise((resolve) => {
+                if (!synth || !text) return resolve(false);
+                synth.cancel();
+                synth.resume();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = "fr-FR";
+                u.volume = 1;
+                u.rate = 0.9;
+                if (frenchVoice) u.voice = frenchVoice;
+                let done = false;
+                const finish = (ok) => {
+                    if (done) return;
+                    done = true;
+                    clearInterval(keepAlive);
+                    resolve(ok);
+                };
+                u.onstart = () => setStatus("Le prospect parle...", "status-thinking");
+                u.onend = () => finish(true);
+                u.onerror = () => finish(false);
+                const keepAlive = setInterval(() => {
+                    if (synth.speaking) { synth.pause(); synth.resume(); }
+                }, 4000);
+                synth.speak(u);
+                setTimeout(() => { if (!done && !synth.speaking) finish(false); }, 10000);
+            });
+        }
+
+        async function speakProspect(rawText) {
+            const text = cleanForSpeech(rawText);
+            if (!text) return false;
+            if (!document.getElementById("voiceToggle").checked) return false;
+
+            let ok = await speakLocalTTS(text);
+            if (!ok) {
+                await ensureVoices();
+                ok = await speakBrowser(text);
+            }
+
+            if (callActive) {
+                setStatus(ok ? "À vous de parler" : "Pas de son — cliquez « Tester la voix » puis réessayez", "status-listening");
+            }
+            return ok;
+        }
+
+        function speak(text) {
+            return speakProspect(text);
+        }
+
+        function isMetaLeak(text) {
+            if (!text) return true;
+            const t = text.toLowerCase();
+            const leaks = [
+                "okay,", "wait,", "let me check", "the user is", "as the prospect",
+                "in the context", "instruction says", "roleplaying", "no_think",
+                "réplique agressive", "réplique du prospect", "ma réponse en tant que",
+                "prospect agressif", "prospect pressé", "ton agacé", "regardant ailleurs",
+                "je reste dans le personnage", "profil : prospect", "profil :", "niveau débutant",
+                "slightly impatient", "pause court", "débutant)", "intermédiaire)", "avancé)",
+                "stop speaking", "speak me", "call me", "what do you want"
+            ];
+            if (leaks.some(k => t.includes(k))) return true;
+            if (/^\*\*[^*]+\*\*\s*:?\s*$/.test(text.trim())) return true;
+            if (text.length > 280 && /[a-z]{4,}/.test(text) && !/[àâäéèêëïîôùûüç]/i.test(text)) return true;
+            return false;
+        }
+
+        function isBadProspectReply(text) {
+            if (!text || isMetaLeak(text)) return true;
+            const trimmed = text.trim();
+            if (/^réplique\s/i.test(trimmed)) return true;
+            if (/^\*\*/.test(trimmed)) return true;
+            if (/^[\-*•]\s/.test(trimmed)) return true;
+            if (/\*[^*]+\*/.test(trimmed) && trimmed.length < 80) return true;
+            if (agentAskedIdentity() && trimmed.length >= 2) return false;
+            if (/^[A-Za-zÀ-ÿ\-']{2,30}\.?$/.test(trimmed)) return false;
+            if (/^je m'appelle\s+[A-Za-zÀ-ÿ\-]+/i.test(trimmed)) return false;
+            if (/^[A-Za-zÀ-ÿ\-]+\s+[A-Za-zÀ-ÿ\-]+\.?$/.test(trimmed) && agentAskedIdentity()) return false;
+            if (isProspectNonsenseReply(trimmed)) return true;
+            if (trimmed.length < 8) return true;
+            return false;
+        }
+
+        function fallbackProspectReply() {
+            if (agentAskedIdentity()) return getIdentityReply();
+            if (!isProfileCalibrationEnabled()) {
+                return "Je vous écoute, qu'est-ce que vous voulez ?";
+            }
+            const profile = getProfileKey();
+            const contextual = getContextualObjection(profile, getLevel());
+            if (contextual) return contextual;
+            const factual = tryFactualAnswer(profile, getLevel());
+            if (factual) return factual;
+            const list = getProfileFallbacks();
+            return list[0] || "Je vous écoute, mais je ne suis pas convaincu.";
+        }
+
+        function isProspectNonsenseReply(reply) {
+            const t = (reply || "").trim();
+            if (!t) return true;
+            if (/\b(stop speaking|speak me|call me|please wait|what do you|don't call)\b/i.test(t)) return true;
+            if (/^appelle\s+[A-Za-zÀ-ÿ\-]+\.?$/i.test(t)) return true;
+            if (/\bappelle\s+(elsa|marie|pierre|alex|john|sophie|paul|luc)\b/i.test(t)) return true;
+            if (t.length < 40 && !/\b(je|j'|tu|vous|oui|non|d'accord|c'est|pas|pour|avec|chez|environ|madame|monsieur|bon)\b/i.test(t)) {
+                return true;
+            }
+            return false;
+        }
+
+        function isProspectHallucination(reply) {
+            if (!reply) return true;
+            const r = reply.toLowerCase();
+            if (/\b(pas d'?électricité|n'?ai pas d'?électricité|sans électricité|aucune électricité|j'?ai pas d'?électricité)\b/i.test(r)) return true;
+            if (/\b(edf ne vend pas|ne vendent pas l'?électricité|edf.*pas.*électricité)\b/i.test(r)) return true;
+            if (/\bprix fixe pour l'?appareil\b/i.test(r)) return true;
+            if (/\b(n'?ai pas de pdl|pas de pdl|j'?ai pas de pdl|aucun pdl)\b/i.test(r)) return true;
+            if (/\b(gaz.*edf|edf.*gaz)\b/i.test(r) && !/\b(pas de gaz|électricité seulement|sans gaz)\b/i.test(r)) return true;
+            return false;
+        }
+
+        function isProspectEcho(reply) {
+            const agent = normalizeReply(lastAgentText());
+            const prospect = normalizeReply(reply);
+            if (!agent || !prospect || prospect.length < 8) return false;
+            if (agent.includes(prospect) || prospect.includes(agent.slice(0, Math.max(20, agent.length - 5)))) return true;
+            const pWords = prospect.split(" ").filter(w => w.length > 3);
+            const aWords = new Set(agent.split(" ").filter(w => w.length > 3));
+            if (pWords.length >= 2 && pWords.filter(w => aWords.has(w)).length >= pWords.length - 1) return true;
+            return false;
+        }
+
+        function getRealisticProspectFallback() {
+            const profile = getProfileKey();
+            const level = getLevel();
+            const t = lastAgentText().toLowerCase();
+            const sec = profile === "agressif" && level !== "debutant";
+            const mefiant = profile === "mefiant_rgpd" || profile === "mefiant_fournisseur";
+
+            if (agentAskedIdentity()) return getIdentityReply();
+            if (agentInOfferStage()) {
+                const offer = getOfferStageReply();
+                if (offer) return offer;
+            }
+            if (agentAskedPdl()) {
+                if (mefiant || sec) return prospectPersona.pdl + ", mais pourquoi vous en avez besoin ?";
+                return prospectPersona.pdl + ".";
+            }
+            if (agentAskedPostalAddress()) return prospectPersona.address + ".";
+            if (agentAskedFacture()) return "Je ne l'ai pas sous la main là.";
+            if (agentAskedIban()) {
+                return mefiant || sec ? "Pourquoi vous avez besoin de mon IBAN ?" : "D'accord, c'est pour quoi exactement ?";
+            }
+            if (/\b(pas d'?électricité|comment ça)\b/i.test(t)) {
+                return sec ? "Si si, j'ai de l'électricité. Électricité seulement, chez EDF." : "Oui j'ai de l'électricité, électricité seulement chez EDF.";
+            }
+            if (agentAskedEnergyType() || /\b(gaz|électricité)\b/i.test(t)) {
+                return sec ? "Électricité seulement, pas de gaz." : "Électricité seulement.";
+            }
+            if (agentAskedSupplier()) {
+                if (prospectAlreadySaidSupplier()) return sec ? "On l'a déjà dit : EDF." : "Comme je vous ai dit, EDF.";
+                return sec ? "EDF. Et alors ?" : "Je suis chez EDF.";
+            }
+            if (agentAskedDuration()) return "Ça fait plusieurs années.";
+            if (agentAskedBillAmount()) return sec ? "Environ 70 euros. Vous voulez quoi ?" : "Environ 70 euros par mois.";
+            if (agentAskedMailOnly()) return sec ? "Non, je n'ai pas reçu de mail. C'est pour quoi ?" : "Non, pas à ma connaissance. C'est pour quoi ?";
+            if (agentIgnoredProspectQuestion && agentIgnoredProspectQuestion()) {
+                return sec ? "Pourquoi moi ? Pourquoi vous m'appelez ?" : "C'est pour quoi exactement votre appel ?";
+            }
+            return sec ? "Bon, c'est pour quoi exactement ?" : "D'accord, c'est pour quoi ?";
+        }
+
+        function applyMinimalRealismGuards(reply) {
+            if (isProspectEcho(reply) || isProspectHallucination(reply) || isProspectNonsenseReply(reply) ||
+                isMetaLeak(reply) || isProspectRoleViolation(reply) || isProspectStaleReply(reply)) {
+                return getRealisticProspectFallback();
+            }
+            return reply;
+        }
+
+        function cleanProspectReply(raw) {
+            if (!raw) return "";
+            let text = raw.trim();
+
+            text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
+            text = text.replace(/\*([^*]+)\*/g, "$1");
+            text = text.replace(/^\*?Ma réponse en tant que[^:\n]*:?\s*/i, "");
+            text = text.replace(/^Ton agacé\s*:\s*/i, "");
+            text = text.replace(/^Réplique\s+(agressive\s+)?du prospect\s*:\s*/i, "");
+            text = text.replace(/\(Je reste dans le personnage[^)]*\)/gi, " ");
+            text = text.replace(/\(Profil\s*:[^)]*\)/gi, " ");
+            text = text.replace(/\([^)]*(pause|ton|impatient|agacé|regardant|raccroch|prêt|personnage|profil\s*:)[^)]*\)/gi, " ");
+            text = text.replace(/\([^)]{0,120}\)/g, " ");
+            text = text.replace(/^[\-*•]\s+[^\n]*/gm, " ");
+            text = text.replace(/\s+/g, " ").trim();
+
+            const quote = text.match(/[«"]([^"»]{4,220})[»"]/);
+            if (quote && !isBadProspectReply(quote[1])) return quote[1].trim();
+
+            text = text
+                .replace(/^(Prospect\s*:\s*)/i, "")
+                .replace(/^\/no_think\s*/i, "")
+                .trim();
+
+            const sentences = (text.match(/[^.!?]+[.!?]?/g) || [text])
+                .map(s => s.trim())
+                .filter(s => s.length > 8 && !/^réplique/i.test(s) && !/ma réponse en tant/i.test(s) && !/je reste dans le personnage/i.test(s))
+                .slice(0, 3);
+            text = sentences.join(" ").trim();
+            if (!text && /^[A-Za-zÀ-ÿ\-']{2,30}\.?$/.test(raw.trim())) text = raw.trim();
+            if (!text && /^je m'appelle\s+/i.test(raw.trim())) text = raw.trim().slice(0, 80);
+            return text.slice(0, 320);
+        }
+
+        function finalizeProspectReply(raw) {
+            let reply = cleanProspectReply(raw);
+            const identityGarbage = /vérification|comparatif|on peut faire/i.test(reply);
+            if (agentAskedIdentity() && (!reply || isBadProspectReply(reply) || identityGarbage || isProspectRoleViolation(reply) || isProspectWrongName(reply))) {
+                reply = getIdentityReply();
+            } else if (isBadProspectReply(reply)) {
+                reply = !isProfileCalibrationEnabled() ? getRealisticProspectFallback() : fallbackProspectReply();
+            }
+            if (!isProfileCalibrationEnabled()) {
+                reply = applyMinimalRealismGuards(reply);
+                if (agentAskedIdentity() && isProspectRoleViolation(reply)) {
+                    reply = getIdentityReply();
+                }
+            }
+            reply = applyLevelCalibration(reply);
+            if (isProfileCalibrationEnabled()) {
+                reply = sanitizeRepeatedFactuals(reply);
+                reply = stripPrematureIban(reply);
+                if (getLevel() === "debutant" && isTooAggressiveForDebutant(reply)) {
+                    const coop = applyDebutantCooperation(getProfileKey(), reply);
+                    reply = coop || "D'accord, je vous écoute. Faites vite.";
+                }
+            }
+            if (isProspectRoleViolation(reply)) {
+                reply = agentAskedIdentity() ? getIdentityReply() : getRealisticProspectFallback();
+            } else if (isProspectStaleReply(reply)) {
+                reply = getRealisticProspectFallback();
+            }
+            reply = enforceConversationStage(reply);
+            syncPersonaFromReply(reply);
+            return reply;
+        }
+
+        async function sendAgentMessage(userText) {
+            const apiKey = getApiKey();
+            const keyErr = validateApiKey(apiKey);
+            if (keyErr) return alert(keyErr);
+            addLogMessage("Agent (Vous)", userText, "agent-msg");
+            setStatus("Le prospect réfléchit...", "status-thinking");
+            chatTurns.push({ role: "user", content: userText });
+            rememberAgentFromMessage(userText);
+
+            if (agentSaidGoodbye()) {
+                const reply = "Au revoir.";
+                chatTurns.push({ role: "assistant", content: reply });
+                addLogMessage("Prospect", reply, "prospect-msg");
+                await speakProspect(reply);
+                setStatus("Prospect a raccroché — cliquez Raccrocher pour l'évaluation", "status-listening");
+                return;
+            }
+
+            try {
+                const rawReply = await callLLM(apiKey);
+                const reply = finalizeProspectReply(rawReply);
+                chatTurns.push({ role: "assistant", content: reply });
+                addLogMessage("Prospect", reply, "prospect-msg");
+                await speakProspect(reply);
+            } catch (e) {
+                chatTurns.pop();
+                const creditErr = isPromptTokenLimitError(e.message) || /can only afford|crédit openrouter|402/i.test(e.message);
+                if (creditErr) {
+                    const reply = finalizeProspectReply(fallbackProspectReply());
+                    chatTurns.push({ role: "assistant", content: reply });
+                    addLogMessage("Prospect", reply, "prospect-msg");
+                    await speakProspect(reply);
+                    setStatus("Appel en cours (mode secours — crédit OpenRouter bas)", "status-listening");
+                    return;
+                }
+                alert("Erreur OpenRouter :\n" + e.message + "\n\nNote : les modèles « gratuits » OpenRouter (:free) nécessitent quand même un petit crédit sur le compte (~1$).\n\nVérifiez :\n• openrouter.ai/settings/credits\n• Clé sk-or-v1-... sur openrouter.ai/keys\n• Modèle Nemotron 3 Super (gratuit) dans la liste");
+                setStatus("Erreur API", "status-idle");
+            }
+        }
+
+        function startSpeechListen() {
+            if (!recognition) throw new Error("Micro non disponible — utilisez Chrome ou le champ texte");
+            speechTranscript = "";
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onresult = (e) => {
+                let finalText = "";
+                for (let i = 0; i < e.results.length; i++) {
+                    if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
+                }
+                finalText = finalText.trim();
+                if (finalText) {
+                    speechTranscript = finalText;
+                    return;
+                }
+                const last = e.results[e.results.length - 1];
+                if (last && last[0]) speechTranscript = last[0].transcript.trim();
+            };
+            recognition.onerror = (e) => {
+                if (e.error === "aborted") return;
+                isListening = false;
+                recordTimer.textContent = "";
+                talkBtn.textContent = "🎤 Cliquer pour parler";
+                talkBtn.style.background = "";
+                const msg = e.error === "network"
+                    ? "Service vocal Chrome indisponible — tapez votre réplique en bas"
+                    : e.error === "no-speech"
+                        ? "Aucune voix détectée — réessayez ou tapez votre réplique"
+                        : "Micro : " + e.error;
+                alert(msg);
+                setStatus("Réessayez ou tapez votre réplique", "status-listening");
+            };
+            recognition.onend = () => {
+                if (isListening) {
+                    try { recognition.start(); } catch (_) {}
+                }
+            };
+            recognition.start();
+            isListening = true;
+            setStatus("🎤 Parlez maintenant…", "status-listening");
+            recordTimer.textContent = "Enregistrement — cliquez Arrêter quand vous avez fini";
+            talkBtn.textContent = "⏹ Arrêter et envoyer";
+            talkBtn.style.background = "#dc2626";
+        }
+
+        function stopSpeechListen() {
+            return new Promise((resolve, reject) => {
+                if (!recognition) return reject(new Error("Micro non disponible"));
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.onend = () => {
+                    isListening = false;
+                    recordTimer.textContent = "";
+                    talkBtn.textContent = "🎤 Cliquer pour parler";
+                    talkBtn.style.background = "";
+                    const text = speechTranscript.trim();
+                    if (text) resolve(text);
+                    else reject(new Error("Aucune voix détectée — parlez plus fort ou tapez votre réplique"));
+                };
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    isListening = false;
+                    reject(new Error("Micro : " + e.message));
+                }
+            });
+        }
+
+        function getAgentMessages() {
+            return chatTurns.filter(t => t.role === "user").map(t => t.content);
+        }
+
+        function escapeHtml(text) {
+            return String(text ?? "")
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function clampScore(value, max) {
+            const n = Math.round(Number(value));
+            if (!Number.isFinite(n)) return 0;
+            return Math.max(0, Math.min(max, n));
+        }
+
+        function getEvalLevelClass(niveau, score) {
+            const n = String(niveau || "").toLowerCase();
+            if (n.includes("excellent") || score >= 85) return "eval-level-excellent";
+            if (n.includes("bon") || score >= 70) return "eval-level-bon";
+            if (n.includes("coaching") || score < 50) return "eval-level-coaching";
+            return "eval-level-ameliorer";
+        }
+
+        function parseEvalJson(raw) {
+            if (!raw) return null;
+            const m = raw.match(/\{[\s\S]*\}/);
+            if (!m) return null;
+            try { return JSON.parse(m[0]); } catch (_) { return null; }
+        }
+
+        function repairEvalJson(raw) {
+            if (!raw) return null;
+            let s = String(raw).trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+            const m = s.match(/\{[\s\S]*\}/);
+            if (!m) return null;
+            s = m[0]
+                .replace(/,\s*([}\]])/g, "$1")
+                .replace(/([{,]\s*)([a-zA-Z_]+)\s*:/g, '$1"$2":')
+                .replace(/'/g, '"');
+            try { return JSON.parse(s); } catch (_) {
+                try { return JSON.parse(s.replace(/\n/g, " ")); } catch (_2) { return null; }
+            }
+        }
+
+        function parseEvalResponse(raw) {
+            return normalizeEvaluationData(repairEvalJson(raw) || parseEvalJson(raw));
+        }
+
+        function normalizeEvaluationData(data) {
+            if (!data) return null;
+            const sections = [];
+            let total = 0;
+
+            if (Array.isArray(data.sections) && data.sections.length) {
+                for (const g of EVAL_GRID) {
+                    const found = data.sections.find(s =>
+                        String(s.name || "").toLowerCase().includes(g.section.replace(/^\d+\.\s*/, "").split(" ")[0].toLowerCase())
+                    ) || data.sections[EVAL_GRID.indexOf(g)] || {};
+                    const items = g.items.map((def, j) => {
+                        const fi = (found.items || [])[j] || {};
+                        const score = clampScore(fi.score, def.max);
+                        return {
+                            name: def.name,
+                            score,
+                            max: def.max,
+                            comment: String(fi.comment || "").trim() || "—"
+                        };
+                    });
+                    const secScore = items.reduce((s, i) => s + i.score, 0);
+                    total += secScore;
+                    sections.push({ name: g.section, score: secScore, max: g.max, items });
+                }
+            } else {
+                for (const g of EVAL_GRID) {
+                    const items = g.items.map(def => ({
+                        name: def.name,
+                        score: 0,
+                        max: def.max,
+                        comment: "—"
+                    }));
+                    sections.push({ name: g.section, score: 0, max: g.max, items });
+                }
+            }
+
+            const scoreTotal = clampScore(data.score_total != null ? data.score_total : total, 100);
+            const niveau = data.niveau || (scoreTotal >= 85 ? "Excellent" : scoreTotal >= 70 ? "Bon" : scoreTotal >= 50 ? "À améliorer" : "Coaching nécessaire");
+            return {
+                score_total: scoreTotal,
+                niveau,
+                sections,
+                points_forts: Array.isArray(data.points_forts) ? data.points_forts.slice(0, 3) : [],
+                axes_amelioration: Array.isArray(data.axes_amelioration) ? data.axes_amelioration.slice(0, 3) : [],
+                recommandations: Array.isArray(data.recommandations) ? data.recommandations.slice(0, 3) : []
+            };
+        }
+
+        function computeHeuristicEvaluation() {
+            const agentMsgs = getAgentMessages();
+            const prospectMsgs = chatTurns.filter(t => t.role === "assistant").map(t => t.content);
+            const full = agentMsgs.join(" ").toLowerCase();
+            const pFull = prospectMsgs.join(" ").toLowerCase();
+            const questions = (full.match(/\?/g) || []).length;
+
+            const isPresse = /pressé|faites vite|deux minutes|2 minutes|je dois raccroch/i.test(pFull);
+            const dataPrivacyRefusal = /ne donne pas|ne donne rien|ne vais pas vous donner|ne donne pas ces références|pas de chiffres|données par téléphone|envoyez.*mail|devis par mail|par mail|par écrit|laissez-moi tranquille/i.test(pFull);
+            const pdlRefused = dataPrivacyRefusal || /ne donne pas mon pdl|pdl|pce|références par téléphone/i.test(pFull);
+            const wantsWrittenOffer = /par écrit|écrite|devis|mail|courrier|simulation écrite|proposition par|envoyez l'offre|envoyez-la par mail/i.test(pFull);
+            const addressAskCount = agentMsgs.filter(m => /adresse postale|communiquer l'adresse|votre adresse/i.test(m)).length;
+            const dataAskCount = agentMsgs.filter(m => /pdl|pce|facture|paiement mensuel|régularisation|rajoute combien|combien par mois|voiture s'élève/i.test(m)).length;
+            const gotRappel = /demain|9h|recontacter|rappel/i.test(full + pFull);
+            const addressRefusedLoop = pdlRefused && addressAskCount >= 3;
+            const dataRefusedLoop = (dataPrivacyRefusal || wantsWrittenOffer) && dataAskCount >= 4 && !gotRappel;
+            const contradictsPresse = isPresse && /prenez le temps|prenez votre temps|soyez intéressé/i.test(full);
+            const agentRepeatsQuestion = agentMsgs.some((m, i) =>
+                agentMsgs.slice(i + 1).some(m2 => m.trim().toLowerCase().slice(0, 45) === m2.trim().toLowerCase().slice(0, 45))
+            );
+            const refusalLoop = addressRefusedLoop || dataRefusedLoop;
+            const hostileStart = /pas intéress|sondage|raccroch/i.test(pFull.split(/\n/)[0] || pFull.slice(0, 120));
+            const hasIntro = /\b(bonjour|je suis|génie|genie|comparateur|abdou|allé)\b/.test(full);
+            const hasObject = /\b(facture|énergie|mail|augmentation|tarif|comparatif|lettre|email)\b/.test(full);
+            const hasDiscovery = /\b(fournisseur|edf|gaz|électricit|combien|payez|régul|regul)\b/.test(full);
+            const hasEmpathy = /\b(je comprends|madame|monsieur|d'accord|rassure|bref)\b/.test(full);
+            const hasComparatif = /comparatif/i.test(full);
+            const hasIban = /\biban\b|FR\d{2}/i.test(full + pFull);
+            const hasOfferPrice = /\b60\s*€|20\s*€|19\s*cent|15\s*€|économ/i.test(full);
+            const emailPivot = (pdlRefused || wantsWrittenOffer) && /envoyer un email|envoyé l'email|email immédiatement|offre écrite|par mail|courrier|pas de problème.*mail/i.test(full);
+            const callLost = /au revoir/i.test(pFull.slice(-80)) && !gotRappel && !hasIban;
+            const agentFrustration = /ne voulez pas faire des économies|si vous ne voulez pas/i.test(full);
+            const storyFlip = /sondage/i.test(full) && hasComparatif;
+            const longMonologue = agentMsgs.some(m => m.length > 280);
+            const weakIntro = /salmadogénie|abdougini|dangenie|allé abdou|lenovo|bertrand.*dominique|^pour je suis/i.test(agentMsgs[0] || "");
+            const emailConfusion = !pdlRefused && /\badresse\b/.test(full)
+                && agentMsgs.filter(m => /email|courriel|électronique/i.test(m)).length >= 2
+                && prospectMsgs.filter(m => /république|lille|7500|5900/i.test(m)).length >= 2;
+            const prospectRepeatsHurry = (pFull.match(/pressé|faites vite/g) || []).length >= 3;
+            const wrongEnergyPitch = /gaz/i.test(full) && /électricité seulement|électricité seule/i.test(pFull);
+
+            const scoreItems = (items, scores, comments) => items.map((def, i) => ({
+                name: def.name,
+                score: clampScore(scores[i] != null ? scores[i] : Math.floor(def.max * 0.5), def.max),
+                max: def.max,
+                comment: comments[i] || "—"
+            }));
+
+            const introComment = weakIntro
+                ? "Présentation confuse (« Bertrand Lenovo Dominique ») — nom et Génie peu clairs."
+                : "Présentation correcte avec identification de Génie / comparateur.";
+            const objectComment = hasObject
+                ? "Objet : mail d'augmentation tarifaire août."
+                : "Objet de l'appel peu explicite.";
+            const timeComment = contradictsPresse
+                ? "Erreur majeure : « prenez le temps » alors que le client dit « pressé »."
+                : (isPresse
+                    ? (refusalLoop ? "Prospect pressé — agent insiste sur facture/PDL au lieu d'envoyer un devis mail." : (longMonologue ? "Monologues trop longs." : "Pressé reconnu partiellement."))
+                    : (longMonologue ? "Monologues trop longs." : "Durée acceptable."));
+
+            const listenComment = refusalLoop
+                ? (dataRefusedLoop ? "Client demande un devis mail — agent continue à demander facture/PDL." : "Refus adresse/PDL répété — écoute insuffisante.")
+                : (agentRepeatsQuestion ? "Même question répétée (régularisation) — écoute faible." : (prospectRepeatsHurry ? "Prospect répète « pressé / faites vite »." : "Écoute correcte."));
+            const freinsComment = pdlRefused
+                ? (wantsWrittenOffer ? "Frein clair : pas de données par téléphone — demande d'offre écrite." : "Frein : refus adresse / PDL (confiance / RGPD).")
+                : (hostileStart ? "Freins : désintérêt, refus sondage." : "Freins clients partiellement identifiés.");
+
+            const argAdaptComment = wrongEnergyPitch
+                ? "Offre gaz + électricité alors que le client a dit « électricité seulement »."
+                : (isPresse && longMonologue ? "Argumentation trop longue pour un prospect pressé." : "Argumentation adaptée en début d'appel.");
+            const argBenefComment = hasOfferPrice
+                ? (wantsWrittenOffer ? "Chiffres donnés à l'oral (19 c€/kWh, 15€) — le client veut une simulation écrite." : "Bénéfices chiffrés et comparatif expliqués.")
+                : (hasComparatif ? "Comparatif annoncé sans chiffres concrets assez tôt." : "Peu de bénéfices concrets.");
+            const argStructComment = storyFlip
+                ? "Contradiction : comparateur puis « sondage » — perte de crédibilité."
+                : (/comparatif hôtel|domenergie|homme et flexible/i.test(full) ? "Structure confuse (jargon, noms fournisseurs flous)." : "Structure argumentaire perfectible.");
+
+            const objListenComment = refusalLoop
+                ? "N'a pas entendu : « envoyez par mail », « je ne donne rien par téléphone »."
+                : (pdlRefused ? "Refus données entendu partiellement." : "Écoute des objections correcte.");
+            const objRespComment = emailPivot
+                ? "Acceptation d'envoyer par mail."
+                : (wantsWrittenOffer ? "Client demande devis mail — agent demande quand même PDL/facture." : "Réponses aux objections perfectibles.");
+            const objTransformComment = callLost
+                ? "Aucun engagement — appel perdu malgré une ouverture initiale du prospect."
+                : (gotRappel ? "Rappel ou rendez-vous obtenu." : (hasIban ? "Vente conclue." : "Peu de transformation."));
+            const objCalmComment = agentFrustration
+                ? "Perte de calme en fin d'appel (« si vous ne voulez pas faire des économies »)."
+                : "Ton globalement calme malgré les difficultés.";
+
+            const closePropComment = wantsWrittenOffer && !emailPivot
+                ? "Le client demande une offre écrite — l'agent n'a pas formalisé d'envoi mail/courrier."
+                : (emailPivot ? "Proposition email + comparatif." : (hasOfferPrice ? "Offre orale tardive sans support écrit." : "Proposition comparatif sans closing réussi."));
+            const closeTechComment = callLost
+                ? "Boucle adresse → frustration → raccrochage — closing raté."
+                : (gotRappel ? "Closing par rendez-vous." : "Technique de closing perfectible.");
+            const closeEngComment = callLost ? "Aucun engagement (pas d'email, pas de rappel, pas de vente)." : (hasIban ? "IBAN et souscription." : (gotRappel ? "Email + rappel confirmé." : "Engagement partiel."));
+
+            const sections = [
+                {
+                    name: EVAL_GRID[0].section, max: 15,
+                    items: scoreItems(EVAL_GRID[0].items,
+                        [hasIntro && !weakIntro ? 3 : 1, hasObject ? 4 : 2, contradictsPresse ? 1 : 2, contradictsPresse ? 0 : (isPresse ? 1 : 2)],
+                        [introComment, objectComment,
+                            agentFrustration ? "Vouvoiement/tutoiement mixte, formulations peu professionnelles." : "Ton professionnel mais hésitant.",
+                            timeComment])
+                },
+                {
+                    name: EVAL_GRID[1].section, max: 20,
+                    items: scoreItems(EVAL_GRID[1].items,
+                        [hasDiscovery ? 4 : 2, refusalLoop || agentRepeatsQuestion ? 1 : (questions >= 4 ? 3 : 2), 1, wantsWrittenOffer ? 4 : 3],
+                        ["Questions EDF, gaz/élec, comparatif annoncé.", listenComment,
+                            "Pas de reformulation du besoin « devis par mail ».", freinsComment])
+                },
+                {
+                    name: EVAL_GRID[2].section, max: 20,
+                    items: scoreItems(EVAL_GRID[2].items,
+                        [hasComparatif ? 3 : 2, hasOfferPrice ? 3 : 1, hasComparatif ? 2 : 1, 1],
+                        [argAdaptComment, wantsWrittenOffer && !hasOfferPrice ? "Comparatif annoncé sans chiffres ni devis — client veut voir l'offre." : argBenefComment, argStructComment,
+                            "Aucune offre chiffrée présentée malgré plusieurs demandes du client."])
+                },
+                {
+                    name: EVAL_GRID[3].section, max: 15,
+                    items: scoreItems(EVAL_GRID[3].items,
+                        [refusalLoop ? 1 : (hasEmpathy ? 2 : 1), wantsWrittenOffer && !emailPivot ? 1 : (emailPivot ? 4 : 2), callLost ? 0 : 2, agentFrustration ? 0 : 1],
+                        [objListenComment, objRespComment, objTransformComment, objCalmComment])
+                },
+                {
+                    name: EVAL_GRID[4].section, max: 15,
+                    items: scoreItems(EVAL_GRID[4].items,
+                        [wantsWrittenOffer && !emailPivot ? 2 : 3, callLost ? 1 : 2, callLost ? 0 : (gotRappel || hasIban ? 4 : 1)],
+                        [closePropComment, closeTechComment, closeEngComment])
+                },
+                {
+                    name: EVAL_GRID[5].section, max: 10,
+                    items: scoreItems(EVAL_GRID[5].items,
+                        [1, 1, hasEmpathy ? 1 : 0],
+                        ["Peu d'énergie en fin d'appel — répétitions et relances identiques.",
+                            "Langage confus, phrases longues malgré un client pressé.",
+                            hasEmpathy ? "« Je comprends » au début puis empathy disparue." : "Peu d'empathie face au refus données."])
+                },
+                {
+                    name: EVAL_GRID[6].section, max: 5,
+                    items: scoreItems(EVAL_GRID[6].items,
+                        [refusalLoop ? 1 : 2, refusalLoop ? 0 : 1],
+                        [refusalLoop ? "Boucle facture/PDL malgré demande de devis mail — appel perdu." : "Début : découverte → comparatif.",
+                            refusalLoop ? "Aucune fluidité — client raccroche." : (prospectRepeatsHurry ? "Prospect toujours pressé." : "Fluidité moyenne.")])
+                }
+            ].map(sec => ({ ...sec, score: sec.items.reduce((s, i) => s + i.score, 0) }));
+
+            const scoreTotal = clampScore(sections.reduce((s, sec) => s + sec.score, 0), 100);
+            const pointsForts = [];
+            if (hasDiscovery) pointsForts.push("Bon début de découverte : EDF, ~70€/mois, régularisation.");
+            if (hasComparatif && !callLost) pointsForts.push("Comparatif et indépendance vis-à-vis du fournisseur bien expliqués.");
+            if (hasOfferPrice) pointsForts.push("A fini par communiquer des chiffres (19 c€/kWh, 15€ abonnement).");
+            if (emailPivot) pointsForts.push("Pivot email / offre écrite accepté.");
+            if (gotRappel) pointsForts.push("Rendez-vous de rappel obtenu.");
+            while (pointsForts.length < 3) {
+                if (isPresse && hasDiscovery) { pointsForts.push("Prospect pressé mais ouvert au comparatif en début d'appel."); break; }
+                pointsForts.push("Analyse basée sur la transcription réelle de cet appel.");
+            }
+
+            const axes = [];
+            if (addressRefusedLoop) axes.push("Dès le refus adresse/PDL : proposer une offre écrite par email au lieu de répéter la même demande.");
+            if (agentFrustration) axes.push("Ne jamais conclure par « si vous ne voulez pas faire des économies » — rester professionnel.");
+            if (wrongEnergyPitch) axes.push("Adapter l'offre : électricité seulement = pas de tarif gaz.");
+            if (storyFlip) axes.push("Ne pas changer de discours (comparateur → sondage) — perte de confiance.");
+            if (isPresse && longMonologue) axes.push("Phrases courtes : le client répète « pressé » sans cesse.");
+            while (axes.length < 3) axes.push("Reformuler le refus client avant de relancer.");
+
+            const reco = [];
+            if (wantsWrittenOffer) reco.push("Script : « Je vous envoie la simulation par email — quelle adresse email ? » (sans demander l'adresse postale).");
+            if (addressRefusedLoop) reco.push("Après 2 refus : « Pas de souci, je vous envoie une proposition écrite, vous décidez librement. »");
+            reco.push("Valider : comparatif gratuit, sans engagement, 14 jours rétractation — puis proposer l'envoi écrit.");
+            while (reco.length < 2) reco.push("Structurer : accroche → découverte → comparatif → closing.");
+
+            return {
+                score_total: scoreTotal,
+                niveau: scoreTotal >= 85 ? "Excellent" : scoreTotal >= 70 ? "Bon" : scoreTotal >= 50 ? "À améliorer" : "Coaching nécessaire",
+                sections,
+                points_forts: pointsForts.slice(0, 3),
+                axes_amelioration: axes.slice(0, 3),
+                recommandations: reco.slice(0, 3),
+                _source: "heuristic"
+            };
+        }
+
+        function renderEvaluationReport(data, source) {
+            const score = Number(data.score_total) || 0;
+            const niveau = data.niveau || "À améliorer";
+            const levelClass = getEvalLevelClass(niveau, score);
+            const sourceNote = source === "llm"
+                ? '<p class="eval-subtitle" style="color:#059669;">✓ Évaluation générée par IA (OpenRouter)</p>'
+                : '<p class="eval-subtitle" style="color:#0369a1;">✓ Évaluation détaillée (analyse locale de la transcription)</p>';
+            const rows = (data.sections || []).flatMap(sec => {
+                const header = `<tr class="section-row"><td colspan="2">${escapeHtml(sec.name)}</td><td class="col-score">${escapeHtml(sec.score)}/${escapeHtml(sec.max)}</td><td></td></tr>`;
+                const items = (sec.items || []).map(it => `
+                    <tr>
+                        <td>${escapeHtml(it.name)}</td>
+                        <td class="col-score">${escapeHtml(it.score)}</td>
+                        <td class="col-max">${escapeHtml(it.max)}</td>
+                        <td>${escapeHtml(it.comment)}</td>
+                    </tr>`).join("");
+                return header + items;
+            }).join("");
+
+            const list = arr => (arr || []).map(x => `<li>${escapeHtml(x)}</li>`).join("");
+
+            return `
+                <div class="eval-header">
+                    <div class="eval-score-badge ${levelClass}">
+                        <span class="score-num">${escapeHtml(score)}/100</span>
+                        <span class="score-label">${escapeHtml(niveau)}</span>
+                    </div>
+                    <div>
+                        <h4 class="eval-title">Rapport d'évaluation — Agent commercial</h4>
+                        <p class="eval-subtitle">Grille pédagogique /100 · Télévente énergie</p>
+                        ${sourceNote}
+                    </div>
+                </div>
+                <div class="eval-table-wrap">
+                    <table class="eval-table">
+                        <thead>
+                            <tr>
+                                <th>Critère</th>
+                                <th>Points obtenus</th>
+                                <th>Max</th>
+                                <th>Commentaire (agent uniquement)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="eval-section"><h4>3 points forts de l'agent</h4><ul>${list(data.points_forts)}</ul></div>
+                <div class="eval-section"><h4>3 axes d'amélioration</h4><ul>${list(data.axes_amelioration)}</ul></div>
+                <div class="eval-section"><h4>Recommandations</h4><ul>${list(data.recommandations)}</ul></div>
+                <p class="eval-interpretation">Interprétation : 85–100 Excellent · 70–84 Bon · 50–69 À améliorer · &lt;50 Coaching nécessaire</p>`;
+        }
+
+        async function callEvaluationLLM(apiKey) {
+            const agentLines = getAgentMessages().map((m, i) => (i + 1) + ". " + m);
+            const ctx = chatTurns.slice(-20).map(t =>
+                (t.role === "user" ? "AGENT" : "PROSPECT") + ": " + t.content.slice(0, 180)
+            ).join("\n");
+            const models = [getNvidiaModel(), ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== getNvidiaModel())];
+            const agentChunks = [
+                agentLines.join("\n"),
+                agentLines.slice(0, 12).join("\n"),
+                agentLines.slice(0, 8).join("\n")
+            ];
+            let lastErr = null;
+
+            for (const model of models) {
+                for (const agentText of agentChunks) {
+                    if (!agentText.trim()) continue;
+                    const messages = [
+                        {
+                            role: "system",
+                            content: "Formateur expert vente téléphonique énergie France. Évalue UNIQUEMENT l'agent. Réponds en JSON valide sans markdown ni texte avant/après."
+                        },
+                        {
+                            role: "user",
+                            content: "Profil prospect: " + getProfileKey() + " · Niveau: " + getLevel()
+                                + "\n\nRÉPLIQUES AGENT:\n" + agentText.slice(0, 4500)
+                                + "\n\nCONTEXTE (extrait):\n" + ctx.slice(0, 2000)
+                                + "\n\n" + COMPACT_EVAL_PROMPT
+                        }
+                    ];
+                    try {
+                        const raw = await callOpenRouter(messages, apiKey, model, getEvalMaxTokens(model), 0.25);
+                        const parsed = parseEvalResponse(raw);
+                        if (parsed && parsed.sections && parsed.sections.length) {
+                            if (!parsed.score_total) {
+                                parsed.score_total = parsed.sections.reduce((s, sec) => s + (sec.score || 0), 0);
+                            }
+                            parsed._source = "llm";
+                            return parsed;
+                        }
+                        lastErr = new Error("JSON évaluation invalide");
+                    } catch (e) {
+                        lastErr = e;
+                        console.warn("Eval IA retry", model, e.message);
+                    }
+                }
+            }
+            throw lastErr || new Error("Évaluation IA indisponible");
+        }
+
+        async function runEvaluation(apiKey) {
+            try {
+                const parsed = await callEvaluationLLM(apiKey);
+                return { html: renderEvaluationReport(parsed, "llm"), evaluation: parsed, source: "llm" };
+            } catch (e) {
+                console.warn("Eval IA fallback:", e.message);
+            }
+            const fallback = computeHeuristicEvaluation();
+            return { html: renderEvaluationReport(fallback, "heuristic"), evaluation: fallback, source: "heuristic" };
+        }
+
+        async function showEvaluation(apiKey) {
+            setStatus("Génération de l'évaluation...", "status-thinking");
+            const retryBtn = document.getElementById("retryEvalBtn");
+            let evaluationData = null;
+            try {
+                const evalResult = await runEvaluation(apiKey);
+                evalContent.innerHTML = evalResult.html;
+                evaluationData = evalResult.evaluation;
+                if (retryBtn) {
+                    retryBtn.style.display = evalResult.source === "heuristic" ? "block" : "none";
+                }
+            } catch (_) {
+                evaluationData = computeHeuristicEvaluation();
+                evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
+                if (retryBtn) retryBtn.style.display = "block";
+            }
+            evaluationDiv.style.display = "block";
+            return evaluationData;
+        }
+
+        function resetUi() {
+            callActive = false;
+            isListening = false;
+            startBtn.disabled = false;
+            talkBtn.disabled = true;
+            sendTextBtn.disabled = true;
+            textInput.disabled = true;
+            stopBtn.disabled = true;
+            setStatus("Ligne inactive", "status-idle");
+        }
+
+        startBtn.addEventListener('click', async () => {
+            unlockAudioPlayback();
+            const apiKey = getApiKey();
+            if (!apiKey) return alert("Veuillez saisir votre clé API OpenRouter.");
+            const keyErr = validateApiKey(apiKey);
+            if (keyErr) return alert(keyErr);
+
+            const profileKey = document.getElementById('profileSelect').value;
+            const profile = PROFILES[profileKey];
+            const level = document.getElementById('levelSelect').value;
+            callLevel = level;
+
+            const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
+            const levelBlock = profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant;
+
+            systemPromptText = `CONTEXTE : Simulation d'appel sortant (fournisseurs d'énergie en France).
+MISSION : Tu es le prospect au téléphone. Ne sors JAMAIS de ton rôle.
+COMPORTEMENT : ${profile.prompt}
+IMPORTANT : Le NIVEAU ci-dessous prime sur le profil — un profil agressif en DÉBUTANT reste facile et coopératif.
+
+${levelBlock}
+
+${PROSPECT_FACTS}
+
+${CALL_STRUCTURE}
+
+RÈGLES DE FORMAT (OBLIGATOIRE) :
+- Réponds UNIQUEMENT avec tes paroles à l'oral, comme au téléphone.
+- PAS de markdown (** * #), PAS de titres, PAS de listes.
+- PAS de didascalies (*ton agacé*, (pause), (regardant ailleurs), etc.).
+- NE DIS JAMAIS "prospect", "agressif", "débutant", "ma réponse en tant que", "je reste dans le personnage", "Profil :".
+- 1 à 3 phrases maximum, en français naturel.`;
+            const persona = createProspectPersona(profileKey);
+            compactSystemPromptText = "Prospect " + profileKey + " (" + level + "). "
+                + "FR oral, 1-3 phrases. EDF élec seule ~70€. PDL " + persona.pdl + ". "
+                + persona.firstName + " " + persona.lastName + ". Pas d'anglais. "
+                + profile.prompt.slice(0, 90);
+            chatTurns = [{ role: "assistant", content: profile.start }];
+            callStartedAt = new Date().toISOString();
+            prospectPersona = persona;
+            agentPersona = { firstNames: [], lastNames: [], tokens: [] };
+
+            logDiv.innerHTML = "";
+            evaluationDiv.style.display = "none";
+            callActive = true;
+            startBtn.disabled = true;
+            talkBtn.disabled = !speechRecAvailable;
+            sendTextBtn.disabled = false;
+            textInput.disabled = false;
+            stopBtn.disabled = false;
+
+            addLogMessage("Prospect", profile.start, "prospect-msg");
+            setStatus("Appel en cours", "status-listening");
+            await speakProspect(profile.start);
+        });
+
+        talkBtn.addEventListener('click', async () => {
+            if (!callActive) return alert("Cliquez d'abord sur INITIALISER.");
+            unlockAudioPlayback();
+            try {
+                if (!isListening) {
+                    startSpeechListen();
+                } else {
+                    const userText = await stopSpeechListen();
+                    await sendAgentMessage(userText);
+                }
+            } catch (e) {
+                alert(e.message);
+                setStatus("Réessayez ou tapez votre réplique", "status-listening");
+            }
+        });
+
+        sendTextBtn.addEventListener('click', () => {
+            unlockAudioPlayback();
+            const t = textInput.value.trim();
+            if (!t) return;
+            textInput.value = "";
+            sendAgentMessage(t);
+        });
+
+        textInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && callActive) { e.preventDefault(); sendTextBtn.click(); }
+        });
+
+        document.getElementById("testVoiceBtn").addEventListener("click", async () => {
+            unlockAudioPlayback();
+            const ok = await speakProspect("Bonjour, je suis le prospect. Oui bonjour ?");
+            if (!ok) {
+                alert("Aucun son.\n\n1. Lancez : ./AI_Call_Simulator/web/start.sh (ou tts_server.py)\n2. Ouvrez http://localhost:8080/simulation.html depuis AI_Call_Simulator/web/\n3. Cochez « Voix du prospect »\n4. Vérifiez le volume du Mac");
+            }
+        });
+
+        stopBtn.addEventListener('click', async () => {
+            if (isListening) {
+                try { recognition.stop(); } catch (_) {}
+                isListening = false;
+                recordTimer.textContent = "";
+                talkBtn.textContent = "🎤 Cliquer pour parler";
+                talkBtn.style.background = "";
+            }
+            if (synth.speaking) synth.cancel();
+            if (lastProspectAudio) {
+                lastProspectAudio.pause();
+                if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
+                lastProspectAudio = null;
+            }
+
+            setStatus("Génération de l'évaluation...", "status-thinking");
+            const apiKey = getApiKey();
+            const evaluationData = await showEvaluation(apiKey);
+            setStatus("Enregistrement de la conversation...", "status-thinking");
+            await saveConversationToDb(evaluationData);
+            resetUi();
+        });
+
+        document.getElementById("retryEvalBtn").addEventListener("click", async () => {
+            const apiKey = getApiKey();
+            if (!apiKey) return alert("Clé API OpenRouter requise.");
+            const retryBtn = document.getElementById("retryEvalBtn");
+            retryBtn.disabled = true;
+            retryBtn.textContent = "Évaluation en cours…";
+            try {
+                const parsed = await callEvaluationLLM(apiKey);
+                evalContent.innerHTML = renderEvaluationReport(parsed, "llm");
+                retryBtn.style.display = "none";
+                await saveConversationToDb(parsed);
+            } catch (e) {
+                alert("Évaluation IA échouée :\n" + e.message + "\n\nVérifiez openrouter.ai/settings/credits et réessayez.");
+            } finally {
+                retryBtn.disabled = false;
+                retryBtn.textContent = "🔄 Relancer l'évaluation IA";
+            }
+        });
+
+        if (location.protocol === "file:") {
+            alert("⚠ Ouvrez cette page via un serveur HTTP (ex. http://localhost:8080/simulation.html ou votre URL d'hébergement).");
+        }
+
+        const appUrlLabel = document.getElementById("appUrlLabel");
+        if (appUrlLabel) {
+            appUrlLabel.textContent = location.origin + location.pathname;
+        }
+
+        applyHostedConfig();
+
+        ensureVoices();
+        checkTtsServer();
+        checkDbServer();
+    })();
+    </script>
+</body>
+</html>

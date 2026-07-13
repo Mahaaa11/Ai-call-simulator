@@ -1,0 +1,215 @@
+{
+  "source": "Objections commerciales + appels réels",
+  "objections": [
+    {
+      "profile": "Aggressive customer",
+      "difficulty": "Intermediate",
+      "objection": "Ça ne m'intéresse pas.",
+      "expected_answer": "Je comprends que vous soyez sollicité par téléphone. Nous ne sommes pas un concurrent de votre fournisseur actuel. Je vous contacte dans le cadre d'une étude sur les augmentations tarifaires de l'énergie.",
+      "easy_reaction": "Ah d'accord, je vous écoute.",
+      "intermediate_reaction": "Oui mais je reçois beaucoup d'appels comme ça.",
+      "difficult_reaction": "Franchement ça ne m'intéresse toujours pas.",
+      "emotional_evolution": "Bonne réponse: curiosité augmente. Réponse moyenne: reste méfiant. Mauvaise réponse: raccrochage possible."
+    },
+    {
+      "profile": "Aggressive customer",
+      "difficulty": "Advanced",
+      "objection": "Franchement ça ne m'intéresse toujours pas.",
+      "expected_answer": "Je comprends que vous soyez souvent sollicité. L'appel concerne uniquement une vérification rapide des augmentations tarifaires de l'énergie, pas un changement forcé de fournisseur.",
+      "easy_reaction": "Bon, expliquez rapidement.",
+      "intermediate_reaction": "Je reste méfiant, mais allez-y.",
+      "difficult_reaction": "Non, c'est terminé.",
+      "emotional_evolution": "Bonne réponse: curiosité augmente. Réponse moyenne: méfiance maintenue. Mauvaise réponse: raccrochage possible."
+    },
+    {
+      "profile": "Aggressive customer",
+      "difficulty": "Beginner",
+      "objection": "Laissez-moi tranquille, je n'ai pas le temps pour ça.",
+      "expected_answer": "Je comprends, je serai très bref. C'est juste une vérification rapide sur vos factures d'énergie.",
+      "easy_reaction": "Allez-y, mais faites court.",
+      "intermediate_reaction": "Encore un appel commercial…",
+      "difficult_reaction": "Non merci, au revoir.",
+      "emotional_evolution": "Bonne réponse: écoute un peu. Mauvaise réponse: raccrochage."
+    },
+    {
+      "profile": "Busy customer",
+      "difficulty": "Beginner",
+      "objection": "Je suis occupé, je n'ai pas le temps.",
+      "expected_answer": "Je comprends parfaitement, je serai très bref. Dites-moi simplement si vos factures ont augmenté ces derniers mois.",
+      "easy_reaction": "D'accord allez-y rapidement.",
+      "intermediate_reaction": "Vous avez une minute maximum.",
+      "difficult_reaction": "Faites vite sinon je raccroche.",
+      "emotional_evolution": "Bonne réponse: patience augmente. Réponse longue: patience diminue."
+    },
+    {
+      "profile": "Busy customer",
+      "difficulty": "Intermediate",
+      "objection": "Je suis pressé, qu'est-ce que vous voulez exactement ?",
+      "expected_answer": "Très rapidement : je vérifie si vous payez le bon tarif sur votre électricité, sans engagement.",
+      "easy_reaction": "D'accord, mais faites vite.",
+      "intermediate_reaction": "Une minute, pas une de plus.",
+      "difficult_reaction": "Là je raccroche.",
+      "emotional_evolution": "Réponse courte: continue. Réponse longue: raccrochage."
+    },
+    {
+      "profile": "Busy customer",
+      "difficulty": "Advanced",
+      "objection": "Vous avez une minute maximum, sinon je raccroche.",
+      "expected_answer": "Je comprends parfaitement, je serai très bref. Dites-moi simplement si vos factures ont augmenté ces derniers mois.",
+      "easy_reaction": "Allez-y, mais rapidement.",
+      "intermediate_reaction": "Une minute, pas plus.",
+      "difficult_reaction": "Vous perdez du temps, au revoir.",
+      "emotional_evolution": "Bonne réponse: patience augmente. Réponse longue: raccrochage."
+    },
+    {
+      "profile": "Suspicious customer",
+      "difficulty": "Intermediate",
+      "objection": "Je ne veux pas changer de fournisseur.",
+      "expected_answer": "Je comprends. Notre objectif n'est pas de vous faire changer à tout prix. Nous vérifions simplement si vous payez le juste prix. Si votre offre est déjà avantageuse, je vous conseillerai de la conserver.",
+      "easy_reaction": "Ah d'accord, dans ce cas je veux bien vérifier.",
+      "intermediate_reaction": "Je suis satisfait de mon fournisseur actuel.",
+      "difficult_reaction": "Je ne changerai jamais de fournisseur.",
+      "emotional_evolution": "Bonne réponse: confiance augmente. Réponse agressive: confiance chute."
+    },
+    {
+      "profile": "Suspicious customer",
+      "difficulty": "Advanced",
+      "objection": "Comment avez-vous eu mon nom ou mon adresse ?",
+      "expected_answer": "Les appels ne sont pas nominatifs. Les informations sont demandées uniquement pour réaliser un comparatif personnalisé.",
+      "easy_reaction": "D'accord je comprends.",
+      "intermediate_reaction": "Vous êtes sûr que mes données sont protégées ?",
+      "difficult_reaction": "Je n'aime pas communiquer mes informations personnelles.",
+      "emotional_evolution": "Bonne réponse: confiance augmente. Réponse floue: méfiance augmente."
+    },
+    {
+      "profile": "Suspicious customer",
+      "difficulty": "Beginner",
+      "objection": "C'est une arnaque ou quoi ?",
+      "expected_answer": "Je comprends votre méfiance. Nous sommes un comparateur d'énergie, l'appel est gratuit et sans engagement.",
+      "easy_reaction": "Bon, expliquez-moi qui vous êtes.",
+      "intermediate_reaction": "Je ne fais pas confiance aux appels comme ça.",
+      "difficult_reaction": "Non merci, je raccroche.",
+      "emotional_evolution": "Bonne réponse: écoute. Mauvaise réponse: blocage."
+    },
+    {
+      "profile": "Curious customer",
+      "difficulty": "Advanced",
+      "objection": "Je dois réfléchir avec mon conjoint.",
+      "expected_answer": "Je comprends. Avant cela, y a-t-il un point qui vous semble encore flou ou qui vous empêche d'être totalement convaincu ?",
+      "easy_reaction": "Non, tout est clair.",
+      "intermediate_reaction": "J'aimerais quand même avoir l'avis de mon conjoint.",
+      "difficult_reaction": "Je ne prendrai aucune décision aujourd'hui.",
+      "emotional_evolution": "Bonne réponse: ouverture. Mauvaise réponse: report de décision."
+    },
+    {
+      "profile": "Curious customer",
+      "difficulty": "Intermediate",
+      "objection": "Quelle est la différence avec mon offre actuelle ?",
+      "expected_answer": "Bonne question. On compare le prix du kWh et le mode de facturation, sans changer votre consommation.",
+      "easy_reaction": "D'accord, montrez-moi concrètement.",
+      "intermediate_reaction": "Il faudra me donner des chiffres précis.",
+      "difficult_reaction": "Sans chiffres je ne peux pas décider.",
+      "emotional_evolution": "Réponse concrète: intérêt monte. Réponse vague: scepticisme."
+    },
+    {
+      "profile": "Curious customer",
+      "difficulty": "Beginner",
+      "objection": "Vous proposez quoi exactement ?",
+      "expected_answer": "Un comparatif gratuit pour voir si vous pouvez payer moins cher sur l'électricité, sans engagement.",
+      "easy_reaction": "D'accord, je vous écoute.",
+      "intermediate_reaction": "Expliquez-moi comment ça marche.",
+      "difficult_reaction": "Je ne comprends pas l'intérêt pour moi.",
+      "emotional_evolution": "Bonne réponse: curiosité. Mauvaise réponse: désintérêt."
+    },
+    {
+      "profile": "Well-informed customer",
+      "difficulty": "Intermediate",
+      "objection": "Je suis satisfait de mon fournisseur actuel et je connais déjà ce type d'offre.",
+      "expected_answer": "Je comprends. L'objectif n'est pas de vous faire changer à tout prix, mais de vérifier si vous payez le juste prix. Si votre offre actuelle est déjà meilleure, il faut la conserver.",
+      "easy_reaction": "D'accord, on peut comparer rapidement.",
+      "intermediate_reaction": "Il faudra être concret, je connais déjà les offres du marché.",
+      "difficult_reaction": "Je ne vois pas ce que vous pouvez m'apporter de plus.",
+      "emotional_evolution": "Bonne réponse: intérêt augmente. Réponse vague: scepticisme."
+    },
+    {
+      "profile": "Well-informed customer",
+      "difficulty": "Advanced",
+      "objection": "J'ai déjà comparé, votre offre n'est pas meilleure.",
+      "expected_answer": "Vous avez raison d'être vigilant. On vérifie le tarif au kWh et l'abonnement compteur, pas seulement le fournisseur.",
+      "easy_reaction": "Montrez-moi le détail au kWh.",
+      "intermediate_reaction": "J'ai déjà un tarif fixe, difficile de faire mieux.",
+      "difficult_reaction": "Non, j'ai déjà la meilleure offre.",
+      "emotional_evolution": "Chiffres précis: écoute. Argument vague: refus."
+    },
+    {
+      "profile": "Well-informed customer",
+      "difficulty": "Beginner",
+      "objection": "Je connais déjà les tarifs du marché.",
+      "expected_answer": "Parfait, alors on ira vite : je compare votre tarif actuel avec ce qui existe aujourd'hui.",
+      "easy_reaction": "D'accord, comparez.",
+      "intermediate_reaction": "Vous connaissez mon fournisseur actuel ?",
+      "difficult_reaction": "Je doute que vous puissiez faire mieux.",
+      "emotional_evolution": "Réponse factuelle: intérêt. Réponse commerciale: rejet."
+    },
+    {
+      "profile": "Busy customer",
+      "difficulty": "Beginner",
+      "objection": "Avez-vous reçu le mail d'augmentation des tarifs de votre fournisseur ?",
+      "expected_answer": "Je vous contacte suite à l'augmentation tarifaire annoncée par votre fournisseur. Avez-vous bien reçu ce mail ?",
+      "easy_reaction": "Oui, je l'ai reçu.",
+      "intermediate_reaction": "Oui je crois, mais je n'ai pas encore regardé.",
+      "difficult_reaction": "Non, je ne l'ai pas vu.",
+      "emotional_evolution": "Question claire: répond oui/non. Réponse floue: méfiance."
+    },
+    {
+      "profile": "Busy customer",
+      "difficulty": "Intermediate",
+      "objection": "Mail d'augmentation tarifaire — avez-vous reçu l'information ?",
+      "expected_answer": "C'est concernant le mail d'augmentation de votre fournisseur actuel. L'avez-vous bien reçu ?",
+      "easy_reaction": "Oui, je l'ai eu.",
+      "intermediate_reaction": "Peut-être, je n'ai pas fait attention.",
+      "difficult_reaction": "Je reçois trop de mails, je ne sais pas.",
+      "emotional_evolution": "Réponse directe: continue. Évitement: impatience."
+    },
+    {
+      "profile": "Aggressive customer",
+      "difficulty": "Beginner",
+      "objection": "Encore un appel sur les factures d'énergie.",
+      "expected_answer": "Je comprends. C'est simplement pour vérifier si vous avez reçu le mail d'augmentation de votre fournisseur.",
+      "easy_reaction": "Oui, j'ai reçu le mail.",
+      "intermediate_reaction": "Oui mais ça ne m'intéresse pas.",
+      "difficult_reaction": "Non et je n'ai pas le temps.",
+      "emotional_evolution": "Bonne accroche: écoute. Mauvaise: raccrochage."
+    },
+    {
+      "profile": "Suspicious customer",
+      "difficulty": "Beginner",
+      "objection": "Pourquoi me parlez-vous d'un mail d'augmentation ?",
+      "expected_answer": "Votre fournisseur a envoyé une notification d'augmentation tarifaire. Je vérifie si vous l'avez bien reçue.",
+      "easy_reaction": "Oui, je l'ai reçue.",
+      "intermediate_reaction": "Je ne fais pas confiance à ces mails.",
+      "difficult_reaction": "Comment savez-vous que j'ai reçu un mail ?",
+      "emotional_evolution": "Transparence: confiance. Flou: méfiance."
+    },
+    {
+      "profile": "Curious customer",
+      "difficulty": "Beginner",
+      "objection": "Quel mail d'augmentation parlez-vous ?",
+      "expected_answer": "Le mail de votre fournisseur actuel concernant la hausse des tarifs électricité/gaz.",
+      "easy_reaction": "Ah oui, je l'ai reçu.",
+      "intermediate_reaction": "Oui, mais je ne l'ai pas encore lu.",
+      "difficult_reaction": "Je ne sais pas de quel mail vous parlez.",
+      "emotional_evolution": "Précision: curiosité. Vague: scepticisme."
+    },
+    {
+      "profile": "Well-informed customer",
+      "difficulty": "Beginner",
+      "objection": "J'ai déjà vu l'augmentation sur ma facture.",
+      "expected_answer": "Exactement, c'est bien ce mail ou cette notification d'augmentation que je mentionne.",
+      "easy_reaction": "Oui, je l'ai bien reçu.",
+      "intermediate_reaction": "Oui, et je connais déjà le montant.",
+      "difficult_reaction": "Oui mais je sais déjà gérer mes contrats.",
+      "emotional_evolution": "Reconnaissance expertise: écoute. Condescendance: rejet."
+    }
+  ]
+}

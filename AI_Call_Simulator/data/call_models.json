@@ -1,0 +1,617 @@
+{
+  "source": "Appels réels ABDELLI, ADEMARD, AHMED + knowledge base",
+  "models": {
+    "Busy customer": {
+      "name": "Client pressé",
+      "stages": [
+        {
+          "id": "opening",
+          "label": "Accroche",
+          "turn": 1,
+          "customer_examples": [
+            "Oui bonjour.",
+            "Oui mais faites vite.",
+            "J'ai une minute, c'est tout."
+          ],
+          "good_agent": "D'accord allez-y, mais faites court.",
+          "neutral_agent": "Oui, qu'est-ce que c'est exactement ?",
+          "bad_agent": "Écoutez j'ai pas le temps, dépêchez-vous."
+        },
+        {
+          "id": "mail_tariff",
+          "label": "Mail augmentation tarifaire",
+          "turn": 1,
+          "customer_examples": [
+            "Oui, je l'ai reçu.",
+            "Oui je crois, mais je n'ai pas encore regardé.",
+            "Non, je ne l'ai pas vu."
+          ],
+          "good_agent": "Oui, je l'ai reçu.",
+          "neutral_agent": "Oui je crois, pas encore regardé.",
+          "bad_agent": "Non, je ne l'ai pas vu."
+        },
+        {
+          "id": "provider",
+          "label": "Fournisseur actuel",
+          "turn": 2,
+          "customer_examples": [
+            "Alpiq.",
+            "EDF.",
+            "TotalEnergies."
+          ],
+          "good_agent": "Oui c'est ça.",
+          "neutral_agent": "Pourquoi vous me demandez ça ?",
+          "bad_agent": "Vous avez déjà l'info non ?"
+        },
+        {
+          "id": "billing",
+          "label": "Facture / consommation",
+          "turn": 3,
+          "customer_examples": [
+            "Je paye à la consommation.",
+            "Ça dépend des mois.",
+            "Je ne sais pas exactement."
+          ],
+          "good_agent": "D'accord, je vois.",
+          "neutral_agent": "Je sais pas trop, ça varie.",
+          "bad_agent": "Vous pouvez pas regarder vous-même ?"
+        },
+        {
+          "id": "kwh_price",
+          "label": "Prix du kWh",
+          "turn": 4,
+          "customer_examples": [
+            "Je ne sais pas du tout.",
+            "Non, aucune idée.",
+            "Euh… non."
+          ],
+          "good_agent": "D'accord pas de souci.",
+          "neutral_agent": "Non, je ne connais pas le tarif.",
+          "bad_agent": "C'est vous le spécialiste, non ?"
+        },
+        {
+          "id": "offer_intro",
+          "label": "Proposition comparatif",
+          "turn": 5,
+          "customer_examples": [
+            "D'accord.",
+            "Vous proposez quoi concrètement ?",
+            "C'est sans engagement ?"
+          ],
+          "good_agent": "D'accord, continuez rapidement.",
+          "neutral_agent": "Expliquez en deux mots.",
+          "bad_agent": "Allez-y mais vite."
+        },
+        {
+          "id": "housing",
+          "label": "Infos logement",
+          "turn": 6,
+          "customer_examples": [
+            "Oui.",
+            "Appartement.",
+            "Locataire.",
+            "Deux personnes."
+          ],
+          "good_agent": "Oui c'est ça.",
+          "neutral_agent": "Pourquoi toutes ces questions ?",
+          "bad_agent": "On peut accélérer ?"
+        },
+        {
+          "id": "offer_detail",
+          "label": "Détail offre",
+          "turn": 7,
+          "customer_examples": [
+            "Le réel.",
+            "Je préfère payer ma consommation réelle.",
+            "Pas de mensualité fixe."
+          ],
+          "good_agent": "D'accord, le réel c'est bien.",
+          "neutral_agent": "Et le prix au kWh c'est combien ?",
+          "bad_agent": "Vous m'avez déjà dit l'essentiel ?"
+        },
+        {
+          "id": "objection",
+          "label": "Objection / hésitation",
+          "turn": 8,
+          "customer_examples": [
+            "Je suis pressé.",
+            "Une minute maximum.",
+            "Faites vite sinon je raccroche."
+          ],
+          "good_agent": "Bon d'accord.",
+          "neutral_agent": "J'ai pas le temps là.",
+          "bad_agent": "Là je raccroche."
+        }
+      ]
+    },
+    "Aggressive customer": {
+      "name": "Client agressif",
+      "stages": [
+        {
+          "id": "opening",
+          "label": "Accroche",
+          "turn": 1,
+          "customer_examples": [
+            "Oui ?",
+            "Qu'est-ce que vous voulez ?",
+            "Encore un appel commercial…"
+          ],
+          "good_agent": "Bon, allez-y rapidement.",
+          "neutral_agent": "Ça ne m'intéresse pas.",
+          "bad_agent": "Non merci, au revoir."
+        },
+        {
+          "id": "mail_tariff",
+          "label": "Mail augmentation tarifaire",
+          "turn": 1,
+          "customer_examples": [
+            "Oui, je l'ai reçu.",
+            "Oui je crois, mais je n'ai pas encore regardé.",
+            "Non, je ne l'ai pas vu."
+          ],
+          "good_agent": "Oui, je l'ai reçu.",
+          "neutral_agent": "Oui je crois, pas encore regardé.",
+          "bad_agent": "Non, je ne l'ai pas vu."
+        },
+        {
+          "id": "provider",
+          "label": "Fournisseur actuel",
+          "turn": 2,
+          "customer_examples": [
+            "Alpiq.",
+            "EDF.",
+            "Et alors ?"
+          ],
+          "good_agent": "Oui, et alors ?",
+          "neutral_agent": "Pourquoi ça vous regarde ?",
+          "bad_agent": "Vous allez me vendre quelque chose c'est ça ?"
+        },
+        {
+          "id": "billing",
+          "label": "Facture",
+          "turn": 3,
+          "customer_examples": [
+            "Oui mes factures ont augmenté.",
+            "Je sais, tout augmente.",
+            "Et votre point c'est quoi ?"
+          ],
+          "good_agent": "Hmm, d'accord.",
+          "neutral_agent": "Oui comme tout le monde.",
+          "bad_agent": "Vous croyez que je suis idiot ?"
+        },
+        {
+          "id": "kwh_price",
+          "label": "Prix kWh",
+          "turn": 4,
+          "customer_examples": [
+            "Je ne sais pas.",
+            "Vous me prenez pour qui ?",
+            "Non."
+          ],
+          "good_agent": "Bon…",
+          "neutral_agent": "Franchement ça ne m'intéresse toujours pas.",
+          "bad_agent": "Laissez-moi tranquille."
+        },
+        {
+          "id": "offer_intro",
+          "label": "Proposition",
+          "turn": 5,
+          "customer_examples": [
+            "C'est une arnaque ?",
+            "Vous êtes qui exactement ?",
+            "Sans engagement vous dites ?"
+          ],
+          "good_agent": "Expliquez, je vous écoute.",
+          "neutral_agent": "Oui mais je reçois beaucoup d'appels comme ça.",
+          "bad_agent": "Non c'est terminé."
+        },
+        {
+          "id": "housing",
+          "label": "Questions logement",
+          "turn": 6,
+          "customer_examples": [
+            "Pourquoi ?",
+            "Oui appartement.",
+            "C'est obligatoire ?"
+          ],
+          "good_agent": "D'accord.",
+          "neutral_agent": "Je vois pas le rapport.",
+          "bad_agent": "Je ne donne rien."
+        },
+        {
+          "id": "offer_detail",
+          "label": "Détail offre",
+          "turn": 7,
+          "customer_examples": [
+            "Montrez-moi que c'est intéressant.",
+            "Combien au kWh ?",
+            "Mieux que mon offre actuelle ?"
+          ],
+          "good_agent": "Bon, continuez.",
+          "neutral_agent": "Je reste méfiant.",
+          "bad_agent": "Non merci."
+        },
+        {
+          "id": "objection",
+          "label": "Objection finale",
+          "turn": 8,
+          "customer_examples": [
+            "Franchement ça ne m'intéresse toujours pas.",
+            "Non c'est terminé.",
+            "Arrêtez de m'appeler."
+          ],
+          "good_agent": "Hmm d'accord…",
+          "neutral_agent": "Je reste méfiant, mais allez-y.",
+          "bad_agent": "Au revoir."
+        }
+      ]
+    },
+    "Suspicious customer": {
+      "name": "Client méfiant",
+      "stages": [
+        {
+          "id": "opening",
+          "label": "Accroche",
+          "turn": 1,
+          "customer_examples": [
+            "Oui bonjour.",
+            "C'est qui ?",
+            "Vous êtes de quelle société ?"
+          ],
+          "good_agent": "Bon, expliquez-moi qui vous êtes.",
+          "neutral_agent": "C'est une arnaque ou quoi ?",
+          "bad_agent": "Non merci, je raccroche."
+        },
+        {
+          "id": "mail_tariff",
+          "label": "Mail augmentation tarifaire",
+          "turn": 1,
+          "customer_examples": [
+            "Oui, je l'ai reçu.",
+            "Oui je crois, mais je n'ai pas encore regardé.",
+            "Non, je ne l'ai pas vu."
+          ],
+          "good_agent": "Oui, je l'ai reçu.",
+          "neutral_agent": "Oui je crois, pas encore regardé.",
+          "bad_agent": "Non, je ne l'ai pas vu."
+        },
+        {
+          "id": "provider",
+          "label": "Fournisseur",
+          "turn": 2,
+          "customer_examples": [
+            "Alpiq.",
+            "EDF.",
+            "Je ne veux pas changer de fournisseur."
+          ],
+          "good_agent": "Ah d'accord, dans ce cas je veux bien vérifier.",
+          "neutral_agent": "Je suis satisfait de mon fournisseur actuel.",
+          "bad_agent": "Je ne changerai jamais."
+        },
+        {
+          "id": "billing",
+          "label": "Facture",
+          "turn": 3,
+          "customer_examples": [
+            "Oui un peu.",
+            "Je ne sais pas trop.",
+            "Pourquoi vous me demandez ça ?"
+          ],
+          "good_agent": "D'accord je comprends.",
+          "neutral_agent": "Mes données sont protégées ?",
+          "bad_agent": "Je n'aime pas communiquer mes infos."
+        },
+        {
+          "id": "kwh_price",
+          "label": "Prix kWh",
+          "turn": 4,
+          "customer_examples": [
+            "Je ne sais pas.",
+            "Non.",
+            "Comment avez-vous eu mon numéro ?"
+          ],
+          "good_agent": "D'accord je comprends.",
+          "neutral_agent": "Vous êtes sûr que mes données sont protégées ?",
+          "bad_agent": "Je ne fais pas confiance."
+        },
+        {
+          "id": "offer_intro",
+          "label": "Proposition",
+          "turn": 5,
+          "customer_examples": [
+            "C'est gratuit ?",
+            "Sans engagement ?",
+            "Vous allez vendre mes données ?"
+          ],
+          "good_agent": "Bon, je vous écoute.",
+          "neutral_agent": "Je reste méfiant.",
+          "bad_agent": "Non merci."
+        },
+        {
+          "id": "housing",
+          "label": "Logement",
+          "turn": 6,
+          "customer_examples": [
+            "Oui.",
+            "Appartement.",
+            "Pourquoi l'adresse ?"
+          ],
+          "good_agent": "D'accord.",
+          "neutral_agent": "C'est obligatoire de répondre ?",
+          "bad_agent": "Je ne donne pas mon adresse au téléphone."
+        },
+        {
+          "id": "offer_detail",
+          "label": "Détail offre",
+          "turn": 7,
+          "customer_examples": [
+            "Je veux voir par écrit.",
+            "C'est enregistré l'appel ?",
+            "D'accord mais je vérifie après."
+          ],
+          "good_agent": "D'accord, je veux bien vérifier.",
+          "neutral_agent": "Je suis satisfait de mon fournisseur.",
+          "bad_agent": "Non, trop de questions."
+        },
+        {
+          "id": "objection",
+          "label": "Objection données",
+          "turn": 8,
+          "customer_examples": [
+            "Comment avez-vous eu mon nom ?",
+            "Je n'aime pas donner mon RIB.",
+            "Un minute…"
+          ],
+          "good_agent": "D'accord je comprends.",
+          "neutral_agent": "Vous êtes sûr que c'est sécurisé ?",
+          "bad_agent": "Non, je raccroche."
+        }
+      ]
+    },
+    "Curious customer": {
+      "name": "Client curieux",
+      "stages": [
+        {
+          "id": "opening",
+          "label": "Accroche",
+          "turn": 1,
+          "customer_examples": [
+            "Oui bonjour.",
+            "Bonjour, c'est à propos de quoi ?",
+            "D'accord je vous écoute."
+          ],
+          "good_agent": "D'accord, je vous écoute.",
+          "neutral_agent": "Vous proposez quoi exactement ?",
+          "bad_agent": "Je ne comprends pas l'intérêt."
+        },
+        {
+          "id": "mail_tariff",
+          "label": "Mail augmentation tarifaire",
+          "turn": 1,
+          "customer_examples": [
+            "Oui, je l'ai reçu.",
+            "Oui je crois, mais je n'ai pas encore regardé.",
+            "Non, je ne l'ai pas vu."
+          ],
+          "good_agent": "Oui, je l'ai reçu.",
+          "neutral_agent": "Oui je crois, pas encore regardé.",
+          "bad_agent": "Non, je ne l'ai pas vu."
+        },
+        {
+          "id": "provider",
+          "label": "Fournisseur",
+          "turn": 2,
+          "customer_examples": [
+            "Alpiq.",
+            "EDF.",
+            "TotalEnergies, pourquoi ?"
+          ],
+          "good_agent": "Oui c'est bien ça.",
+          "neutral_agent": "Quelle est la différence avec mon offre ?",
+          "bad_agent": "Et alors ?"
+        },
+        {
+          "id": "billing",
+          "label": "Facture",
+          "turn": 3,
+          "customer_examples": [
+            "Je paye à la consommation.",
+            "Ça varie selon les mois.",
+            "Je ne sais pas trop."
+          ],
+          "good_agent": "D'accord je vois.",
+          "neutral_agent": "Expliquez-moi comment ça marche.",
+          "bad_agent": "Je ne sais pas du tout."
+        },
+        {
+          "id": "kwh_price",
+          "label": "Prix kWh",
+          "turn": 4,
+          "customer_examples": [
+            "Je ne sais pas.",
+            "Non, aucune idée.",
+            "C'est combien chez vous ?"
+          ],
+          "good_agent": "D'accord pas de problème.",
+          "neutral_agent": "Il faudra me donner des chiffres précis.",
+          "bad_agent": "Sans chiffres je peux pas décider."
+        },
+        {
+          "id": "offer_intro",
+          "label": "Proposition",
+          "turn": 5,
+          "customer_examples": [
+            "D'accord, montrez-moi.",
+            "C'est quoi l'avantage ?",
+            "Sans engagement ?"
+          ],
+          "good_agent": "D'accord, montrez-moi concrètement.",
+          "neutral_agent": "Quelle est la différence avec mon offre actuelle ?",
+          "bad_agent": "Je ne vois pas l'intérêt."
+        },
+        {
+          "id": "housing",
+          "label": "Logement",
+          "turn": 6,
+          "customer_examples": [
+            "Oui.",
+            "Appartement.",
+            "Deux personnes.",
+            "Locataire."
+          ],
+          "good_agent": "Oui c'est ça.",
+          "neutral_agent": "Pourquoi ces infos ?",
+          "bad_agent": "C'est long…"
+        },
+        {
+          "id": "offer_detail",
+          "label": "Détail offre",
+          "turn": 7,
+          "customer_examples": [
+            "Le réel.",
+            "Quel prix au kWh ?",
+            "Sur combien de temps le contrat ?"
+          ],
+          "good_agent": "D'accord, le réel c'est bien.",
+          "neutral_agent": "Il me faut les chiffres au kWh.",
+          "bad_agent": "Je dois réfléchir."
+        },
+        {
+          "id": "objection",
+          "label": "Hésitation",
+          "turn": 8,
+          "customer_examples": [
+            "Je dois réfléchir avec mon conjoint.",
+            "Tout est clair mais j'hésite.",
+            "J'aimerais l'avis de mon conjoint."
+          ],
+          "good_agent": "Non, tout est clair.",
+          "neutral_agent": "J'aimerais quand même avoir l'avis de mon conjoint.",
+          "bad_agent": "Je ne prendrai aucune décision aujourd'hui."
+        }
+      ]
+    },
+    "Well-informed customer": {
+      "name": "Client bien informé",
+      "stages": [
+        {
+          "id": "opening",
+          "label": "Accroche",
+          "turn": 1,
+          "customer_examples": [
+            "Oui.",
+            "Je connais déjà ce type d'appel.",
+            "Bonjour, oui ?"
+          ],
+          "good_agent": "D'accord, comparez.",
+          "neutral_agent": "Je connais déjà les tarifs du marché.",
+          "bad_agent": "Je doute que vous fassiez mieux."
+        },
+        {
+          "id": "mail_tariff",
+          "label": "Mail augmentation tarifaire",
+          "turn": 1,
+          "customer_examples": [
+            "Oui, je l'ai reçu.",
+            "Oui je crois, mais je n'ai pas encore regardé.",
+            "Non, je ne l'ai pas vu."
+          ],
+          "good_agent": "Oui, je l'ai reçu.",
+          "neutral_agent": "Oui je crois, pas encore regardé.",
+          "bad_agent": "Non, je ne l'ai pas vu."
+        },
+        {
+          "id": "provider",
+          "label": "Fournisseur",
+          "turn": 2,
+          "customer_examples": [
+            "Alpiq.",
+            "EDF.",
+            "Je suis en tarif fixe chez EDF."
+          ],
+          "good_agent": "Oui.",
+          "neutral_agent": "Vous connaissez mon offre actuelle ?",
+          "bad_agent": "Je suis satisfait de mon fournisseur."
+        },
+        {
+          "id": "billing",
+          "label": "Facture",
+          "turn": 3,
+          "customer_examples": [
+            "Environ 200 euros.",
+            "Je paye à la consommation.",
+            "Je connais ma facture."
+          ],
+          "good_agent": "D'accord, on peut comparer.",
+          "neutral_agent": "Il faudra être concret.",
+          "bad_agent": "Je ne vois pas ce que vous apportez."
+        },
+        {
+          "id": "kwh_price",
+          "label": "Prix kWh",
+          "turn": 4,
+          "customer_examples": [
+            "Je suis à 0,20 environ.",
+            "Je connais mon tarif.",
+            "Montrez-moi le vôtre."
+          ],
+          "good_agent": "D'accord, montrez le détail au kWh.",
+          "neutral_agent": "J'ai déjà un tarif fixe, difficile de faire mieux.",
+          "bad_agent": "Non, j'ai déjà la meilleure offre."
+        },
+        {
+          "id": "offer_intro",
+          "label": "Proposition",
+          "turn": 5,
+          "customer_examples": [
+            "D'accord, comparez.",
+            "Quel fournisseur ?",
+            "Prix fixe combien de temps ?"
+          ],
+          "good_agent": "D'accord, on compare rapidement.",
+          "neutral_agent": "Il faudra être concret, je connais le marché.",
+          "bad_agent": "Je ne vois pas la plus-value."
+        },
+        {
+          "id": "housing",
+          "label": "Logement",
+          "turn": 6,
+          "customer_examples": [
+            "Oui.",
+            "Appartement.",
+            "Compteur 6 kVA."
+          ],
+          "good_agent": "Oui c'est ça.",
+          "neutral_agent": "Vous avez besoin de quoi d'autre ?",
+          "bad_agent": "Allez à l'essentiel."
+        },
+        {
+          "id": "offer_detail",
+          "label": "Détail offre",
+          "turn": 7,
+          "customer_examples": [
+            "Le réel.",
+            "0,13 en heures creuses ? Montrez-moi.",
+            "Abonnement compteur combien ?"
+          ],
+          "good_agent": "D'accord, le réel.",
+          "neutral_agent": "Montrez-moi le détail au kWh.",
+          "bad_agent": "J'ai déjà comparé, pas mieux."
+        },
+        {
+          "id": "objection",
+          "label": "Objection finale",
+          "turn": 8,
+          "customer_examples": [
+            "J'ai déjà comparé, pas mieux.",
+            "Je connais les offres du marché.",
+            "Il me faut mieux que mon tarif actuel."
+          ],
+          "good_agent": "D'accord, on compare.",
+          "neutral_agent": "Il faudra me battre sur le kWh.",
+          "bad_agent": "Non merci."
+        }
+      ]
+    }
+  }
+}

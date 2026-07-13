@@ -1,0 +1,364 @@
+Dialogue — ABDELLI___Nadia_AGT_3571_IND_262669_TEL_50000033765275428_TIME_123510
+================================================================================
+
+[001] (    0.9s) Agent: Allo ? Bonjour madame.
+[002] (    0.9s) Prospect: Bonjour.
+[003] (    0.9s) Agent: C'est Samuel de Société Ogini, je vous appelle concernant vos factures d'électricité, c'est vous qui gérez ?
+[004] (    0.9s) Prospect: Oui.
+[005] (   11.7s) Agent: Vous étiez quel fournisseur actuellement madame ?
+[006] (   11.7s) Prospect: Alpiq. D'accord.
+[007] (   11.7s) Agent: Vous payez combien par mois madame ? Alors ça dépend, ça dépend. Oui d'accord, madame votre facturation c'est un prix fixe au réel, vous payez chaque mois une montualité fixe ou vous payez ce que vous consommez seulement ?
+[008] (   24.1s) Prospect: Je paye ce que je consomme. D'accord.
+[009] (   33.1s) Agent: Madame, est-ce que vous avez une idée combien vous payez pour le prix de kWh ?
+[010] (   39.1s) Prospect: Oui, je ne sais pas trop, mais je ne sais pas, j'avoue je ne sais pas.
+[011] (   47.0s) Agent: Madame, est-ce que vous avez avec Alpiq, vous payez 26 centimes pour un kWh, mais avec d'autres fournisseurs vous pouvez seulement payer 20 centimes pour un kWh ? C'est un kWh qui fait la différence de 10% dans le prix de l'énergie madame ?
+[012] (   59.1s) Prospect: D'accord.
+[013] (   59.1s) Agent: Madame, est-ce que vous voulez qu'on lance un comparatif ? Cette opération ne prend pas plus de 5 minutes, d'accord ?
+[014] (   59.1s) Prospect: Oui, allez-y.
+[015] (   74.5s) Agent: Madame, vous pouvez me donner votre adresse ? Alors c'est 45 rue Général Leclerc, 93 000 fondis, à Renisebois. Vous pouvez répéter pour l'écrire le 45 rue ?
+[016] (   85.5s) Prospect: Général Leclerc.
+[017] (   92.2s) Agent: Génival, avec V, Génival.
+[018] (   92.2s) Prospect: Oui. C'est G-I-N-I-V-A-L. Alors, non, c'est G, le G garçon. C'est ça. E-N-A, non, N-E-R-A-L-E. D'accord.
+[019] (  118.1s) Agent: D'accord, après madame ?
+[020] (  118.1s) Prospect: Leclerc. Leclerc. L-E-R. Alors, Leclerc. L-E-C-L-E-R. Voilà. D'accord.
+[021] (  118.1s) Agent: Madame, votre code postal ?
+[022] (  118.1s) Prospect: 93 000 fondis.
+[023] (  148.4s) Agent: 93 000, madame ?
+[024] (  148.4s) Prospect: Fondis. Fondis, d'accord.
+[025] (  148.4s) Agent: Madame, vous pouvez me confirmer avec moi votre adresse e-mail, s'il vous plaît ?
+[026] (  162.8s) Prospect: C'est Abdeli, A-B-D-E-Z-L-I. D'accord. N-A-D-I-A. D'accord. 21.com.
+[027] (  162.8s) Agent: Une seconde, madame, s'il vous plaît. Madame, vous pouvez me donner votre date de naissance ?
+[028] (  191.1s) Prospect: 21 février, 88. Février, 1988. 88, d'accord.
+[029] (  191.1s) Agent: Vous avez seulement l'électricité, c'est ça, madame ?
+[030] (  191.1s) Prospect: Oui. D'accord.
+[031] (  208.7s) Agent: Madame, c'est 21 février, c'est ça ?
+[032] (  208.7s) Prospect: Oui. D'accord.
+[033] (  208.7s) Agent: Madame, votre nom, c'est Abdeline, c'est ça ?
+[034] (  236.5s) Prospect: Abdeli. Abdeli, d'accord.
+[035] (  236.5s) Agent: Il n'y a pas un N à la fin.
+[036] (  236.5s) Prospect: D'accord.
+[037] (  236.5s) Agent: Et votre prénom, c'est Nadia ?
+[038] (  236.5s) Prospect: Oui. D'accord.
+[039] (  236.5s) Agent: Une seconde, madame, s'il vous plaît. Madame, votre ville, c'est Rosny-Sauvois, c'est ça ?
+[040] (  236.5s) Prospect: Oui. D'accord.
+[041] (  346.1s) Agent: Une seconde, s'il vous plaît. Madame, je vous passe mon responsable.
+[042] (  346.1s) Prospect: Une seconde, s'il vous plaît. D'accord.
+[043] (  354.3s) Agent: Madame, Nadia, bonjour.
+[044] (  354.3s) Prospect: Bonjour. Oui, j'espère que vous allez bien. Ça va, merci. Très bien, merci.
+[045] (  359.1s) Agent: Je me présente, c'est monsieur Eric Mongo de la société Haugeny.com. Donc, vous savez, madame, nous sommes un comparateur en énergie. On travaille avec plusieurs fournisseurs d'électricité et de gaz. Du coup, pour vous, actuellement, vous êtes auprès de Alpique, c'est bien cela ?
+[046] (  366.2s) Prospect: Oui. C'est parfait.
+[047] (  374.8s) Agent: Vous payez combien par mois, s'il vous plaît, madame ?
+[048] (  374.8s) Prospect: Alors, je paye ce que je consomme.
+[049] (  374.8s) Agent: Du coup, ça a dû faire des saisons, des périodes, des mois.
+[050] (  384.5s) Prospect: D'accord, c'est parfait.
+[051] (  384.5s) Agent: Donc, vous payez à la consommation, c'est très bien. Vous avez une idée par rapport au prix de kWh actuel auprès de Alpique ou pas ?
+[052] (  392.5s) Prospect: Oui, je ne sais pas du tout. D'accord, pas de problème.
+[053] (  392.5s) Agent: Donc, aujourd'hui, vous êtes à 26 centimes pour chaque kWh consommé d'électricité. Et bien sûr, par la suite, on va essayer quand même de vous trouver une offre moins chère avec un prix de kWh moins cher. Et surtout, avec le même mode de facturation, ça veut dire que vous payerez toujours à la consommation, comme ça, vous ne serez pas impacté au niveau de la régularisation, d'accord ?
+[054] (  413.9s) Prospect: Oui. Voilà. Alors, le nom, s'il vous plaît, c'est ? Abdeli. Donc, Abdeli Nadia. C'est bien ça. C'est ça. C'est très bien.
+[055] (  427.0s) Agent: C'est parfait, madame.
+[056] (  427.0s) Prospect: Voilà, le compteur, il est bien à votre nom.
+[057] (  427.0s) Agent: On est bien d'accord ?
+[058] (  432.7s) Prospect: Oui. C'est très bien.
+[059] (  433.9s) Agent: C'est parfait, madame. Vous avez que l'électricité. Il n'y a pas de gaz à la maison ?
+[060] (  437.2s) Prospect: Non.
+[061] (  438.4s) Agent: Ça marche, madame.
+[062] (  438.4s) Prospect: Parfait.
+[063] (  438.4s) Agent: Bien sûr, madame, vous m'autorisez à accéder à vos données de consommation annuelles ?
+[064] (  444.6s) Prospect: Oui. Voilà, c'est parfait.
+[065] (  446.0s) Agent: Alors, donc, avant de continuer, je tiens à vous informer aussi que la conversation est enregistrée pour des raisons de qualité de service.
+[066] (  453.0s) Prospect: D'accord.
+[067] (  454.2s) Agent: Donc, là, madame, vous habitez bien à 45 rue du Général Leclerc, 93-110, à Rouen-et-Chaubois ?
+[068] (  461.2s) Prospect: C'est ça. Voilà.
+[069] (  462.6s) Agent: Et vous habitez à un appartement ?
+[070] (  464.6s) Prospect: Oui. D'accord.
+[071] (  466.0s) Agent: Elle fait combien de mètres carrés, s'il vous plaît ?
+[072] (  468.0s) Prospect: 58. 58.
+[073] (  470.5s) Agent: Bien sûr, c'est votre résidence principale ?
+[074] (  472.6s) Prospect: Oui.
+[075] (  473.7s) Agent: C'est parfait, madame. Vous êtes seule ?
+[076] (  475.8s) Prospect: Deux personnes. Deux personnes. C'est parfait.
+[077] (  477.3s) Agent: Et vous êtes propriétaire au locataire ?
+[078] (  481.3s) Prospect: Locataire. D'accord.
+[079] (  482.5s) Agent: Vous êtes née le 21 février 1988 ?
+[080] (  486.5s) Prospect: C'est ça.
+[081] (  487.9s) Agent: C'est très bien, madame.
+[082] (  487.9s) Prospect: Donc, le logement, il est ancien, là où vous habitez.
+[083] (  487.9s) Agent: Il fait plus de deux ans.
+[084] (  493.9s) Prospect: Oui.
+[085] (  495.2s) Agent: Ça marche, madame.
+[086] (  495.2s) Prospect: C'est parfait.
+[087] (  495.2s) Agent: Et vous êtes à la maison tous les jours ou que les soirs et les week-ends ?
+[088] (  499.4s) Prospect: Alors, une personne, presque tous les jours. D'accord.
+[089] (  505.4s) Agent: Je n'ai que deux jours par semaine où je ne suis pas à la maison.
+[090] (  508.4s) Prospect: D'accord. C'est parfait.
+[091] (  508.4s) Agent: Ça veut dire que vous faites du télétravail ?
+[092] (  511.4s) Prospect: Oui.
+[093] (  512.7s) Agent: D'accord, madame.
+[094] (  512.7s) Prospect: C'est très bien. C'est parfait.
+[095] (  514.7s) Agent: Le chauffage, il est électrique individuel ou bien il est à gaz ?
+[096] (  518.3s) Prospect: Électrique. Électrique individuelle.
+[097] (  519.3s) Agent: La même chose pour l'eau chaude ?
+[098] (  522.8s) Prospect: Oui. D'accord.
+[099] (  523.8s) Agent: Et le chauffage pendant l'hiver, là, compte, il fait vraiment froid. Il est toujours allumé ou seulement qu'on est à la maison ?
+[100] (  529.8s) Prospect: Oui. Non, non.
+[101] (  529.8s) Agent: Il est toujours allumé.
+[102] (  532.0s) Prospect: Il est toujours allumé.
+[103] (  532.0s) Agent: D'accord, madame.
+[104] (  532.0s) Prospect: C'est parfait. Voilà.
+[105] (  536.3s) Agent: Après, pour la cuisine, vous utilisez des plaques électriques ?
+[106] (  539.3s) Prospect: Oui. Ça marche. C'est parfait. Voilà.
+[107] (  541.9s) Agent: Vous n'avez pas une voiture électrique ?
+[108] (  545.8s) Prospect: Non.
+[109] (  546.8s) Agent: Et on a combien de radiateurs électriques à la maison ?
+[110] (  548.8s) Prospect: Deux. Deux radiateurs. Oui. Voilà.
+[111] (  556.3s) Agent: L'adresse-mé, c'est abdelli-nadia21, c'est ça ?
+[112] (  559.3s) Prospect: Oui. Abdelli-nadia21-gmail.com C'est ça. D'accord. Voilà. C'est parfait.
+[113] (  566.6s) Agent: Donc comme je viens de vous dire, madame, l'offre la plus adaptée pour vous, ce sera l'offre de Home Energy.
+[114] (  589.2s) Prospect: D'accord. D'accord. D'accord. D'accord. Le réel.
+[115] (  643.4s) Agent: Le réel, toujours à la consommation.
+[116] (  644.4s) Prospect: Oui.
+[117] (  645.4s) Agent: Donc on va garder le réel. C'est parfait, madame. Donc là, dites-moi s'il vous plaît, vous êtes prélevée quand auprès de Alpique ?
+[118] (  651.5s) Prospect: Le 30 du mois.
+[119] (  657.0s) Agent: Le 30 du mois.
+[120] (  657.0s) Prospect: D'accord. C'est parfait.
+[121] (  657.0s) Agent: Donc vous êtes prélevée toujours le 30. Du coup, pour ce mois-ci, vous n'avez pas encore eu le prélèvement ? Pas encore, mais j'ai eu la facture.
+[122] (  667.7s) Prospect: D'accord.
+[123] (  667.7s) Agent: Ça a été combien le montant sur la facture ?
+[124] (  670.7s) Prospect: Pour ce mois, j'étais à 200.
+[125] (  673.8s) Agent: 200 euros ?
+[126] (  674.8s) Prospect: Oui. D'accord. C'est un petit peu élevé auprès de Alpique.
+[127] (  677.8s) Agent: Mais bon, ça fait combien du temps que vous êtes chez Alpique ?
+[128] (  680.8s) Prospect: Ça fait, je crois, deux ans.
+[129] (  683.4s) Agent: Ça fait deux ans.
+[130] (  684.5s) Prospect: Oui, deux ans. D'accord.
+[131] (  685.5s) Agent: Vous êtes impactée un petit peu par les augmentations tarifaires.
+[132] (  688.5s) Prospect: Oui. C'est normal. C'est tout à fait normal.
+[133] (  691.7s) Agent: Donc là, avec le contrat, ou bien le nouveau contrat, madame,
+[134] (  695.7s) Prospect: il n'y aura pas d'augmentation tarifaire pendant deux années. D'accord ? D'accord.
+[135] (  699.7s) Agent: Donc depuis 2026, donc 2025 toute l'année,
+[136] (  702.8s) Prospect: et 2026 toute l'année, il n'y aura aucune augmentation tarifaire. D'accord. Voilà.
+[137] (  706.9s) Agent: Confirmez-moi, s'il vous plaît, madame Nadia, votre référence IBAN.
+[138] (  709.9s) Prospect: Sur le compteur ? Non, non, l'IBAN.
+[139] (  715.4s) Agent: Le compteur, c'est bon.
+[140] (  718.7s) Prospect: J'ai le compteur devant moi, donc j'ai toutes les informations de consommation.
+[141] (  721.7s) Agent: J'ai besoin de votre référence IBAN, le RIB, pour arrêter les prélèvements de Alpique
+[142] (  725.7s) Prospect: et mettre en place les nouveaux de Home Energy.
+[143] (  728.7s) Agent: Ah, le RIB ?
+[144] (  729.8s) Prospect: Oui. D'accord.
+[145] (  730.8s) Agent: Une minute, hein ?
+[146] (  734.1s) Prospect: D'accord.
+[147] (  734.1s) Agent: Pas ceci, madame.
+[148] (  734.1s) Prospect: Je patiente.
+[149] (  736.1s) Agent: Une minute, une minute.
+[150] (  740.4s) Prospect: D'accord.
+[151] (  740.4s) Agent: Pas de problème, madame.
+[152] (  740.4s) Prospect: Je patiente. Alors, c'est SR. Oui. 97. 97. 3000. 3000. 2000 chiffres. 2000 chiffres. 2100. 2100. 2100. 0006. 0006. 17. 68. 68. Z. Z de Zoé. 56. 56. Voilà, ça m'indique que c'est bon, madame. C'est le Cri des Lyonnais de Bourbigny. C'est ça. D'accord. C'est parfait. C'est très bien. Voilà.
+[153] (  824.5s) Agent: Donc, je vais revérifier avec vous, s'il vous plaît, madame, les éléments de votre contrat.
+[154] (  828.0s) Prospect: Donc, le nom, on a bien dit, c'est Nadia. Donc, N-A-D-I-A. D'accord ? Oui.
+[155] (  834.2s) Agent: Le prénom, plutôt, ça c'est le prénom.
+[156] (  835.2s) Prospect: Le nom, c'est Abdelie. Donc, A-B-D-E-Z-L-I. C'est ça ? C'est ça.
+[157] (  841.4s) Agent: Vous êtes tunisienne ?
+[158] (  842.4s) Prospect: Euh, non. Je n'ai rien. D'accord. C'est parfait.
+[159] (  847.3s) Agent: L'adresse mail, donc, c'est Abdelie.
+[160] (  849.6s) Prospect: A-B-D-E-Z-L-I-N-A-D-I-A-21-A-R-O-B-G-M-A-Y.com. Oui. Voilà.
+[161] (  856.6s) Agent: Et l'adresse, c'est 45 rue du général Leclerc.
+[162] (  858.6s) Prospect: 93-110-A-R-O-N-I-S-O-B-O-A. C'est bien cela, madame ? C'est ça, oui.
+[163] (  862.6s) Agent: C'est parfait, madame.
+[164] (  862.6s) Prospect: C'est très bien.
+[165] (  863.6s) Agent: Alors, donc, le prélèvement, vous voulez toujours le 30, madame ?
+[166] (  866.6s) Prospect: Oui. Ça m'arrange.
+[167] (  869.0s) Agent: Ça vous arrange le 30 ?
+[168] (  871.0s) Prospect: Oui. C'est parfait. Alors, je regarde. Tac, tac, tac. Voilà.
+[169] (  880.0s) Agent: Alors, seulement pour le top premier mois, madame, parce que là, votre contrat, normalement... Alors, votre contrat...
+[170] (  895.4s) Prospect: Voilà.
+[171] (  900.2s) Agent: Donc, votre contrat va commencer chez Home Energy le 25 du mois de janvier.
+[172] (  904.2s) Prospect: D'accord ? D'accord.
+[173] (  906.2s) Agent: Ça sera le 25.
+[174] (  907.4s) Prospect: Du coup, le mois de janvier,
+[175] (  909.4s) Agent: le premier prélèvement auprès de Home Energy,
+[176] (  912.5s) Prospect: ça ne sera pas le 30, mais ça sera le 11.
+[177] (  914.5s) Agent: Sauf que vous n'allez pas payer...
+[178] (  916.5s) Prospect: Ça veut dire toute la somme.
+[179] (  919.6s) Agent: En fait, ce que vous allez payer au mois de janvier,
+[180] (  922.7s) Prospect: ça sera que un prorata.
+[181] (  924.7s) Agent: Je vais vous dire tout de suite le montant.
+[182] (  926.7s) Prospect: Voilà.
+[183] (  929.9s) Agent: Donc, ce que vous allez payer, c'est seulement 15 euros au mois de janvier.
+[184] (  936.2s) Prospect: Donc, le 11 janvier, madame.
+[185] (  938.2s) Agent: Donc, notez bien, s'il vous plaît.
+[186] (  940.2s) Prospect: Le 11 janvier, vous allez payer 15 euros. D'accord ?
+[187] (  944.5s) Agent: Comme ça, votre contrat sera le 25 janvier.
+[188] (  947.5s) Prospect: Et comme ça, bien sûr, le mois prochain,
+[189] (  950.5s) Agent: vous n'aurez pas de prélèvement de Alpique.
+[190] (  952.5s) Prospect: D'accord.
+[191] (  953.5s) Agent: Automatiquement, Alpique, ils vont vous envoyer votre clôture, madame.
+[192] (  956.5s) Prospect: D'accord ? D'accord. Voilà.
+[193] (  959.8s) Agent: Alors, je vous rappelle aussi, madame,
+[194] (  961.8s) Prospect: que, bien sûr, que la conversation est enregistrée.
+[195] (  965.8s) Agent: Et s'il vous plaît, madame, on est bien d'accord que vous n'êtes ni sous tutelle, ni sous curatelle ?
+[196] (  969.8s) Prospect: Non. D'accord. C'est très bien. C'est parfait. Tac, tac, tac. Voilà.
+[197] (  975.9s) Agent: Donc, bien sûr, les prix seront révisés à chaque échéance. Vous serez informés 30 jours avant l'entrée en vigore du nouveau contrat,
+[198] (  981.9s) Prospect: avec la possibilité de refuser 15 jours avant,
+[199] (  985.0s) Agent: ce qui entraînera la résiliation à échéance. Et avant de continuer, je tiens à vous informer aussi
+[200] (  991.8s) Prospect: que, selon la réglementation française,
+[201] (  993.8s) Agent: nous devons raccrocher et vous rappeler
+[202] (  996.2s) Prospect: pour confirmer votre souscription.
+[203] (  998.2s) Agent: Cela vous permet de prendre le temps de réfléchir à cette offre.
+[204] ( 1001.3s) Prospect: Aussi, vous avez droit à 14 jours de rétractation
+[205] ( 1004.4s) Agent: que vous pouvez également utiliser
+[206] ( 1006.4s) Prospect: pour réfléchir à la proposition.
+[207] ( 1008.5s) Agent: Cependant, si vous voyez que la proposition vous convient,
+[208] ( 1011.5s) Prospect: bien sûr, vous pouvez renoncer à ces droits.
+[209] ( 1013.5s) Agent: Et vous pouvez, bien évidemment, résilier votre contrat
+[210] ( 1015.5s) Prospect: quand vous le souhaitez,
+[211] ( 1017.5s) Agent: vu que le marché de l'énergie est libéré depuis 2007.
+[212] ( 1020.7s) Prospect: D'accord. Très bien. Voilà.
+[213] ( 1021.7s) Agent: Maintenant, madame, je vous ai envoyé un code de quatre chiffres par SMS. Donc, s'il vous plaît, confirmez-moi
+[214] ( 1027.8s) Prospect: les quatre chiffres que vous avez reçus. Oui, j'ai bien reçu.
+[215] ( 1032.1s) Agent: Donc, le code, c'est ? Alors, je vais vous dire.
+[216] ( 1041.5s) Prospect: Alors, c'est pas celui-là. C'est celui-là. 9000. Voilà.
+[217] ( 1059.3s) Agent: Ça m'indique que c'est le bon, madame.
+[218] ( 1061.3s) Prospect: C'est parfait.
+[219] ( 1063.5s) Agent: Donc, je vais juste récapituler
+[220] ( 1065.5s) Prospect: tout ce qu'on a fait ensemble.
+[221] ( 1068.9s) Agent: Vous m'entendez là ?
+[222] ( 1068.9s) Prospect: Oui. Voilà.
+[223] ( 1071.1s) Agent: Donc, en tant que abonnée au génie, vous avez profité d'un comparatif gratuit
+[224] ( 1075.1s) Prospect: des prix de l'énergie.
+[225] ( 1077.3s) Agent: Suite à quoi je vous ai proposé votre nouveau fournisseur en énergie. Donc, madame, afin de valider votre contrat
+[226] ( 1083.5s) Prospect: de fourniture d'électricité, je dois réaliser un résumé exhaustif
+[227] ( 1087.5s) Agent: de tout ce que je viens de vous présenter.
+[228] ( 1089.7s) Prospect: Autorisez-vous à des fins de conformité
+[229] ( 1091.7s) Agent: d'enregistrer les minutes qui viennent. Sachez que vous avez le droit de refuser.
+[230] ( 1096.7s) Prospect: Non, non, je vous autorise. Voilà.
+[231] ( 1098.7s) Agent: Pour rappel, je suis monsieur Eric de la société au génie.com. Je vous ai contacté aujourd'hui pour vous proposer un contrat
+[232] ( 1106.8s) Prospect: de fourniture d'électricité de HomeEnergie.
+[233] ( 1108.8s) Agent: Donc, madame, est-ce que vous pouvez me confirmer les coordonnées communiquées ?
+[234] ( 1112.8s) Prospect: Donc, on a bien dit, le nom, c'est Abdelli.
+[235] ( 1114.8s) Agent: Le prénom, c'est Nadia.
+[236] ( 1116.8s) Prospect: L'adresse, c'est 45 rue Générale 113 110 à Ronis Chaubois. C'est bien cela.
+[237] ( 1125.1s) Agent: Et l'adresse mail, c'est abdelli nadia21
+[238] ( 1127.1s) Prospect: à robageme.com. C'est parfait.
+[239] ( 1129.6s) Agent: Vous me confirmez également
+[240] ( 1131.6s) Prospect: avoir plus de 18 ans, moins de 75 ans.
+[241] ( 1133.6s) Agent: Vous êtes ni sous tutelle,
+[242] ( 1135.6s) Prospect: ni sous curatelle. Voilà.
+[243] ( 1138.0s) Agent: Est-ce que vous pouvez me confirmer
+[244] ( 1140.1s) Prospect: que vous avez autorisé
+[245] ( 1142.1s) Agent: HomeEnergie à accéder à vos données
+[246] ( 1144.1s) Prospect: de consommation annuelle, à votre
+[247] ( 1146.1s) Agent: opus sans souscrite du compteur
+[248] ( 1148.1s) Prospect: du compteur ? Oui.
+[249] ( 1150.3s) Agent: Donc, l'offre que je vous ai proposé, madame, c'est l'offre HomeFix
+[250] ( 1154.3s) Prospect: deux ans Earthplane or Cause.
+[251] ( 1156.3s) Agent: Vous trouverez toutes ces caractéristiques
+[252] ( 1158.3s) Prospect: dans l'email que vous allez recevoir
+[253] ( 1160.3s) Agent: à la suite de notre appel. Vous m'avez indiqué choisir l'option Earthplane or Cause et vous me confirmez
+[254] ( 1166.5s) Prospect: que la puissance sous-crite choisie
+[255] ( 1168.5s) Agent: de votre compteur est de 6k via.
+[256] ( 1170.8s) Prospect: C'est bien cela. C'est ça.
+[257] ( 1172.8s) Agent: Je vous rappelle également que le prix de kWh en Earthplane c'est seulement
+[258] ( 1176.8s) Prospect: 13, en Earthplane c'est seulement 0,18, l'abonnement compteur
+[259] ( 1180.8s) Agent: seulement 10 euros, tout ça
+[260] ( 1182.8s) Prospect: en eurtax et contribution et tout
+[261] ( 1184.8s) Agent: ça est inclus bien sûr dans la mensualité.
+[262] ( 1186.8s) Prospect: D'accord ? Oui. Voilà.
+[263] ( 1188.8s) Agent: Le contrat est conclu pour
+[264] ( 1190.8s) Prospect: une durée déterminée de deux ans.
+[265] ( 1192.8s) Agent: Votre contrat est sans engagement. Je vous rappelle que vous disposez d'un délai
+[266] ( 1196.8s) Prospect: de rétractation de 14 jours. D'accord. Voilà.
+[267] ( 1199.2s) Agent: Vous me confirmez avoir bien compris, madame, que l'activation de votre contrat sera le 25
+[268] ( 1205.2s) Prospect: janvier 2025. Oui, très bien. Voilà.
+[269] ( 1207.3s) Agent: Vous me confirmez avoir bien compris qu'un premier prélèvement
+[270] ( 1211.3s) Prospect: correspondant au prorata de votre première mensualité sera réalisé
+[271] ( 1215.3s) Agent: 14 jours avant l'activation de votre contrat et ça sera 15 euros
+[272] ( 1219.3s) Prospect: le mois prochain. Oui. Voilà.
+[273] ( 1222.0s) Agent: Vous me confirmez avoir bien compris que vous changiez de fournisseur
+[274] ( 1226.0s) Prospect: pour rejoindre Home Energy
+[275] ( 1228.0s) Agent: à la date d'activation de votre compteur.
+[276] ( 1230.0s) Prospect: Oui.
+[277] ( 1230.0s) Agent: Et vous me confirmez
+[278] ( 1232.5s) Prospect: avoir bien compris que vous ne devez
+[279] ( 1234.5s) Agent: pas résilier votre contrat actuel
+[280] ( 1236.5s) Prospect: chez Alpique par vos soins
+[281] ( 1238.5s) Agent: afin de ne pas risquer une interruption
+[282] ( 1240.5s) Prospect: de service avant l'activation chez Home Energy. C'est ça, oui. C'est à nous de tout faire. Oui.
+[283] ( 1247.6s) Agent: Vous me confirmez, madame, avoir bien reçu
+[284] ( 1249.6s) Prospect: les 3 000 relatifs à votre subscription.
+[285] ( 1251.6s) Agent: Manda, c'est pas mal.
+[286] ( 1251.6s) Prospect: Bienvenue,
+[287] ( 1253.6s) Agent: mes signatures, accès à l'espace client,
+[288] ( 1255.6s) Prospect: les pierres jointes, les CGV, la grille
+[289] ( 1257.6s) Agent: tarifaire et les CPV.
+[290] ( 1257.6s) Prospect: Vérifiez,
+[291] ( 1259.7s) Agent: s'il vous plaît, si vous avez bien reçu les e-mails.
+[292] ( 1261.8s) Prospect: Comme ça, vous allez garder votre traçabilité. Oui. Voilà, c'est parfait.
+[293] ( 1266.0s) Agent: Et enfin, madame, est-ce que vous pouvez me confirmer
+[294] ( 1268.0s) Prospect: nous avoir fourni tous les éléments
+[295] ( 1270.0s) Agent: permettant d'établir au mieux
+[296] ( 1272.0s) Prospect: votre obidu annuel. Oui, très bien. Voilà. Avoir été informé
+[297] ( 1277.6s) Agent: du montant de votre mensualité estimée
+[298] ( 1279.6s) Prospect: quand je viens de vous dire 70 euros. Oui. Voilà. Et
+[299] ( 1285.5s) Agent: reconnaître que vous vous engagez à payer
+[300] ( 1287.5s) Prospect: votre consommation réelle. Oui. Voilà.
+[301] ( 1290.1s) Agent: Pour terminer, madame, je vous informe que vous pouvez vous inscrire gratuitement
+[302] ( 1294.2s) Prospect: à la liste d'oppositions
+[303] ( 1296.2s) Agent: pour ne pas recevoir les appels commerciaux.
+[304] ( 1298.2s) Prospect: D'accord.
+[305] ( 1298.2s) Agent: Et s'il vous plaît, madame,
+[306] ( 1300.5s) Prospect: prenez de quoi noter,
+[307] ( 1302.5s) Agent: je vais vous donner le numéro de téléphone du service
+[308] ( 1304.5s) Prospect: client Home Energy. D'accord. Donc 09 Oui. 70 70. Oui. 21, 25. 21, 25. Très bien.
+[309] ( 1317.6s) Agent: Donc là, c'est le numéro de téléphone du service client.
+[310] ( 1319.6s) Prospect: A titre
+[311] ( 1321.6s) Agent: transformatif, madame, le service client
+[312] ( 1323.6s) Prospect: Home Energy, c'est un service
+[313] ( 1325.6s) Agent: qui est, ça veut dire, très réactif. Surtout, madame, elle est joinable toute la semaine,
+[314] ( 1329.6s) Prospect: même le dimanche. D'accord.
+[315] ( 1331.6s) Agent: Donc du coup, si vous avez besoin de quoi que ce soit,
+[316] ( 1333.6s) Prospect: n'hésitez pas à appeler.
+[317] ( 1335.6s) Agent: N'hésitez pas aussi à nous appeler, à me
+[318] ( 1337.6s) Prospect: demander, monsieur Eric, comme ça, bien sûr,
+[319] ( 1339.6s) Agent: si vous avez des questions, on est là.
+[320] ( 1341.6s) Prospect: Et surtout, le 25 du mois, d'accord. Donc le 25
+[321] ( 1345.6s) Agent: du mois prochain, madame, vous allez appeler le service client.
+[322] ( 1347.6s) Prospect: D'accord. Oui.
+[323] ( 1349.9s) Agent: Et vous allez demander
+[324] ( 1352.0s) Prospect: la facturation réelle. D'accord.
+[325] ( 1354.0s) Agent: Parce que là maintenant, vous serez à une mensurité
+[326] ( 1356.0s) Prospect: de 70 euros, mais vous allez
+[327] ( 1358.0s) Agent: appeler, vous demandez la facturation
+[328] ( 1360.0s) Prospect: réelle. Sinon, vous pouvez
+[329] ( 1362.0s) Agent: le faire juste depuis votre espace client.
+[330] ( 1364.0s) Prospect: Donc l'espace client, c'est l'application
+[331] ( 1366.0s) Agent: Home Energy, c'est très développé. Vous allez choisir mensuel au lieu de
+[332] ( 1370.0s) Prospect: mensualité. D'accord. D'accord. Voilà.
+[333] ( 1372.0s) Agent: Dites-moi, s'il vous plaît,
+[334] ( 1374.0s) Prospect: si vous avez des questions, si tout est clair pour vous,
+[335] ( 1376.0s) Agent: madame Nadia.
+[336] ( 1376.0s) Prospect: Oui, c'est clair.
+[337] ( 1378.0s) Agent: C'est parfait, madame.
+[338] ( 1378.0s) Prospect: On vous remercie
+[339] ( 1380.0s) Agent: beaucoup, madame, pour votre confiance.
+[340] ( 1382.0s) Prospect: Je répète encore une fois, si vous avez besoin de quoi que ce soit,
+[341] ( 1384.0s) Agent: n'hésitez pas à prendre contact avec nous.
+[342] ( 1386.0s) Prospect: D'accord ?
+[343] ( 1386.0s) Agent: Donc si vous appelez le menu
+[344] ( 1388.0s) Prospect: au téléphone, vous demandez juste Monsieur Eric.
+[345] ( 1390.0s) Agent: Comme ça, bien sûr, on est là pour tout vous expliquer.
+[346] ( 1392.0s) Prospect: Et merci beaucoup pour votre confiance,
+[347] ( 1394.0s) Agent: pour votre ton accordé et surtout
+[348] ( 1396.0s) Prospect: pour les soins de vous. À notre point,
+[349] ( 1398.0s) Agent: j'ai oublié de vous annoncer, c'est que vous allez avoir, madame, un cadeau de 50 euros qu'on va n'avoir sur les factures.
+[350] ( 1404.1s) Prospect: Donc 25 euros la
+[351] ( 1406.1s) Agent: première année sur la toute dernière facture
+[352] ( 1408.1s) Prospect: et moins 25 euros la
+[353] ( 1410.1s) Agent: deuxième année sur la toute dernière facture.
+[354] ( 1412.3s) Prospect: D'accord. C'est parfait.
+[355] ( 1414.3s) Agent: Tout est clair, madame ?
+[356] ( 1414.3s) Prospect: Oui. Eh ben parfait.
+[357] ( 1416.5s) Agent: Merci beaucoup, madame.
+[358] ( 1416.5s) Prospect: Prenez soin de vous.
+[359] ( 1418.5s) Agent: Bonne journée à vous.
+[360] ( 1418.5s) Prospect: Merci. Au revoir.
+[361] ( 1420.5s) Agent: Au revoir, madame.

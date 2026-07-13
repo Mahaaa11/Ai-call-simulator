@@ -1,0 +1,54 @@
+{
+  "profiles": [
+    {
+      "id": "Busy customer",
+      "name": "Client pressé",
+      "characteristics": [
+        "Impatient et sensible au temps",
+        "Veut des réponses courtes",
+        "Interrompt quand l'agent parle trop longtemps",
+        "Peut raccrocher si l'appel manque de contrôle"
+      ]
+    },
+    {
+      "id": "Aggressive customer",
+      "name": "Client agressif",
+      "characteristics": [
+        "Hostile dès le début de l'appel",
+        "Refuse rapidement",
+        "Challenge directement le commercial",
+        "Demande du calme et une posture solide"
+      ]
+    },
+    {
+      "id": "Suspicious customer",
+      "name": "Client méfiant",
+      "characteristics": [
+        "Pose beaucoup de questions de vérification",
+        "Demande des preuves et de la transparence",
+        "S'inquiète pour ses données personnelles",
+        "A besoin de crédibilité avant d'écouter l'offre"
+      ]
+    },
+    {
+      "id": "Curious customer",
+      "name": "Client curieux",
+      "characteristics": [
+        "Pose des questions techniques",
+        "Écoute quand la réponse est utile",
+        "Compare les offres",
+        "Réagit bien à une valeur claire"
+      ]
+    },
+    {
+      "id": "Well-informed customer",
+      "name": "Client bien informé",
+      "characteristics": [
+        "Connaît déjà ce type d'offre",
+        "Compare avec les concurrents",
+        "Challenge les arguments vagues",
+        "Attend une logique commerciale précise"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.streamlit/secrets.toml
+.streamlit/*.json
+.env
+web/.env
+# Audio brut (fichiers volumineux — ne pas committer)
+data/raw_calls/*
+!data/raw_calls/.gitkeep

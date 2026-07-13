@@ -1,0 +1,59 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: call_simulator_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-call_simulator}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-call_simulator}
+    volumes:
+      - call_simulator_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_PASSWORD:-call_simulator}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  tts:
+    build: .
+    container_name: call_simulator_tts
+    restart: unless-stopped
+    command: ["python", "tts_server.py"]
+    environment:
+      BIND_HOST: 0.0.0.0
+    expose:
+      - "8765"
+
+  api:
+    build: .
+    container_name: call_simulator_api
+    restart: unless-stopped
+    command: ["python", "conversation_api.py"]
+    environment:
+      BIND_HOST: 0.0.0.0
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-call_simulator}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-call_simulator}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    expose:
+      - "8766"
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: call_simulator_web
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./simulation.html:/usr/share/nginx/html/simulation.html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - tts
+      - api
+
+volumes:
+  call_simulator_mysql_data:
