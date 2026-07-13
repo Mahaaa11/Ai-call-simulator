@@ -87,7 +87,13 @@ def ensure_database() -> None:
         conn.close()
 
 
+_SCHEMA_READY = False
+
+
 def ensure_schema() -> None:
+    global _SCHEMA_READY
+    if _SCHEMA_READY:
+        return
     ddl_conversations = """
         CREATE TABLE IF NOT EXISTS conversations (
           id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -124,6 +130,7 @@ def ensure_schema() -> None:
             cur.execute(ddl_messages)
     finally:
         conn.close()
+    _SCHEMA_READY = True
 
 
 def parse_dt(value):
@@ -199,6 +206,27 @@ def save_conversation(payload: dict) -> int:
                 )
 
         return int(conversation_id)
+    finally:
+        conn.close()
+
+
+def update_conversation_evaluation(conversation_id: int, evaluation: dict) -> None:
+    ensure_schema()
+    score_total = evaluation.get("score_total")
+    score_level = evaluation.get("niveau")
+    evaluation_json = json.dumps(evaluation, ensure_ascii=False) if evaluation else None
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE conversations
+                SET score_total = %s, score_level = %s, evaluation_json = %s
+                WHERE id = %s
+                """,
+                (score_total, score_level, evaluation_json, conversation_id),
+            )
     finally:
         conn.close()
 

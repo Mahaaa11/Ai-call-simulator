@@ -690,6 +690,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         let dbServerOk = false;
         let callStartedAt = null;
         let audioUnlocked = false;
+        let lastConversationId = null;
+        const PENDING_EVAL_KEY = "simulator_pending_eval_v1";
 
         function unlockAudioPlayback() {
             if (audioUnlocked) return;
@@ -764,13 +766,66 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (!el) return;
             if (data.ok) {
                 dbServerOk = true;
-                el.innerHTML = "✅ Conversation #" + data.conversation_id + " enregistrée dans MySQL";
+                if (data.conversation_id) lastConversationId = data.conversation_id;
+                if (data.updated) {
+                    el.innerHTML = "✅ Évaluation enregistrée — conversation #" + data.conversation_id;
+                } else {
+                    el.innerHTML = "✅ Conversation #" + data.conversation_id + " enregistrée (évaluation en cours…)";
+                }
                 el.style.color = "#16a34a";
             } else {
                 dbServerOk = false;
                 el.innerHTML = "⚠️ Sauvegarde MySQL échouée : " + (data.error || "erreur");
                 el.style.color = "#dc2626";
             }
+        }
+
+        function buildConversationPayload(evaluation) {
+            return {
+                profile: document.getElementById("profileSelect").value,
+                level: getLevel(),
+                model: getNvidiaModel(),
+                started_at: callStartedAt,
+                ended_at: new Date().toISOString(),
+                persona: prospectPersona,
+                evaluation: evaluation || null,
+                messages: chatTurns.map(t => ({ role: t.role, content: t.content }))
+            };
+        }
+
+        function stashPendingEvaluation(apiKey) {
+            sessionStorage.setItem(PENDING_EVAL_KEY, JSON.stringify({
+                apiKey: apiKey,
+                chatTurns: chatTurns,
+                callStartedAt: callStartedAt,
+                persona: prospectPersona,
+                level: getLevel(),
+                stashed_at: Date.now()
+            }));
+        }
+
+        async function resumePendingEvaluation() {
+            const raw = sessionStorage.getItem(PENDING_EVAL_KEY);
+            if (!raw) return;
+            const cfg = window.__SIMULATOR_CONFIG__ || {};
+            const result = cfg.lastSaveResult;
+            if (!result?.ok || !result.conversation_id) {
+                sessionStorage.removeItem(PENDING_EVAL_KEY);
+                return;
+            }
+
+            const pending = JSON.parse(raw);
+            sessionStorage.removeItem(PENDING_EVAL_KEY);
+            chatTurns = pending.chatTurns || [];
+            callStartedAt = pending.callStartedAt || null;
+            prospectPersona = pending.persona || prospectPersona;
+            callLevel = pending.level || callLevel;
+            lastConversationId = result.conversation_id;
+
+            setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
+            const evaluationData = await showEvaluation(pending.apiKey);
+            await updateConversationEvaluation(result.conversation_id, evaluationData);
+            resetUi();
         }
 
         function applyHostedConfig() {
@@ -2208,22 +2263,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         async function saveConversationToDb(evaluation) {
             if (!chatTurns.length) return null;
-            const payload = {
-                profile: document.getElementById("profileSelect").value,
-                level: getLevel(),
-                model: getNvidiaModel(),
-                started_at: callStartedAt,
-                ended_at: new Date().toISOString(),
-                persona: prospectPersona,
-                evaluation: evaluation || null,
-                messages: chatTurns.map(t => ({ role: t.role, content: t.content }))
-            };
+            const payload = buildConversationPayload(evaluation);
             if (useStreamlitSave()) {
                 try {
                     window.parent.postMessage({ type: "SAVE_CONVERSATION", payload: payload }, "*");
                     const el = document.getElementById("dbStatus");
                     if (el) {
-                        el.innerHTML = "⏳ Enregistrement MySQL en cours…";
+                        el.innerHTML = "⏳ Enregistrement de l'appel…";
                         el.style.color = "#2563eb";
                     }
                     return "streamlit";
@@ -2241,8 +2287,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const data = await res.json();
                 if (!res.ok || !data.ok) throw new Error(data.error || ("HTTP " + res.status));
                 dbServerOk = true;
+                lastConversationId = data.conversation_id;
                 const el = document.getElementById("dbStatus");
-                el.innerHTML = "✅ Conversation #" + data.conversation_id + " enregistrée dans MySQL";
+                el.innerHTML = "✅ Conversation #" + data.conversation_id + " enregistrée";
                 el.style.color = "#16a34a";
                 return data.conversation_id;
             } catch (e) {
@@ -2250,6 +2297,47 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 dbServerOk = false;
                 const el = document.getElementById("dbStatus");
                 el.innerHTML = "⚠️ Sauvegarde MySQL échouée : " + (e.message || e);
+                el.style.color = "#dc2626";
+                return null;
+            }
+        }
+
+        async function updateConversationEvaluation(conversationId, evaluation) {
+            if (!conversationId || !evaluation) return null;
+            if (useStreamlitSave()) {
+                try {
+                    window.parent.postMessage({
+                        type: "UPDATE_CONVERSATION_EVAL",
+                        conversation_id: conversationId,
+                        evaluation: evaluation
+                    }, "*");
+                    const el = document.getElementById("dbStatus");
+                    if (el) {
+                        el.innerHTML = "⏳ Enregistrement de l'évaluation…";
+                        el.style.color = "#2563eb";
+                    }
+                    return "streamlit";
+                } catch (e) {
+                    console.warn("Update Streamlit:", e);
+                    return null;
+                }
+            }
+            try {
+                const res = await fetch(CONVERSATION_API + "/api/conversations/" + conversationId + "/evaluation", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ evaluation: evaluation })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw new Error(data.error || ("HTTP " + res.status));
+                const el = document.getElementById("dbStatus");
+                el.innerHTML = "✅ Évaluation enregistrée — conversation #" + conversationId;
+                el.style.color = "#16a34a";
+                return conversationId;
+            } catch (e) {
+                console.warn("Update eval MySQL:", e);
+                const el = document.getElementById("dbStatus");
+                el.innerHTML = "⚠️ Évaluation non enregistrée : " + (e.message || e);
                 el.style.color = "#dc2626";
                 return null;
             }
@@ -3089,7 +3177,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         async function showEvaluation(apiKey) {
-            setStatus("Génération de l'évaluation...", "status-thinking");
+            setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
             const retryBtn = document.getElementById("retryEvalBtn");
             let evaluationData = null;
             try {
@@ -3226,11 +3314,23 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 lastProspectAudio = null;
             }
 
-            setStatus("Génération de l'évaluation...", "status-thinking");
+            setStatus("Enregistrement de l'appel…", "status-thinking");
             const apiKey = getApiKey();
+
+            if (useStreamlitSave()) {
+                stashPendingEvaluation(apiKey);
+                await saveConversationToDb(null);
+                return;
+            }
+
+            const conversationId = await saveConversationToDb(null);
+            setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
             const evaluationData = await showEvaluation(apiKey);
-            setStatus("Enregistrement de la conversation...", "status-thinking");
-            await saveConversationToDb(evaluationData);
+            if (conversationId) {
+                await updateConversationEvaluation(conversationId, evaluationData);
+            } else {
+                await saveConversationToDb(evaluationData);
+            }
             resetUi();
         });
 
@@ -3244,7 +3344,11 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 const parsed = await callEvaluationLLM(apiKey);
                 evalContent.innerHTML = renderEvaluationReport(parsed, "llm");
                 retryBtn.style.display = "none";
-                await saveConversationToDb(parsed);
+                if (lastConversationId) {
+                    await updateConversationEvaluation(lastConversationId, parsed);
+                } else {
+                    await saveConversationToDb(parsed);
+                }
             } catch (e) {
                 alert("Évaluation IA échouée :\n" + e.message + "\n\nVérifiez openrouter.ai/settings/credits et réessayez.");
             } finally {
@@ -3268,6 +3372,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             await loadDeployConfig();
             applyHostedConfig();
             showLastSaveResult();
+            await resumePendingEvaluation();
             ensureVoices();
             checkTtsServer();
             checkDbServer();

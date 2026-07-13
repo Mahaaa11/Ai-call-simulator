@@ -21,7 +21,12 @@ WEB_DIR = PROJECT_ROOT / "web"
 if str(WEB_DIR) not in sys.path:
     sys.path.insert(0, str(WEB_DIR))
 
-from mysql_store import apply_mysql_env_from_mapping, check_mysql_connection, save_conversation
+from mysql_store import (
+    apply_mysql_env_from_mapping,
+    check_mysql_connection,
+    save_conversation,
+    update_conversation_evaluation,
+)
 
 
 def _load_env_file() -> None:
@@ -125,7 +130,31 @@ def _process_bridge_payload(payload: dict) -> None:
             "ok": False,
             "error": str(exc),
         }
-    st.rerun()
+
+
+def _process_eval_update(incoming: dict) -> None:
+    conversation_id = int(incoming.get("conversation_id") or 0)
+    evaluation = incoming.get("evaluation") or {}
+    if not conversation_id:
+        return
+    key = _payload_key({"conversation_id": conversation_id, "evaluation": evaluation})
+    update_key = f"eval:{key}"
+    if st.session_state.get("last_save_key") == update_key:
+        return
+    try:
+        update_conversation_evaluation(conversation_id, evaluation)
+        st.session_state.last_save_key = update_key
+        st.session_state.save_feedback = {
+            "ok": True,
+            "conversation_id": conversation_id,
+            "updated": True,
+        }
+    except Exception as exc:
+        st.session_state.save_feedback = {
+            "ok": False,
+            "error": str(exc),
+            "conversation_id": conversation_id,
+        }
 
 
 def main() -> None:
@@ -154,7 +183,12 @@ def main() -> None:
 
     incoming = conversation_bridge(key="conversation_bridge")
     if incoming:
-        _process_bridge_payload(incoming)
+        if isinstance(incoming, dict) and incoming.get("action") == "update_eval":
+            _process_eval_update(incoming)
+        elif isinstance(incoming, dict) and incoming.get("action") == "save":
+            _process_bridge_payload(incoming.get("payload") or {})
+        else:
+            _process_bridge_payload(incoming)
 
     st.markdown(
         """

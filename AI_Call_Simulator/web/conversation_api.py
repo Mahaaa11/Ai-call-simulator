@@ -12,7 +12,7 @@ except ImportError:
     print("Installation requise : pip install pymysql")
     raise SystemExit(1)
 
-from mysql_store import check_mysql_connection, save_conversation
+from mysql_store import check_mysql_connection, save_conversation, update_conversation_evaluation
 
 PORT = int(os.getenv("API_PORT", "8766"))
 BIND_HOST = os.getenv("BIND_HOST", "127.0.0.1")
@@ -73,10 +73,16 @@ class ConversationHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urllib.parse.urlparse(self.path).path
-        if path != "/api/conversations":
-            self._json_response(404, {"ok": False, "error": "Not found"})
+        if path == "/api/conversations":
+            self._handle_save_conversation()
+            return
+        if path.startswith("/api/conversations/") and path.endswith("/evaluation"):
+            self._handle_update_evaluation(path)
             return
 
+        self._json_response(404, {"ok": False, "error": "Not found"})
+
+    def _handle_save_conversation(self) -> None:
         length = int(self.headers.get("Content-Length", "0") or "0")
         raw = self.rfile.read(length).decode("utf-8") if length else "{}"
         try:
@@ -90,6 +96,33 @@ class ConversationHandler(BaseHTTPRequestHandler):
             self._json_response(201, {"ok": True, "conversation_id": conversation_id})
         except Exception as e:
             print("Erreur save:", e)
+            self._json_response(500, {"ok": False, "error": str(e)})
+
+    def _handle_update_evaluation(self, path: str) -> None:
+        parts = path.strip("/").split("/")
+        if len(parts) != 4:
+            self._json_response(400, {"ok": False, "error": "URL invalide"})
+            return
+        try:
+            conversation_id = int(parts[2])
+        except ValueError:
+            self._json_response(400, {"ok": False, "error": "ID invalide"})
+            return
+
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        raw = self.rfile.read(length).decode("utf-8") if length else "{}"
+        try:
+            payload = json.loads(raw or "{}")
+        except json.JSONDecodeError:
+            self._json_response(400, {"ok": False, "error": "JSON invalide"})
+            return
+
+        evaluation = payload.get("evaluation") or payload
+        try:
+            update_conversation_evaluation(conversation_id, evaluation)
+            self._json_response(200, {"ok": True, "conversation_id": conversation_id})
+        except Exception as e:
+            print("Erreur update eval:", e)
             self._json_response(500, {"ok": False, "error": str(e)})
 
 

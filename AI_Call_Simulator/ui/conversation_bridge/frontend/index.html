@@ -11,9 +11,17 @@
     target.__simSaveBridgeAttached = true;
     target.addEventListener("message", function (event) {
       const data = event.data || {};
-      if (data.type !== "SAVE_CONVERSATION" || !data.payload) return;
-      if (window.Streamlit) {
-        Streamlit.setComponentValue(data.payload);
+      if (!window.Streamlit) return;
+      if (data.type === "SAVE_CONVERSATION" && data.payload) {
+        Streamlit.setComponentValue({ action: "save", payload: data.payload });
+        return;
+      }
+      if (data.type === "UPDATE_CONVERSATION_EVAL" && data.conversation_id) {
+        Streamlit.setComponentValue({
+          action: "update_eval",
+          conversation_id: data.conversation_id,
+          evaluation: data.evaluation || {},
+        });
       }
     });
     if (window.Streamlit) {
