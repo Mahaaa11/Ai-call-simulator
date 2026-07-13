@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/streamlit-component-lib@1.0.0/dist/index.js"></script>
+</head>
+<body>
+<script>
+  function attachListener() {
+    const target = window.parent;
+    if (!target || target.__simSaveBridgeAttached) return;
+    target.__simSaveBridgeAttached = true;
+    target.addEventListener("message", function (event) {
+      const data = event.data || {};
+      if (data.type !== "SAVE_CONVERSATION" || !data.payload) return;
+      if (window.Streamlit) {
+        Streamlit.setComponentValue(data.payload);
+      }
+    });
+    if (window.Streamlit) {
+      Streamlit.setFrameHeight(0);
+    }
+  }
+  attachListener();
+  setTimeout(attachListener, 500);
+</script>
+</body>
+</html>

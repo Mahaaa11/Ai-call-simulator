@@ -22,15 +22,21 @@ streamlit run app.py
 ### Sur Streamlit Cloud
 
 1. Allez sur [share.streamlit.io](https://share.streamlit.io)
-2. Connectez votre repo GitHub
-3. **Main file path** : `AI_Call_Simulator/app.py`
-4. **Settings → Secrets** :
+2. **Settings → Secrets** — ajoutez OpenRouter **et MySQL** :
 
 ```toml
-OPENROUTER_API_KEY = "sk-or-v1-votre-cle"
+OPENROUTER_API_KEY = "sk-or-v1-..."
+MYSQL_HOST = "votre-hote-mysql.com"
+MYSQL_PORT = 3306
+MYSQL_USER = "votre_user"
+MYSQL_PASSWORD = "votre_password"
+MYSQL_DATABASE = "call_simulator"
+MYSQL_SSL = "true"
 ```
 
-La clé est lue côté serveur — les agents n'ont plus à la saisir.
+Les conversations sont **sauvegardées automatiquement** dans MySQL à la fin de chaque appel.
+
+Alternative : si vous avez une API externe, utilisez `CONVERSATION_API_URL` au lieu de MYSQL_*.
 
 ---
 

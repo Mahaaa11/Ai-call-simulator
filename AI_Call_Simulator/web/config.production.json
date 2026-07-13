@@ -1,0 +1,5 @@
+{
+  "conversationApiUrl": "https://jenna-controle.com/conv-api",
+  "ttsApiUrl": "https://jenna-controle.com/tts",
+  "useBrowserVoiceFallback": true
+}

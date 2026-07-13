@@ -1,0 +1,8 @@
+RewriteEngine On
+RewriteBase /conv-api/
+
+# /conv-api/health → index.php
+RewriteRule ^health$ index.php [L,QSA]
+
+# /conv-api/api/conversations → index.php
+RewriteRule ^api/conversations$ index.php [L,QSA]
