@@ -53,10 +53,9 @@
         Streamlit.setFrameHeight(height);
 
         if (iframe.dataset.ready === "1" && currentPage === page) {
+          applyConfig(config);
           if (config.lastSaveResult) {
             postToSim({ type: "SAVE_RESULT", result: config.lastSaveResult });
-          } else {
-            applyConfig(config);
           }
           return;
         }

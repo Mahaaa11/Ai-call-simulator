@@ -612,9 +612,19 @@ ${transcript.slice(0, 2500)}`;
             if (synth.onvoiceschanged) synth.onvoiceschanged = pick;
         }
 
-        applyHostedConfig();
-        showSaveResult();
-        resumePendingEval();
+        function onStreamlitConfigApplied() {
+            applyHostedConfig();
+            showSaveResult();
+            const el = document.getElementById("dbStatus");
+            const cfg = getCfg();
+            if (useStreamlitSave() || cfg.mysqlEnabled) {
+                el.innerHTML = "✅ MySQL connecté via Streamlit";
+                el.style.color = "#16a34a";
+            } else if (cfg.hostedOnStreamlit) {
+                el.innerHTML = "ℹ️ Ajoutez MYSQL_* dans les Secrets Streamlit";
+                el.style.color = "#2563eb";
+            }
+        }
 
         window.addEventListener("message", function (event) {
             const data = event.data || {};
@@ -623,8 +633,7 @@ ${transcript.slice(0, 2500)}`;
                     window.__SIMULATOR_CONFIG__ || {},
                     data.config || {}
                 );
-                applyHostedConfig();
-                showSaveResult();
+                onStreamlitConfigApplied();
             }
             if (data.type === "SAVE_RESULT") {
                 window.__SIMULATOR_CONFIG__ = window.__SIMULATOR_CONFIG__ || {};
@@ -633,6 +642,17 @@ ${transcript.slice(0, 2500)}`;
                 resumePendingEval();
             }
         });
+
+        (async function initProspect() {
+            const cfg = getCfg();
+            if (cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled) {
+                onStreamlitConfigApplied();
+                await resumePendingEval();
+            } else {
+                const el = document.getElementById("dbStatus");
+                if (el) el.textContent = "Connexion Streamlit…";
+            }
+        })();
     })();
     </script>
 </body>

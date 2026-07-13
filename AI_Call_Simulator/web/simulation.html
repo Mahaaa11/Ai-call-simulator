@@ -731,7 +731,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         async function loadDeployConfig() {
             const injected = window.__SIMULATOR_CONFIG__ || {};
-            if (injected.streamlitSave || injected.mysqlEnabled) {
+            if (injected.streamlitSave || injected.mysqlEnabled || injected.hostedOnStreamlit) {
                 return;
             }
             try {
@@ -2235,6 +2235,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
                 return;
             }
+            if (cfg.hostedOnStreamlit && !cfg.conversationApiUrl) {
+                el.innerHTML = "ℹ️ Ajoutez MYSQL_HOST dans les Secrets Streamlit pour activer la sauvegarde";
+                el.style.color = "#2563eb";
+                return;
+            }
             try {
                 const ctrl = new AbortController();
                 setTimeout(() => ctrl.abort(), 5000);
@@ -3372,7 +3377,12 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             appUrlLabel.textContent = location.origin + location.pathname;
         }
 
-        applyHostedConfig();
+        function onStreamlitConfigApplied() {
+            applyHostedConfig();
+            showLastSaveResult();
+            checkDbServer();
+            checkTtsServer();
+        }
 
         window.addEventListener("message", function (event) {
             const data = event.data || {};
@@ -3381,8 +3391,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                     window.__SIMULATOR_CONFIG__ || {},
                     data.config || {}
                 );
-                applyHostedConfig();
-                showLastSaveResult();
+                onStreamlitConfigApplied();
             }
             if (data.type === "SAVE_RESULT") {
                 window.__SIMULATOR_CONFIG__ = window.__SIMULATOR_CONFIG__ || {};
@@ -3394,12 +3403,20 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 
         (async function initSimulator() {
             await loadDeployConfig();
-            applyHostedConfig();
-            showLastSaveResult();
-            await resumePendingEvaluation();
+            const cfg = window.__SIMULATOR_CONFIG__ || {};
+            const ready = !!(cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled);
+            if (ready) {
+                onStreamlitConfigApplied();
+                await resumePendingEvaluation();
+            }
             ensureVoices();
-            checkTtsServer();
-            checkDbServer();
+            if (!ready) {
+                const el = document.getElementById("dbStatus");
+                if (el) {
+                    el.innerHTML = "Connexion Streamlit…";
+                    el.style.color = "#64748b";
+                }
+            }
         })();
     })();
     </script>

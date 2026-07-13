@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import shutil
+import re
 import sys
 from pathlib import Path
 
@@ -82,15 +82,31 @@ def _is_local_api_url(url: str) -> bool:
     return any(token in lower for token in ("127.0.0.1", "localhost", "0.0.0.0"))
 
 
-def _sync_component_pages() -> None:
+def _inject_config(html: str, config: dict) -> str:
+    injection = (
+        "<script>window.__SIMULATOR_CONFIG__ = "
+        + json.dumps(config, ensure_ascii=False)
+        + ";</script>"
+    )
+    cleaned = re.sub(
+        r"<script>window\.__SIMULATOR_CONFIG__\s*=\s*[\s\S]*?;</script>\s*",
+        "",
+        html,
+    )
+    if "</head>" in cleaned:
+        return cleaned.replace("</head>", injection + "\n</head>", 1)
+    return injection + cleaned
+
+
+def _sync_component_pages(config: dict) -> None:
     COMPONENT_FRONTEND.mkdir(parents=True, exist_ok=True)
     for name in _SIM_PAGES:
         src = WEB_DIR / name
-        dst = COMPONENT_FRONTEND / name
         if not src.exists():
             continue
-        if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
-            shutil.copy2(src, dst)
+        html = src.read_text(encoding="utf-8")
+        dst = COMPONENT_FRONTEND / name
+        dst.write_text(_inject_config(html, config), encoding="utf-8")
 
 
 def _page_stem(html_path: Path) -> str:
@@ -224,8 +240,8 @@ def run_simulator(
         mysql_ok = bool(st.session_state.mysql_ok)
         mysql_detail = str(st.session_state.mysql_detail or "")
 
-    _sync_component_pages()
     config = _build_streamlit_config(api_key, mysql_enabled, mysql_ok, extra_config)
+    _sync_component_pages(config)
 
     st.markdown(
         """
