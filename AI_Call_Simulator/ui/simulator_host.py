@@ -10,8 +10,9 @@ import sys
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
-from ui.simulator_component import simulator_frame
+from ui.conversation_bridge import conversation_bridge
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_PATH = PROJECT_ROOT / ".env"
@@ -93,21 +94,6 @@ def _inject_config(html: str, config: dict) -> str:
     if "</head>" in cleaned:
         return cleaned.replace("</head>", injection + "\n</head>", 1)
     return injection + cleaned
-
-
-def _build_html_content(html_path: Path, config: dict) -> str:
-    embed_config = {k: v for k, v in config.items() if k != "lastSaveResult"}
-    html = html_path.read_text(encoding="utf-8")
-    return _inject_config(html, embed_config)
-
-
-def _content_key(html_path: Path, config: dict) -> str:
-    payload = {
-        "page": html_path.name,
-        "mysql": bool(config.get("mysqlEnabled")),
-        "api": bool(config.get("openrouterApiKey")),
-    }
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
 
 def _build_streamlit_config(
@@ -254,9 +240,12 @@ def run_simulator(
         mysql_ok = bool(st.session_state.mysql_ok)
         mysql_detail = str(st.session_state.mysql_detail or "")
 
+    incoming = conversation_bridge(key="save_bridge")
+    if incoming and _handle_incoming(incoming):
+        st.rerun()
+
     config = _build_streamlit_config(api_key, mysql_enabled, mysql_ok, extra_config)
-    html_content = _build_html_content(html_path, config)
-    content_key = _content_key(html_path, config)
+    html = _inject_config(html_path.read_text(encoding="utf-8"), config)
 
     st.markdown(
         """
@@ -271,12 +260,4 @@ def run_simulator(
 
     _render_status_bar(api_key, mysql_enabled, mysql_ok, mysql_detail)
 
-    incoming = simulator_frame(
-        html_content=html_content,
-        config=config,
-        content_key=content_key,
-        height=iframe_height,
-        key="simulator_frame",
-    )
-    if incoming and _handle_incoming(incoming):
-        st.rerun()
+    components.html(html, height=iframe_height, scrolling=True)

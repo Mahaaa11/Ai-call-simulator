@@ -1,5 +1,13 @@
-"""Deprecated: use ui.simulator_component.simulator_frame instead."""
+"""Minimal bridge: receives conversation saves from simulation iframe."""
 
-from ui.simulator_component import simulator_frame as conversation_bridge
+from __future__ import annotations
 
-__all__ = ["conversation_bridge"]
+from pathlib import Path
+
+import streamlit.components.v1 as components
+
+_BRIDGE_DIR = Path(__file__).resolve().parent / "frontend"
+conversation_bridge = components.declare_component(
+    "conversation_bridge",
+    path=str(_BRIDGE_DIR),
+)
