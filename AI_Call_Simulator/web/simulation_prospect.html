@@ -244,6 +244,10 @@ RÈGLES FORMAT :
         const evalContent = document.getElementById("evalContent");
 
         function getCfg() { return window.__SIMULATOR_CONFIG__ || {}; }
+        function isStreamlitCloud() {
+            const host = (location.hostname || "").toLowerCase();
+            return host.endsWith(".streamlit.app") || host === "streamlit.app";
+        }
         function getApiKey() {
             const k = (getCfg().openrouterApiKey || document.getElementById("apiKey").value || "").trim();
             return k;
@@ -253,7 +257,8 @@ RÈGLES FORMAT :
         function getLevel() { return document.getElementById("levelSelect").value; }
         function useStreamlitSave() {
             const c = getCfg();
-            return !!(c.streamlitSave && c.hostedOnStreamlit && !c.conversationApiUrl);
+            if (c.conversationApiUrl) return false;
+            return !!(c.streamlitSave || c.hostedOnStreamlit || isStreamlitCloud());
         }
 
         function updateHints() {
@@ -592,12 +597,12 @@ ${transcript.slice(0, 2500)}`;
 
         function applyHostedConfig() {
             const cfg = getCfg();
-            if (cfg.openrouterApiKey) {
-                document.getElementById("apiKey").value = cfg.openrouterApiKey;
+            if (cfg.openrouterApiKey || isStreamlitCloud()) {
+                if (cfg.openrouterApiKey) document.getElementById("apiKey").value = cfg.openrouterApiKey;
                 document.getElementById("apiKeySection").style.display = "none";
-                document.getElementById("apiKeyStatus").style.display = "block";
+                if (cfg.openrouterApiKey) document.getElementById("apiKeyStatus").style.display = "block";
             }
-            if (cfg.hostedOnStreamlit) {
+            if (cfg.hostedOnStreamlit || isStreamlitCloud()) {
                 const link = document.getElementById("v1Link");
                 if (link) link.style.display = "none";
             }
@@ -617,10 +622,15 @@ ${transcript.slice(0, 2500)}`;
             showSaveResult();
             const el = document.getElementById("dbStatus");
             const cfg = getCfg();
-            if (useStreamlitSave() || cfg.mysqlEnabled) {
+            const onStreamlit = useStreamlitSave() || cfg.hostedOnStreamlit || isStreamlitCloud();
+            if (!onStreamlit) return;
+            if (cfg.mysqlEnabled && !cfg.mysqlConnectionWarning) {
                 el.innerHTML = "✅ MySQL connecté via Streamlit";
                 el.style.color = "#16a34a";
-            } else if (cfg.hostedOnStreamlit) {
+            } else if (cfg.mysqlEnabled) {
+                el.innerHTML = "⚠️ MySQL configuré — sauvegarde tentée à la fin";
+                el.style.color = "#d97706";
+            } else {
                 el.innerHTML = "ℹ️ Ajoutez MYSQL_* dans les Secrets Streamlit";
                 el.style.color = "#2563eb";
             }
@@ -645,7 +655,7 @@ ${transcript.slice(0, 2500)}`;
 
         (async function initProspect() {
             const cfg = getCfg();
-            if (cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled) {
+            if (cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud()) {
                 onStreamlitConfigApplied();
                 await resumePendingEval();
             } else {

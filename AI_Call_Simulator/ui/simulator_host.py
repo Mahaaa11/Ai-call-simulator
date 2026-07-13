@@ -122,18 +122,19 @@ def _build_streamlit_config(
     config: dict = {
         "openrouterApiKey": api_key,
         "hostedOnStreamlit": True,
+        "streamlitSave": True,
     }
     if extra_config:
         config.update(extra_config)
     api_url = _get_secret_or_env("CONVERSATION_API_URL")
 
     if mysql_configured:
-        config["streamlitSave"] = True
         config["mysqlEnabled"] = True
         if not mysql_ok:
             config["mysqlConnectionWarning"] = True
     elif api_url and not _is_local_api_url(api_url):
         config["conversationApiUrl"] = api_url.rstrip("/")
+        config["streamlitSave"] = False
 
     save_feedback = st.session_state.pop("save_feedback", None)
     if save_feedback:
