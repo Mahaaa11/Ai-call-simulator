@@ -99,6 +99,7 @@ def ensure_schema() -> None:
           id BIGINT AUTO_INCREMENT PRIMARY KEY,
           profile_key VARCHAR(64) NOT NULL,
           level_key VARCHAR(32) NOT NULL,
+          training_mode VARCHAR(32) NULL,
           model VARCHAR(128) NULL,
           prospect_first_name VARCHAR(64) NULL,
           prospect_last_name VARCHAR(64) NULL,
@@ -128,6 +129,10 @@ def ensure_schema() -> None:
         with conn.cursor() as cur:
             cur.execute(ddl_conversations)
             cur.execute(ddl_messages)
+            try:
+                cur.execute("SELECT training_mode FROM conversations LIMIT 1")
+            except Exception:
+                cur.execute("ALTER TABLE conversations ADD COLUMN training_mode VARCHAR(32) NULL")
     finally:
         conn.close()
     _SCHEMA_READY = True
@@ -159,6 +164,7 @@ def save_conversation(payload: dict) -> int:
     persona = payload.get("persona") or {}
     evaluation = payload.get("evaluation") or {}
     messages = payload.get("messages") or []
+    training_mode = (payload.get("training_mode") or "train_agent").strip() or "train_agent"
 
     score_total = evaluation.get("score_total")
     score_level = evaluation.get("niveau")
@@ -170,15 +176,16 @@ def save_conversation(payload: dict) -> int:
             cur.execute(
                 """
                 INSERT INTO conversations (
-                  profile_key, level_key, model,
+                  profile_key, level_key, training_mode, model,
                   prospect_first_name, prospect_last_name,
                   started_at, ended_at,
                   score_total, score_level, evaluation_json
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     profile,
                     level,
+                    training_mode,
                     model,
                     (persona.get("firstName") or persona.get("first_name") or None),
                     (persona.get("lastName") or persona.get("last_name") or None),
@@ -191,18 +198,25 @@ def save_conversation(payload: dict) -> int:
             )
             conversation_id = cur.lastrowid
 
+            rows = []
             for idx, msg in enumerate(messages):
                 role = (msg.get("role") or "").lower()
-                speaker = "agent" if role in ("user", "agent") else "prospect"
+                if training_mode == "train_prospect":
+                    speaker = "prospect" if role in ("user", "prospect") else "agent"
+                else:
+                    speaker = "agent" if role in ("user", "agent") else "prospect"
                 content = (msg.get("content") or "").strip()
                 if not content:
                     continue
-                cur.execute(
+                rows.append((conversation_id, idx, speaker, content))
+
+            if rows:
+                cur.executemany(
                     """
                     INSERT INTO conversation_messages (conversation_id, seq, speaker, content)
                     VALUES (%s, %s, %s, %s)
                     """,
-                    (conversation_id, idx, speaker, content),
+                    rows,
                 )
 
         return int(conversation_id)

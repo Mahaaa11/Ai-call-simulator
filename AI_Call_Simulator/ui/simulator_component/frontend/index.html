@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="./streamlit-component-lib.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    #sim { width: 100%; border: none; display: block; }
+  </style>
+</head>
+<body>
+  <iframe id="sim" title="Simulateur" allow="microphone"></iframe>
+  <script>
+    (function () {
+      var iframe = document.getElementById("sim");
+      var currentPage = "";
+      var pendingConfig = null;
+
+      function postToSim(message) {
+        if (!iframe.contentWindow) return;
+        try {
+          iframe.contentWindow.postMessage(message, "*");
+        } catch (_) {}
+      }
+
+      function applyConfig(config) {
+        if (!config) return;
+        postToSim({ type: "SIM_CONFIG", config: config });
+      }
+
+      window.addEventListener("message", function (event) {
+        var data = event.data || {};
+        if (!window.Streamlit) return;
+        if (data.type === "SAVE_CONVERSATION" && data.payload) {
+          Streamlit.setComponentValue({ action: "save", payload: data.payload });
+          return;
+        }
+        if (data.type === "UPDATE_CONVERSATION_EVAL" && data.conversation_id) {
+          Streamlit.setComponentValue({
+            action: "update_eval",
+            conversation_id: data.conversation_id,
+            evaluation: data.evaluation || {},
+          });
+        }
+      });
+
+      function onRender() {
+        var args = (window.Streamlit && Streamlit.args) || {};
+        var page = args.page || "simulation";
+        var height = args.height || 1180;
+        var config = args.config || {};
+
+        Streamlit.setFrameHeight(height);
+
+        if (iframe.dataset.ready === "1" && currentPage === page) {
+          if (config.lastSaveResult) {
+            postToSim({ type: "SAVE_RESULT", result: config.lastSaveResult });
+          } else {
+            applyConfig(config);
+          }
+          return;
+        }
+
+        currentPage = page;
+        pendingConfig = config;
+        iframe.onload = function () {
+          iframe.dataset.ready = "1";
+          applyConfig(pendingConfig);
+          pendingConfig = null;
+        };
+        iframe.src = page + ".html";
+      }
+
+      if (window.Streamlit) {
+        Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, onRender);
+      }
+    })();
+  </script>
+</body>
+</html>
