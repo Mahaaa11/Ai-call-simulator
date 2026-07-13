@@ -65,7 +65,16 @@ def get_server_connection():
     return pymysql.connect(**_mysql_connect_kwargs(False))
 
 
+def _skip_create_database() -> bool:
+    if os.getenv("MYSQL_SKIP_CREATE_DATABASE", "").lower() in ("1", "true", "yes"):
+        return True
+    host = os.getenv("MYSQL_HOST", "").lower()
+    return "tidbcloud.com" in host or "tidb." in host
+
+
 def ensure_database() -> None:
+    if _skip_create_database():
+        return
     db_name = os.getenv("MYSQL_DATABASE", "call_simulator")
     conn = get_server_connection()
     try:
@@ -81,7 +90,7 @@ def ensure_database() -> None:
 def ensure_schema() -> None:
     ddl_conversations = """
         CREATE TABLE IF NOT EXISTS conversations (
-          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          id BIGINT AUTO_INCREMENT PRIMARY KEY,
           profile_key VARCHAR(64) NOT NULL,
           level_key VARCHAR(32) NOT NULL,
           model VARCHAR(128) NULL,
@@ -95,21 +104,18 @@ def ensure_schema() -> None:
           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           INDEX idx_conversations_created (created_at),
           INDEX idx_conversations_profile (profile_key, level_key)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        )
     """
     ddl_messages = """
         CREATE TABLE IF NOT EXISTS conversation_messages (
-          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-          conversation_id BIGINT UNSIGNED NOT NULL,
-          seq INT UNSIGNED NOT NULL,
-          speaker ENUM('agent', 'prospect') NOT NULL,
+          id BIGINT AUTO_INCREMENT PRIMARY KEY,
+          conversation_id BIGINT NOT NULL,
+          seq INT NOT NULL,
+          speaker VARCHAR(16) NOT NULL,
           content TEXT NOT NULL,
           created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          CONSTRAINT fk_messages_conversation
-            FOREIGN KEY (conversation_id) REFERENCES conversations(id)
-            ON DELETE CASCADE,
           INDEX idx_messages_conversation (conversation_id, seq)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        )
     """
     conn = get_connection()
     try:
@@ -136,7 +142,6 @@ def parse_dt(value):
 
 
 def save_conversation(payload: dict) -> int:
-    ensure_database()
     ensure_schema()
 
     profile = (payload.get("profile") or "").strip() or "unknown"
@@ -200,9 +205,11 @@ def save_conversation(payload: dict) -> int:
 
 def check_mysql_connection() -> tuple[bool, str]:
     try:
-        ensure_database()
         ensure_schema()
         conn = get_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+            cur.fetchone()
         conn.close()
         db_name = os.getenv("MYSQL_DATABASE", "call_simulator")
         return True, db_name
