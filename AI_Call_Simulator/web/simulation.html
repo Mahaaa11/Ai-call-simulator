@@ -2291,12 +2291,27 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
+        function pushToStreamlit(value) {
+            if (window.Streamlit && typeof Streamlit.setComponentValue === "function") {
+                Streamlit.setComponentValue(value);
+                return true;
+            }
+            const targets = [window.parent, window.top];
+            const msg = value.action === "update_eval"
+                ? { type: "UPDATE_CONVERSATION_EVAL", conversation_id: value.conversation_id, evaluation: value.evaluation }
+                : { type: "SAVE_CONVERSATION", payload: value.payload || value };
+            for (const t of targets) {
+                try { t.postMessage(msg, "*"); } catch (_) {}
+            }
+            return false;
+        }
+
         async function saveConversationToDb(evaluation) {
             if (!chatTurns.length) return null;
             const payload = buildConversationPayload(evaluation);
             if (useStreamlitSave()) {
                 try {
-                    window.parent.postMessage({ type: "SAVE_CONVERSATION", payload: payload }, "*");
+                    pushToStreamlit({ action: "save", payload: payload });
                     const el = document.getElementById("dbStatus");
                     if (el) {
                         el.innerHTML = "⏳ Enregistrement de l'appel…";
@@ -2336,11 +2351,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (!conversationId || !evaluation) return null;
             if (useStreamlitSave()) {
                 try {
-                    window.parent.postMessage({
-                        type: "UPDATE_CONVERSATION_EVAL",
+                    pushToStreamlit({
+                        action: "update_eval",
                         conversation_id: conversationId,
                         evaluation: evaluation
-                    }, "*");
+                    });
                     const el = document.getElementById("dbStatus");
                     if (el) {
                         el.innerHTML = "⏳ Enregistrement de l'évaluation…";

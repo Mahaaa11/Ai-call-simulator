@@ -10,13 +10,13 @@ import sys
 from pathlib import Path
 
 import streamlit as st
-import streamlit.components.v1 as components
 
-from ui.conversation_bridge import conversation_bridge
+from ui.simulation_component import simulation_app
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_PATH = PROJECT_ROOT / ".env"
 WEB_DIR = PROJECT_ROOT / "web"
+COMPONENT_FRONTEND = Path(__file__).resolve().parent / "simulation_component" / "frontend"
 
 if str(WEB_DIR) not in sys.path:
     sys.path.insert(0, str(WEB_DIR))
@@ -27,6 +27,21 @@ from mysql_store import (
     save_conversation,
     update_conversation_evaluation,
 )
+
+_STREAMLIT_BOOT = """
+<script src="streamlit-component-lib.js"></script>
+<script>
+  window.addEventListener("load", function () {
+    if (window.Streamlit) Streamlit.setComponentReady();
+  });
+  if (window.Streamlit) {
+    Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function () {
+      var h = (Streamlit.args && Streamlit.args.height) || 1180;
+      Streamlit.setFrameHeight(h);
+    });
+  }
+</script>
+"""
 
 
 def _load_env_file() -> None:
@@ -94,6 +109,19 @@ def _inject_config(html: str, config: dict) -> str:
     if "</head>" in cleaned:
         return cleaned.replace("</head>", injection + "\n</head>", 1)
     return injection + cleaned
+
+
+def _prepare_component_html(html_path: Path, config: dict) -> str:
+    html = _inject_config(html_path.read_text(encoding="utf-8"), config)
+    return html.replace("</head>", _STREAMLIT_BOOT + "\n</head>", 1)
+
+
+def _sync_component_index(html_path: Path, config: dict) -> None:
+    COMPONENT_FRONTEND.mkdir(parents=True, exist_ok=True)
+    (COMPONENT_FRONTEND / "index.html").write_text(
+        _prepare_component_html(html_path, config),
+        encoding="utf-8",
+    )
 
 
 def _build_streamlit_config(
@@ -204,6 +232,20 @@ def _render_status_bar(api_key: str, mysql_enabled: bool, mysql_ok: bool, mysql_
             st.info("MySQL : ajoutez MYSQL_* dans Secrets Streamlit")
 
 
+def _render_save_feedback(config: dict) -> None:
+    result = config.get("lastSaveResult")
+    if not result:
+        return
+    if result.get("ok"):
+        cid = result.get("conversation_id")
+        if result.get("updated"):
+            st.success(f"Évaluation enregistrée — conversation #{cid}")
+        else:
+            st.success(f"Conversation #{cid} enregistrée dans TiDB")
+    else:
+        st.error(f"Sauvegarde MySQL échouée : {result.get('error', 'erreur inconnue')}")
+
+
 def run_simulator(
     html_path: Path,
     *,
@@ -240,12 +282,8 @@ def run_simulator(
         mysql_ok = bool(st.session_state.mysql_ok)
         mysql_detail = str(st.session_state.mysql_detail or "")
 
-    incoming = conversation_bridge(key="save_bridge")
-    if incoming and _handle_incoming(incoming):
-        st.rerun()
-
     config = _build_streamlit_config(api_key, mysql_enabled, mysql_ok, extra_config)
-    html = _inject_config(html_path.read_text(encoding="utf-8"), config)
+    _sync_component_index(html_path, config)
 
     st.markdown(
         """
@@ -259,5 +297,8 @@ def run_simulator(
     )
 
     _render_status_bar(api_key, mysql_enabled, mysql_ok, mysql_detail)
+    _render_save_feedback(config)
 
-    components.html(html, height=iframe_height, scrolling=True)
+    incoming = simulation_app(height=iframe_height, key="simulation_app")
+    if incoming and _handle_incoming(incoming):
+        st.rerun()
