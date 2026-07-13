@@ -70,18 +70,26 @@ def _get_openrouter_api_key() -> str:
     return _get_secret_or_env("OPENROUTER_API_KEY")
 
 
-def _build_simulation_html(api_key: str, mysql_enabled: bool) -> str:
+def _is_local_api_url(url: str) -> bool:
+    lower = url.lower()
+    return any(token in lower for token in ("127.0.0.1", "localhost", "0.0.0.0"))
+
+
+def _build_simulation_html(api_key: str, mysql_configured: bool, mysql_ok: bool) -> str:
     html = SIMULATION_HTML.read_text(encoding="utf-8")
     config = {
         "openrouterApiKey": api_key,
         "hostedOnStreamlit": True,
     }
     api_url = _get_secret_or_env("CONVERSATION_API_URL")
-    if api_url:
-        config["conversationApiUrl"] = api_url
-    elif mysql_enabled:
+
+    if mysql_configured:
         config["streamlitSave"] = True
         config["mysqlEnabled"] = True
+        if not mysql_ok:
+            config["mysqlConnectionWarning"] = True
+    elif api_url and not _is_local_api_url(api_url):
+        config["conversationApiUrl"] = api_url.rstrip("/")
     save_feedback = st.session_state.pop("save_feedback", None)
     if save_feedback:
         config["lastSaveResult"] = save_feedback
@@ -162,4 +170,8 @@ def main() -> None:
     if mysql_enabled and not mysql_ok:
         st.warning(f"MySQL configuré mais inaccessible : {mysql_detail}")
 
-    components.html(_build_simulation_html(api_key, mysql_enabled and mysql_ok), height=1180, scrolling=True)
+    components.html(
+        _build_simulation_html(api_key, mysql_enabled, mysql_ok),
+        height=1180,
+        scrolling=True,
+    )

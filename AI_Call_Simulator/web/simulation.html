@@ -568,7 +568,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function resolveConversationApi() {
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             if (cfg.conversationApiUrl) {
-                return String(cfg.conversationApiUrl).replace(/\/$/, "");
+                const url = String(cfg.conversationApiUrl).replace(/\/$/, "");
+                if (cfg.hostedOnStreamlit && isLocalApiUrl(url)) {
+                    return getServiceUrl(8766, "/conv-api");
+                }
+                return url;
             }
             return getServiceUrl(8766, "/conv-api");
         }
@@ -717,12 +721,24 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return !!(cfg.hostedOnStreamlit || cfg.openrouterApiKey || window.__INJECTED_OPENROUTER_KEY__ || isProductionHost());
         }
 
+        function isLocalApiUrl(url) {
+            const lower = String(url || "").toLowerCase();
+            return lower.includes("127.0.0.1") || lower.includes("localhost") || lower.includes("0.0.0.0");
+        }
+
         async function loadDeployConfig() {
+            const injected = window.__SIMULATOR_CONFIG__ || {};
+            if (injected.streamlitSave || injected.mysqlEnabled) {
+                return;
+            }
             try {
                 const r = await fetch("config.json", { cache: "no-store" });
                 if (!r.ok) return;
                 const cfg = await r.json();
-                window.__SIMULATOR_CONFIG__ = Object.assign(window.__SIMULATOR_CONFIG__ || {}, cfg);
+                if (injected.hostedOnStreamlit && cfg.conversationApiUrl && isLocalApiUrl(cfg.conversationApiUrl)) {
+                    delete cfg.conversationApiUrl;
+                }
+                window.__SIMULATOR_CONFIG__ = Object.assign(injected, cfg);
                 if (cfg.conversationApiUrl) CONVERSATION_API = resolveConversationApi();
                 if (cfg.ttsApiUrl) {
                     window.__TTS_OVERRIDE__ = String(cfg.ttsApiUrl).replace(/\/$/, "");
@@ -2148,9 +2164,14 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const el = document.getElementById("dbStatus");
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             if (useStreamlitSave() || cfg.mysqlEnabled) {
-                dbServerOk = true;
-                el.innerHTML = "✅ MySQL connecté via Streamlit — conversations enregistrées à la fin de l'appel";
-                el.style.color = "#16a34a";
+                dbServerOk = !cfg.mysqlConnectionWarning;
+                if (cfg.mysqlConnectionWarning) {
+                    el.innerHTML = "⚠️ MySQL configuré — test de connexion en attente. La sauvegarde sera tentée à la fin de l'appel.";
+                    el.style.color = "#d97706";
+                } else {
+                    el.innerHTML = "✅ MySQL connecté via Streamlit — conversations enregistrées à la fin de l'appel";
+                    el.style.color = "#16a34a";
+                }
                 return;
             }
             try {
