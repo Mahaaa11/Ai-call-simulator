@@ -100,8 +100,10 @@
             <div style="text-align:center;padding:16px 0;">
                 <div id="status" class="status-badge status-idle">Ligne inactive</div>
                 <div id="recordTimer"></div>
+                <p class="hint" id="micStatus"></p>
+                <p class="hint" id="speechPreview" style="min-height:20px;color:#6d28d9;font-weight:600;"></p>
                 <button type="button" id="talkBtn" disabled style="height:56px;font-size:17px;">🎤 Parler en tant que prospect</button>
-                <p class="hint">Posez des objections, posez des questions, résistez ou coopérez selon le profil.</p>
+                <p class="hint"><strong>Micro :</strong> 1) Cliquez le bouton · 2) Parlez · 3) Cliquez <em>Envoyer</em>. Sinon tapez votre réplique ci-dessous.</p>
                 <label>Ou tapez votre réplique prospect :</label>
                 <div class="text-row">
                     <input type="text" id="textInput" placeholder="Ex : Ça ne m'intéresse pas…" disabled>
@@ -284,15 +286,24 @@ RÈGLES FORMAT :
         const synth = window.speechSynthesis;
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
+        let speechRecAvailable = false;
         try {
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
                 recognition.lang = "fr-FR";
+                speechRecAvailable = true;
             }
-        } catch (_) {}
+        } catch (_) {
+            speechRecAvailable = false;
+        }
 
         const startBtn = document.getElementById("startBtn");
         const talkBtn = document.getElementById("talkBtn");
+        const recordTimer = document.getElementById("recordTimer");
+        const speechPreview = document.getElementById("speechPreview");
+        const micStatus = document.getElementById("micStatus");
         const stopBtn = document.getElementById("stopBtn");
         const sendTextBtn = document.getElementById("sendTextBtn");
         const textInput = document.getElementById("textInput");
@@ -395,6 +406,103 @@ RÈGLES FORMAT :
             return t.replace(/\([^)]*\)/g, " ").replace(/\*+/g, "").replace(/\s+/g, " ").trim();
         }
 
+        function pushToStreamlit(value) {
+            if (window.Streamlit && typeof Streamlit.setComponentValue === "function") {
+                Streamlit.setComponentValue(value);
+                return true;
+            }
+            const targets = [window.parent, window.top];
+            const msg = value.action === "update_eval"
+                ? { type: "UPDATE_CONVERSATION_EVAL", conversation_id: value.conversation_id, evaluation: value.evaluation }
+                : { type: "SAVE_CONVERSATION", payload: value.payload || value };
+            for (const t of targets) {
+                try { t.postMessage(msg, "*"); } catch (_) {}
+            }
+            return false;
+        }
+
+        function updateSpeechPreview(text) {
+            if (!speechPreview) return;
+            speechPreview.textContent = text ? ("🎙️ « " + text + " »") : "";
+        }
+
+        function startSpeechListen() {
+            if (!recognition) throw new Error("Micro non disponible — utilisez Chrome ou le champ texte");
+            speechTranscript = "";
+            updateSpeechPreview("");
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onresult = (e) => {
+                let finalText = "";
+                for (let i = 0; i < e.results.length; i++) {
+                    if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
+                }
+                finalText = finalText.trim();
+                if (finalText) {
+                    speechTranscript = finalText;
+                    updateSpeechPreview(finalText);
+                    return;
+                }
+                const last = e.results[e.results.length - 1];
+                if (last && last[0]) {
+                    speechTranscript = last[0].transcript.trim();
+                    updateSpeechPreview(speechTranscript);
+                }
+            };
+            recognition.onerror = (e) => {
+                if (e.error === "aborted") return;
+                isListening = false;
+                recordTimer.textContent = "";
+                talkBtn.textContent = "🎤 Parler en tant que prospect";
+                talkBtn.style.background = "";
+                updateSpeechPreview("");
+                const msg = e.error === "network"
+                    ? "Service vocal Chrome indisponible — tapez votre réplique en bas"
+                    : e.error === "no-speech"
+                        ? "Aucune voix détectée — réessayez ou tapez votre réplique"
+                        : e.error === "not-allowed"
+                            ? "Micro refusé — autorisez le micro dans Chrome ou tapez votre réplique"
+                            : "Micro : " + e.error;
+                alert(msg);
+                setStatus("Réessayez ou tapez votre réplique", "status-listening");
+            };
+            recognition.onend = () => {
+                if (isListening) {
+                    try { recognition.start(); } catch (_) {}
+                }
+            };
+            recognition.start();
+            isListening = true;
+            setStatus("🎤 Parlez maintenant…", "status-listening");
+            recordTimer.textContent = "Enregistrement — cliquez Envoyer quand vous avez fini";
+            talkBtn.textContent = "⏹ Envoyer ma réplique";
+            talkBtn.style.background = "#dc2626";
+        }
+
+        function stopSpeechListen() {
+            return new Promise((resolve, reject) => {
+                if (!recognition) return reject(new Error("Micro non disponible"));
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.onend = () => {
+                    isListening = false;
+                    recordTimer.textContent = "";
+                    talkBtn.textContent = "🎤 Parler en tant que prospect";
+                    talkBtn.style.background = "";
+                    const text = speechTranscript.trim();
+                    updateSpeechPreview("");
+                    if (text) resolve(text);
+                    else reject(new Error("Aucune voix détectée — parlez plus fort ou tapez votre réplique"));
+                };
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    isListening = false;
+                    reject(new Error("Micro : " + e.message));
+                }
+            });
+        }
+
         async function speakAgent(text) {
             if (!document.getElementById("voiceToggle").checked) return;
             const t = cleanSpeech(text);
@@ -411,6 +519,7 @@ RÈGLES FORMAT :
         async function sendProspectMessage(text) {
             const apiKey = getApiKey();
             if (!apiKey) return alert("Clé OpenRouter requise.");
+            if (synth && synth.speaking) synth.cancel();
             addLog("Prospect (Vous)", text, "prospect-msg");
             chatTurns.push({ role: "user", content: text });
             setStatus("L'agent IA répond…", "status-thinking");
@@ -456,7 +565,7 @@ RÈGLES FORMAT :
             if (!chatTurns.length) return null;
             const payload = buildPayload(evaluation);
             if (useStreamlitSave()) {
-                window.parent.postMessage({ type: "SAVE_CONVERSATION", payload }, "*");
+                pushToStreamlit({ action: "save", payload: payload });
                 document.getElementById("dbStatus").innerHTML = "⏳ Enregistrement…";
                 return "streamlit";
             }
@@ -478,11 +587,11 @@ RÈGLES FORMAT :
 
         async function updateEvalInDb(convId, evaluation) {
             if (useStreamlitSave()) {
-                window.parent.postMessage({
-                    type: "UPDATE_CONVERSATION_EVAL",
+                pushToStreamlit({
+                    action: "update_eval",
                     conversation_id: convId,
-                    evaluation
-                }, "*");
+                    evaluation: evaluation
+                });
                 return;
             }
             try {
@@ -603,7 +712,7 @@ ${transcript.slice(0, 2500)}`;
             evalDiv.style.display = "none";
             callActive = true;
             startBtn.disabled = true;
-            talkBtn.disabled = !recognition;
+            talkBtn.disabled = !speechRecAvailable;
             sendTextBtn.disabled = false;
             textInput.disabled = false;
             stopBtn.disabled = false;
@@ -617,31 +726,16 @@ ${transcript.slice(0, 2500)}`;
 
         talkBtn.addEventListener("click", async () => {
             if (!callActive) return;
-            if (!isListening) {
-                speechTranscript = "";
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.onresult = e => {
-                    let f = "";
-                    for (let i = 0; i < e.results.length; i++) {
-                        if (e.results[i].isFinal) f += e.results[i][0].transcript + " ";
-                    }
-                    if (f.trim()) speechTranscript = f.trim();
-                    else if (e.results.length) speechTranscript = e.results[e.results.length-1][0].transcript.trim();
-                };
-                recognition.onend = () => { if (isListening) try { recognition.start(); } catch(_){} };
-                recognition.start();
-                isListening = true;
-                talkBtn.textContent = "⏹ Envoyer";
-                document.getElementById("recordTimer").textContent = "Parlez…";
-            } else {
-                recognition.stop();
-                isListening = false;
-                talkBtn.textContent = "🎤 Parler en tant que prospect";
-                document.getElementById("recordTimer").textContent = "";
-                const t = speechTranscript.trim();
-                if (t) await sendProspectMessage(t);
-                else alert("Aucune voix — tapez votre réplique.");
+            try {
+                if (!isListening) {
+                    startSpeechListen();
+                } else {
+                    const userText = await stopSpeechListen();
+                    await sendProspectMessage(userText);
+                }
+            } catch (e) {
+                alert(e.message);
+                setStatus("Réessayez ou tapez votre réplique", "status-listening");
             }
         });
 
@@ -697,8 +791,20 @@ ${transcript.slice(0, 2500)}`;
             if (synth.onvoiceschanged) synth.onvoiceschanged = pick;
         }
 
+        function initMicStatus() {
+            if (!micStatus) return;
+            if (speechRecAvailable) {
+                micStatus.textContent = "✅ Micro Chrome disponible — ou utilisez le champ texte";
+                micStatus.style.color = "#16a34a";
+            } else {
+                micStatus.textContent = "⚠️ Micro indisponible ici — utilisez Chrome ou tapez votre réplique";
+                micStatus.style.color = "#d97706";
+            }
+        }
+
         function onStreamlitConfigApplied() {
             applyHostedConfig();
+            initMicStatus();
             showSaveResult();
             const el = document.getElementById("dbStatus");
             const cfg = getCfg();
@@ -734,6 +840,7 @@ ${transcript.slice(0, 2500)}`;
         });
 
         (async function initProspect() {
+            initMicStatus();
             const cfg = getCfg();
             if (cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud()) {
                 onStreamlitConfigApplied();

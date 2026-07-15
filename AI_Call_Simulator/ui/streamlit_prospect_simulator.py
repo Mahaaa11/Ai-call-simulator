@@ -10,6 +10,10 @@ SIMULATION_HTML = Path(__file__).resolve().parents[1] / "web" / "simulation_pros
 
 
 def main() -> None:
+    st.info(
+        "🎤 **Micro** : utilisez **Chrome**, cliquez le bouton micro, parlez, puis cliquez **Envoyer ma réplique**. "
+        "Si le micro ne marche pas dans Streamlit, tapez votre réplique dans le champ texte."
+    )
     run_simulator(
         SIMULATION_HTML,
         page_title="Simulateur — Mode Prospect",
