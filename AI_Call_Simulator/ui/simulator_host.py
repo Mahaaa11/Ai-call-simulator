@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -122,6 +123,13 @@ def _sync_component_index(html_path: Path, config: dict, frontend_dir: Path) -> 
     lib_dst = frontend_dir / "streamlit-component-lib.js"
     if lib_src.exists() and not lib_dst.exists():
         lib_dst.write_bytes(lib_src.read_bytes())
+    assets_src = WEB_DIR / "assets"
+    assets_dst = frontend_dir / "assets"
+    if assets_src.is_dir():
+        assets_dst.mkdir(parents=True, exist_ok=True)
+        for asset in assets_src.iterdir():
+            if asset.is_file():
+                shutil.copy2(asset, assets_dst / asset.name)
     (frontend_dir / "index.html").write_text(
         _prepare_component_html(html_path, config),
         encoding="utf-8",

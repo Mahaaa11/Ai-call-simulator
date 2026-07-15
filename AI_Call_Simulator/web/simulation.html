@@ -5,145 +5,561 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulateur d'Appels Sortants v1 — Lead and Connect</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --dark: #1f2937;
-            --light-bg: #f8fafc;
-            --border: #e2e8f0;
+            --lc-navy: #002D58;
+            --lc-navy-light: #003d75;
+            --lc-orange: #D9802E;
+            --lc-teal: #00827F;
+            --lc-grey: #666666;
+            --lc-grey-light: #999999;
+            --primary: #002D58;
+            --primary-glow: #003d75;
+            --accent: #00827F;
+            --accent-warm: #D9802E;
+            --success: #00827F;
+            --danger: #c0392b;
+            --dark: #002D58;
+            --dark-card: #ffffff;
+            --dark-elevated: #f4f6f8;
+            --text: #333333;
+            --text-muted: #666666;
+            --border: #e0e4e8;
+            --glass: #ffffff;
         }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            max-width: 1100px;
+            font-family: 'Outfit', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 40% at 10% 0%, rgba(0, 45, 88, 0.06), transparent),
+                radial-gradient(ellipse 50% 30% at 95% 5%, rgba(217, 128, 46, 0.05), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: var(--light-bg);
-            color: var(--dark);
+            padding: 20px 24px 40px;
         }
-        header {
+
+        .hero {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 15px;
+            padding: 32px 24px 36px;
+            margin: 0 auto 24px;
+            max-width: 1280px;
+            background: var(--lc-navy);
+            border: none;
+            border-radius: 0;
+            color: #ffffff;
         }
-        header h1 { margin: 0; color: var(--primary); font-size: 24px; }
-        header p { margin: 5px 0 0 0; font-style: italic; color: #64748b; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(217, 128, 46, 0.25);
+            color: var(--lc-orange);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(22px, 4vw, 30px);
+            font-weight: 800;
+            color: #ffffff;
+            background: none;
+            -webkit-text-fill-color: #ffffff;
+        }
+
+        .hero p {
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 15px;
+        }
+
+        .hero a {
+            display: inline-block;
+            margin-top: 14px;
+            color: var(--lc-orange);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .hero a:hover { color: #f0a050; }
+
         .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            background: var(--glass);
+            padding: 22px;
+            border-radius: 12px;
             border: 1px solid var(--border);
             margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0, 45, 88, 0.06);
         }
-        .card h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-        label { display: block; margin-top: 10px; font-weight: 600; font-size: 14px; }
-        select, input, button {
+
+        .card h3 {
+            margin: 0 0 16px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h3::before {
+            content: "";
+            width: 4px;
+            height: 18px;
+            background: linear-gradient(180deg, var(--lc-navy), var(--lc-orange));
+            border-radius: 2px;
+        }
+
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        select, input[type="password"], input[type="text"] {
             width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            font-size: 15px;
-            box-sizing: border-box;
+            padding: 12px 14px;
+            margin: 6px 0 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
         }
-        input:focus, select:focus { outline: 2px solid var(--primary); }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--lc-navy);
+            box-shadow: 0 0 0 3px rgba(0, 45, 88, 0.12);
+        }
+
         button {
-            background: var(--primary);
+            width: 100%;
+            padding: 14px 18px;
+            margin: 10px 0 0;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+        }
+
+        button:hover:not(:disabled) { transform: translateY(-1px); }
+        button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+        #startBtn {
+            background: var(--lc-teal);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 130, 127, 0.35);
+        }
+
+        #startBtn:hover:not(:disabled) { background: #006b68; }
+
+        #stopBtn {
+            background: var(--lc-orange);
+            color: white;
+            box-shadow: 0 4px 16px rgba(217, 128, 46, 0.35);
+        }
+
+        #stopBtn:hover:not(:disabled) { background: #c46f22; }
+
+        #talkBtn {
+            background: var(--lc-navy);
+            color: white;
+            height: 64px;
+            font-size: 17px;
+            box-shadow: 0 4px 16px rgba(0, 45, 88, 0.25);
+        }
+
+        #talkBtn:hover:not(:disabled) { background: var(--lc-navy-light); }
+
+        #sendTextBtn {
+            width: auto;
+            min-width: 100px;
+            margin: 0;
+            background: var(--lc-teal);
             color: white;
             border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
         }
-        button:hover { background: var(--primary-hover); }
-        button:disabled { background: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
-        #stopBtn { background: var(--danger); }
-        #stopBtn:hover { background: #b91c1c; }
-        #log {
-            height: 380px;
-            overflow-y: auto;
+
+        #testVoiceBtn {
+            width: auto;
+            margin: 12px auto 0;
+            display: block;
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 10px 20px;
+        }
+
+        .call-experience {
+            display: grid;
+            grid-template-columns: minmax(280px, 380px) 1fr;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        @media (max-width: 900px) {
+            .call-experience { grid-template-columns: 1fr; }
+        }
+
+        .prospect-stage-card {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .prospect-stage-card h3 { padding: 20px 22px 0; }
+
+        .prospect-frame-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 20px 20px;
+        }
+
+        .prospect-frame {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            aspect-ratio: 3 / 4;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 3px rgba(0, 45, 88, 0.15),
+                0 16px 40px rgba(0, 45, 88, 0.12);
+            transition: box-shadow 0.4s, transform 0.3s;
+        }
+
+        .prospect-frame.speaking {
+            box-shadow:
+                0 0 0 3px var(--lc-teal),
+                0 0 30px rgba(0, 130, 127, 0.35),
+                0 16px 40px rgba(0, 45, 88, 0.15);
+            transform: scale(1.02);
+        }
+
+        .prospect-frame.thinking {
+            box-shadow:
+                0 0 0 3px var(--lc-orange),
+                0 0 24px rgba(217, 128, 46, 0.25),
+                0 16px 40px rgba(0, 45, 88, 0.12);
+        }
+
+        .prospect-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 15%;
+            display: block;
+            transition: filter 0.4s;
+        }
+
+        .prospect-frame.mood-tense img {
+            filter: contrast(1.05) saturate(0.9) brightness(0.97);
+        }
+
+        .prospect-frame.mood-angry img {
+            filter: contrast(1.12) saturate(1.1) brightness(0.94) sepia(0.08);
+        }
+
+        .prospect-frame.speaking img { filter: brightness(1.05) saturate(1.05); }
+        .prospect-frame.speaking.mood-angry img { filter: contrast(1.1) saturate(1.15) brightness(1); }
+        .prospect-frame.speaking.mood-tense img { filter: contrast(1.05) saturate(0.95) brightness(1.02); }
+
+        .prospect-frame.gender-female .mouth-overlay {
+            bottom: 33%;
+            left: 50%;
+            width: 10%;
+        }
+
+        .prospect-frame.gender-male .mouth-overlay {
+            bottom: 36%;
+            left: 54%;
+            width: 11%;
+        }
+
+        .mouth-overlay {
+            position: absolute;
+            bottom: 36%;
+            left: 54%;
+            width: 11%;
+            height: 3.5%;
+            background: linear-gradient(180deg, #5c3d2e 0%, #3d2518 100%);
+            border-radius: 50% 50% 40% 40%;
+            transform: translateX(-50%) scaleY(0.15);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s;
+            z-index: 3;
+        }
+
+        .prospect-frame.speaking .mouth-overlay {
+            opacity: 0.9;
+            animation: mouthTalk 0.11s ease-in-out infinite alternate;
+        }
+
+        @keyframes mouthTalk {
+            0% { transform: translateX(-50%) scaleY(0.15) scaleX(0.9); }
+            100% { transform: translateX(-50%) scaleY(1.3) scaleX(1.15); }
+        }
+
+        .speak-waves {
+            position: absolute;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 4;
+        }
+
+        .prospect-frame.speaking .speak-waves { opacity: 1; }
+
+        .speak-waves span {
+            display: block;
+            width: 5px;
+            height: 20px;
+            background: var(--lc-teal);
+            border-radius: 3px;
+            animation: waveBar 0.5s ease-in-out infinite;
+        }
+
+        .speak-waves span:nth-child(2) { animation-delay: 0.1s; height: 28px; }
+        .speak-waves span:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes waveBar {
+            0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+            50% { transform: scaleY(1); opacity: 1; }
+        }
+
+        .call-ring {
+            position: absolute;
+            inset: -8px;
+            border-radius: 24px;
+            border: 2px solid transparent;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .prospect-frame.speaking .call-ring {
+            border-color: rgba(0, 130, 127, 0.5);
+            animation: ringPulse 1.2s ease-out infinite;
+        }
+
+        @keyframes ringPulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.08); opacity: 0; }
+        }
+
+        .prospect-status-label {
+            margin-top: 14px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: var(--dark-elevated);
             border: 1px solid var(--border);
-            padding: 15px;
-            background: #ffffff;
-            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.3s, border-color 0.3s;
         }
+
+        .prospect-status-label.active {
+            color: var(--lc-teal);
+            border-color: rgba(0, 130, 127, 0.4);
+        }
+
+        .controls-dock {
+            padding: 16px 22px 22px;
+            border-top: 1px solid var(--border);
+            background: var(--dark-elevated);
+        }
+
+        .controls-dock .status-badge { margin-bottom: 12px; }
+
+        .transcript-card {
+            display: flex;
+            flex-direction: column;
+            min-height: 520px;
+        }
+
+        .transcript-card h3 { flex-shrink: 0; }
+
+        #log {
+            flex: 1;
+            min-height: 400px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding: 16px;
+            background: #fafbfc;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            scroll-behavior: smooth;
+        }
+
+        #log::-webkit-scrollbar { width: 6px; }
+        #log::-webkit-scrollbar-thumb { background: #d0d5db; border-radius: 3px; }
+
         .agent-msg {
-            margin: 12px 0;
-            padding: 12px;
-            background: #eff6ff;
-            border-left: 5px solid var(--primary);
-            border-radius: 4px;
+            margin: 10px 0;
+            padding: 14px 16px;
+            background: rgba(0, 45, 88, 0.06);
+            border-left: 4px solid var(--lc-navy);
+            border-radius: 0 10px 10px 0;
+            animation: msgIn 0.35s ease-out;
         }
+
         .prospect-msg {
-            margin: 12px 0;
-            padding: 12px;
-            background: #f0fdf4;
-            border-left: 5px solid var(--success);
-            border-radius: 4px;
+            margin: 10px 0;
+            padding: 14px 16px;
+            background: rgba(0, 130, 127, 0.08);
+            border-left: 4px solid var(--lc-teal);
+            border-radius: 0 10px 10px 0;
+            animation: msgIn 0.35s ease-out;
         }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .agent-msg strong, .prospect-msg strong {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+            opacity: 0.85;
+        }
+
         #evaluation {
             display: none;
-            background: #ffffff;
-            border-left: 6px solid #eab308;
-            margin-top: 20px;
+            border-left: 4px solid var(--accent-warm);
         }
-        .eval-header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #e2e8f0; }
+
+        .eval-header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
         .eval-score-badge { display: inline-flex; flex-direction: column; align-items: center; min-width: 110px; padding: 14px 18px; border-radius: 12px; color: white; font-weight: bold; }
-        .eval-level-excellent { background: #16a34a; }
-        .eval-level-bon { background: #2563eb; }
-        .eval-level-ameliorer { background: #eab308; color: #1f2937; }
-        .eval-level-coaching { background: #dc2626; }
+        .eval-level-excellent { background: var(--success); }
+        .eval-level-bon { background: var(--primary); }
+        .eval-level-ameliorer { background: var(--accent-warm); color: var(--dark); }
+        .eval-level-coaching { background: var(--danger); }
         .score-num { font-size: 28px; line-height: 1; }
         .score-label { font-size: 13px; margin-top: 4px; opacity: 0.95; }
-        .eval-title { margin: 0 0 4px 0; color: var(--primary); }
-        .eval-subtitle { margin: 0; color: #64748b; font-size: 14px; }
+        .eval-title { margin: 0 0 4px 0; color: var(--primary-glow); }
+        .eval-subtitle { margin: 0; color: var(--text-muted); font-size: 14px; }
         .eval-table-wrap { overflow-x: auto; margin: 16px 0; }
-        .eval-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .eval-table th, .eval-table td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; vertical-align: top; }
-        .eval-table th { background: #f1f5f9; font-weight: 600; }
-        .eval-table .section-row td { background: #eff6ff; font-weight: 700; color: #1e40af; }
+        .eval-table { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--text); }
+        .eval-table th, .eval-table td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+        .eval-table th { background: rgba(99, 102, 241, 0.15); font-weight: 600; }
+        .eval-table .section-row td { background: rgba(99, 102, 241, 0.1); font-weight: 700; color: var(--primary-glow); }
         .eval-table .col-score, .eval-table .col-max { text-align: center; white-space: nowrap; width: 90px; }
-        .eval-section { margin-top: 18px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; }
-        .eval-section h4 { margin: 0 0 8px 0; font-size: 15px; }
-        .eval-section ul { margin: 0; padding-left: 20px; }
-        .eval-interpretation { margin-top: 16px; font-size: 13px; color: #64748b; }
+        .eval-section { margin-top: 18px; padding: 14px; border-radius: 10px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); }
+        .eval-section h4 { margin: 0 0 8px 0; font-size: 15px; color: var(--text); }
+        .eval-section ul { margin: 0; padding-left: 20px; color: var(--text-muted); }
+        .eval-interpretation { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+
         .status-badge {
             display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 13px;
-            margin-bottom: 15px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.04em;
         }
-        .status-idle { background: #e2e8f0; color: #475569; }
-        .status-listening { background: #dbeafe; color: #2563eb; }
-        .status-thinking { background: #fef9c3; color: #854d0e; }
-        .hint { font-size: 13px; color: #64748b; margin: 4px 0 0 0; }
-        #recordTimer { font-size: 13px; color: #dc2626; font-weight: bold; min-height: 18px; }
-        .text-row { display: flex; gap: 8px; }
+
+        .status-idle { background: #eef1f4; color: var(--text-muted); }
+        .status-listening { background: rgba(0, 130, 127, 0.12); color: var(--lc-teal); }
+        .status-thinking { background: rgba(217, 128, 46, 0.12); color: var(--lc-orange); }
+
+        .hint { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; line-height: 1.45; }
+        .hint a { color: var(--accent); }
+        .hint code { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+        #recordTimer { font-size: 13px; color: var(--danger); font-weight: bold; min-height: 18px; text-align: center; }
+
+        .text-row { display: flex; gap: 10px; margin-top: 6px; }
         .text-row input { flex: 1; margin: 0; }
-        .text-row button { width: auto; min-width: 100px; margin: 0; }
-        #voiceToggle { width: auto; margin: 8px 0; }
-        #testVoiceBtn { background: #64748b; width: auto; margin: 0 auto 8px auto; display: block; }
-        #ttsStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; }
-        #dbStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; }
+
+        #voiceToggle { width: auto; margin: 10px 0 0; accent-color: var(--primary); }
+
+        #apiKeyStatus { color: var(--success) !important; }
+        #ttsStatus, #dbStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; text-align: center; }
+
+        #retryEvalBtn {
+            background: var(--lc-navy);
+            color: white;
+            width: auto;
+            margin-top: 12px;
+        }
+
+        .calibration-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 14px 0 4px;
+            font-weight: normal;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .calibration-label input { width: auto; margin: 0; accent-color: var(--primary); }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>CAHIER DE DÉVELOPPEMENT — AGENT IA</h1>
-        <p>VERSION 1 — LEAD AND CONNECT (SIMULATEUR D'APPELS SORTANTS)</p>
-        <a href="simulation_prospect.html" id="v2Link" style="display:inline-block;margin-top:10px;color:#7c3aed;font-weight:600;text-decoration:none;">Version 2 : jouer le prospect et observer l'IA agent →</a>
+    <header class="hero">
+        <div class="hero-badge">Lead & Connect</div>
+        <h1>Simulateur d'Appels Sortants</h1>
+        <p>Externalisation de centre d'appels — Entraînement agent commercial</p>
+        <a href="simulation_prospect.html" id="v2Link">Version 2 : jouer le prospect →</a>
     </header>
 
+    <div class="app-shell">
+
     <div class="card">
-        <h3>1. Paramètres de Formation</h3>
+        <h3>Paramètres de formation</h3>
         <div id="apiKeySection">
             <label for="apiKey">Clé API OpenRouter :</label>
             <input type="password" id="apiKey" placeholder="sk-or-v1-...">
@@ -158,7 +574,7 @@
             <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
         </select>
 
-        <div class="grid">
+        <div class="settings-grid">
             <div>
                 <label for="profileSelect">Scénario / Profil de Prospect :</label>
                 <select id="profileSelect">
@@ -178,21 +594,32 @@
                 </select>
             </div>
         </div>
-        <label style="display:block;margin:10px 0 4px;font-weight:normal;font-size:13px;color:#475569;">
-            <input type="checkbox" id="calibrationToggle"> Calibration par scripts (cocher pour forcer les objections prédéfinies — décoché = réponses 100&nbsp;% LLM)
+        <label class="calibration-label">
+            <input type="checkbox" id="calibrationToggle"> Calibration par scripts (objections prédéfinies)
         </label>
-        <button type="button" id="startBtn">INITIALISER ET DÉCROCHER L'APPEL</button>
+        <button type="button" id="startBtn">📞 Initialiser et décrocher</button>
     </div>
 
-    <div class="grid">
-        <div class="card">
-            <h3>2. Console de Contrôle Audio</h3>
-            <div style="text-align: center; padding: 20px 0;">
-                <div id="status" class="status-badge status-idle">Ligne inactive</div>
-                <div id="recordTimer"></div>
-                <button type="button" id="talkBtn" disabled style="height: 60px; font-size: 18px; margin-bottom: 8px;">🎤 Cliquer pour parler</button>
-                <p class="hint">Cliquez 🎤, parlez, puis recliquez ⏹ Arrêter pour envoyer. Sinon utilisez le texte.</p>
-                <label for="textInput" style="text-align:left;">Ou tapez votre réplique :</label>
+    <div class="call-experience">
+        <div class="card prospect-stage-card">
+            <h3>Prospect en ligne</h3>
+            <div class="prospect-frame-wrap">
+                <div class="prospect-frame" id="prospectFrame">
+                    <img src="assets/prospect-male-calm.png" id="prospectAvatarImg" alt="Prospect au téléphone">
+                    <div class="mouth-overlay" id="prospectMouth"></div>
+                    <div class="speak-waves" id="prospectWaves"><span></span><span></span><span></span></div>
+                    <div class="call-ring" id="prospectCallRing"></div>
+                </div>
+                <div class="prospect-status-label" id="prospectStatusLabel">En attente d'appel</div>
+            </div>
+            <div class="controls-dock">
+                <div style="text-align:center;">
+                    <div id="status" class="status-badge status-idle">Ligne inactive</div>
+                    <div id="recordTimer"></div>
+                </div>
+                <button type="button" id="talkBtn" disabled>🎤 Cliquer pour parler</button>
+                <p class="hint" style="text-align:center;">Parlez puis recliquez pour envoyer, ou tapez ci-dessous.</p>
+                <label for="textInput">Votre réplique</label>
                 <div class="text-row">
                     <input type="text" id="textInput" placeholder="Ex : Bonjour, je suis…" disabled>
                     <button type="button" id="sendTextBtn" disabled>Envoyer</button>
@@ -200,23 +627,25 @@
                 <button type="button" id="testVoiceBtn">🔊 Tester la voix du prospect</button>
                 <p class="hint" id="ttsStatus">Vérification voix…</p>
                 <p class="hint" id="dbStatus">Vérification MySQL…</p>
-                <label style="text-align:left;font-weight:normal;font-size:13px;">
-                    <input type="checkbox" id="voiceToggle" checked> Voix du prospect (serveur local)
+                <label class="calibration-label">
+                    <input type="checkbox" id="voiceToggle" checked> Voix du prospect
                 </label>
-                <button type="button" id="stopBtn" disabled>📴 Raccrocher et Lancer l'Évaluation</button>
+                <button type="button" id="stopBtn" disabled>📴 Raccrocher et évaluer</button>
             </div>
         </div>
 
-        <div class="card">
-            <h3>3. Transcription de l'Échange (Temps Réel)</h3>
+        <div class="card transcript-card">
+            <h3>Transcription en direct</h3>
             <div id="log"></div>
         </div>
     </div>
 
     <div id="evaluation" class="card">
-        <h3>4. Rapport Pédagogique — Évaluation de l'Agent (/100)</h3>
+        <h3>Rapport pédagogique — Évaluation (/100)</h3>
         <div id="evalContent"></div>
-        <button type="button" id="retryEvalBtn" style="display:none;margin-top:12px;">🔄 Relancer l'évaluation IA</button>
+        <button type="button" id="retryEvalBtn" style="display:none;">🔄 Relancer l'évaluation IA</button>
+    </div>
+
     </div>
 
     <script>
@@ -442,11 +871,13 @@
 - Tu réponds aux questions (fournisseur, ancienneté, électricité/gaz) sans refuser.
 - Tu acceptes facilement la proposition/comparatif en 3-4 échanges.
 - INTERDIT en débutant : "ne m'appelez plus", "raccrochez", "je ne veux rien changer", menaces de raccrocher.`,
-            intermediaire: `NIVEAU INTERMÉDIAIRE — OBJECTIONS :
-- Tu poses 2 à 4 objections réparties sur l'appel (profil, temps, confiance, fournisseur).
-- Tu ne cèdes qu'après des réponses convaincantes de l'agent.
-- Tu peux hésiter avant la proposition, mais tu restes au téléphone.
-- Pas de cris extrêmes. Raccrochage rare, seulement si l'agent est mauvais.`,
+            intermediaire: `NIVEAU INTERMÉDIAIRE — EXIGEANT (PRIORITAIRE) :
+- MINIMUM 3 objections ou questions de méfiance avant de donner adresse, PDL ou e-mail.
+- Sur l'IBAN : pose une objection (« pourquoi ? », « c'est sécurisé ? ») — tu peux le donner si l'agent répond clairement (prélèvement, résiliation ancien fournisseur, SEPA, sécurité des données).
+- Donne ton prénom seulement après avoir compris l'objet de l'appel ; l'adresse seulement après une offre claire.
+- Objections types : pourquoi cet appel, sans engagement, prix garanti, arnaques, habitudes, « je veux voir par écrit ».
+- Tu ne signes pas au téléphone sans explications : si l'agent convainc, tu avances ; sinon tu demandes un mail ou un rappel.
+- Pas de cris extrêmes. Raccrochage rare, seulement si l'agent ignore tes questions ou insiste sans argument.`,
             avance: `NIVEAU AVANCÉ — TRÈS DIFFICILE (PRIORITAIRE SUR LE PROFIL) :
 - Tu refuses, tu es agacé : "ça ne m'intéresse pas", "ne m'appelez plus", "raccrochez".
 - Tu menaces de RACCROCHER souvent. Tu peux crier ("Écoutez !", "Arrêtez !", "Stop !").
@@ -457,12 +888,52 @@
         const CALL_STRUCTURE = `STRUCTURE DE L'APPEL :
 1. ACCROCHE — écoute ou refuse
 2. BUT — comprends pourquoi on appelle
-3. DÉCOUVERTE — fournisseur/facture (seulement si l'agent demande)
-4. PROPOSITION — comparatif (plus facile en débutant)
+3. DÉCOUVERTE — fournisseur/facture/déménagement/mise en service (selon le scénario)
+4. PROPOSITION — comparatif ou offre adaptée au nouveau logement
 5. CLOSING — seulement si proposition bien menée`;
 
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
         const PERSONA_FIRST_NAMES = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc"];
+        const FEMALE_FIRST_NAMES = new Set(["Marie", "Sophie", "Claire", "Isabelle", "Nathalie", "Camille", "Julie", "Émilie", "Emilie", "Anne", "Céline", "Celine", "Virginie", "Sandrine"]);
+        const VOICE_BY_GENDER = {
+            female: "fr-FR-DeniseNeural",
+            male: "fr-FR-HenriNeural"
+        };
+
+        function inferProspectGender(firstName) {
+            return FEMALE_FIRST_NAMES.has(firstName) ? "female" : "male";
+        }
+
+        function getProspectMood(profileKey, level) {
+            if (profileKey === "agressif") return "angry";
+            if (profileKey === "presse") return level === "debutant" ? "tense" : "angry";
+            if (profileKey === "mefiant_rgpd" && level !== "debutant") return "tense";
+            if (level === "avance" && profileKey !== "curieux") return "angry";
+            if (level === "intermediaire" && (profileKey === "agressif" || profileKey === "mefiant_fournisseur")) return "tense";
+            return "calm";
+        }
+
+        function resolveProspectAvatarSrc(gender) {
+            return "assets/prospect-" + (gender === "female" ? "female" : "male") + "-calm.png";
+        }
+
+        function updateProspectAvatar() {
+            const img = document.getElementById("prospectAvatarImg");
+            if (!img || !prospectPersona) return;
+            const gender = prospectPersona.gender || "male";
+            const profileKey = document.getElementById("profileSelect").value;
+            const mood = getProspectMood(profileKey, getLevel());
+            img.src = resolveProspectAvatarSrc(gender);
+            img.alt = (gender === "female" ? "Prospecte" : "Prospect") + " au téléphone";
+            if (prospectFrame) {
+                prospectFrame.classList.remove("gender-male", "gender-female", "mood-calm", "mood-tense", "mood-angry");
+                prospectFrame.classList.add("gender-" + gender, "mood-" + mood);
+            }
+            if (prospectStatusLabel && callActive) {
+                const moodLabel = mood === "angry" ? " — profil difficile" : mood === "tense" ? " — pressé/méfiant" : "";
+                prospectStatusLabel.textContent = (gender === "female" ? "Prospecte" : "Prospect") + " en ligne" + moodLabel;
+            }
+        }
         const PERSONA_LAST_NAMES = ["Dupont", "Martin", "Bernard", "Leroy", "Moreau", "Petit", "Garcia", "Roux", "Faure", "Girard"];
         const PERSONA_SUPPLIERS = ["EDF", "Engie", "TotalEnergies", "Vattenfall", "Ekwateur", "Mint Énergie", "Ohm Énergie"];
         const PERSONA_ADDRESSES = [
@@ -475,8 +946,32 @@
             "22 rue Victor Hugo, 44000 Nantes"
         ];
         const PERSONA_YEARS = ["2 ans", "3 ans", "plus de 4 ans", "5 ans", "depuis 6 ans", "plusieurs années"];
+        const PERSONA_SCENARIO_TYPES = ["standard", "demenagement", "mise_en_service"];
+        const MOVE_WHEN_OPTIONS = [
+            "dans deux semaines", "dans trois semaines", "la semaine prochaine",
+            "le mois prochain", "dans un mois", "fin du mois"
+        ];
+        const MES_STATUS_OPTIONS = [
+            "pas encore lancée",
+            "demande Enedis en cours",
+            "rendez-vous technicien à planifier",
+            "j'attends la date d'activation"
+        ];
+
+        function pickScenarioType(state) {
+            const recent = new Set((state.recentPersonas || []).slice(0, 2).map(p => p.scenarioType || "standard"));
+            const pool = PERSONA_SCENARIO_TYPES.filter(t => !recent.has(t));
+            return pickRandom(pool.length ? pool : PERSONA_SCENARIO_TYPES);
+        }
+
+        function pickDifferentAddress(exclude) {
+            const others = PERSONA_ADDRESSES.filter(a => a !== exclude);
+            return pickRandom(others.length ? others : PERSONA_ADDRESSES);
+        }
 
         function pickRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
             return arr[Math.floor(Math.random() * arr.length)];
         }
 
@@ -510,6 +1005,7 @@
                 firstName: prospectPersona.firstName,
                 lastName: prospectPersona.lastName,
                 billAmount: prospectPersona.billAmount,
+                scenarioType: prospectPersona.scenarioType || "standard",
                 profile: document.getElementById("profileSelect").value,
                 at: Date.now()
             }].concat(state.recentPersonas || []).slice(0, 12);
@@ -535,12 +1031,13 @@
                 ? (state.recentScores.reduce((a, b) => a + b, 0) / state.recentScores.length) : null;
             if (avg != null && avg >= 78) {
                 block += "\n- L'agent progresse (scores récents élevés) : sois un peu plus exigeant, 1 objection de plus avant d'accepter le comparatif.";
-            } else if (avg != null && avg < 55) {
+            } else if (avg != null && avg < 55 && (state.sessionCount || 0) >= 3) {
                 block += "\n- L'agent débute : reste dans le niveau choisi, ouvre-toi si l'agent est poli et clair.";
             }
             if ((state.recentPersonas || []).length) {
                 const used = state.recentPersonas.slice(0, 5).map(p =>
                     (p.firstName || "") + " " + (p.supplier || "") + " ~" + (p.billAmount || "?") + "€"
+                    + (p.scenarioType && p.scenarioType !== "standard" ? " [" + p.scenarioType + "]" : "")
                 ).join(" | ");
                 block += "\n- Scénarios récents déjà joués sur cet appareil (adapter, ne pas copier) : " + used;
             }
@@ -550,21 +1047,54 @@
             return block;
         }
 
+        function buildScenarioFacts(persona) {
+            if (persona.scenarioType === "demenagement") {
+                const atNew = !!persona.alreadyMoved;
+                return `SCÉNARIO — DÉMÉNAGEMENT (à intégrer naturellement dans l'appel) :
+- Tu déménages ${persona.moveWhen} vers : ${persona.newAddress}.
+- ${atNew ? "Tu viens d'emménager au nouveau logement." : "Tu es encore à l'ancienne adresse : " + persona.oldAddress + "."}
+- Fournisseur à l'ancien logement : ${persona.supplier}, électricité seulement, depuis ${persona.yearsAtSupplier}.
+- À l'ancien logement tu payais environ ${persona.billAmount} €/mois — au nouveau tu ne connais pas encore la facture.
+- PDL ancien logement : ${persona.pdl} ; au nouveau logement : ${persona.newPdlKnown ? persona.newPdl : "pas encore (pas sur la facture / pas reçu)"}.
+- Tu peux parler de résiliation, transfert de contrat, mise en service au nouveau logement, délais Enedis.
+- Si l'agent ne pose pas la question, tu peux mentionner le déménagement quand il parle de facture, adresse ou fournisseur.`;
+            }
+            if (persona.scenarioType === "mise_en_service") {
+                return `SCÉNARIO — MISE EN SERVICE (à intégrer naturellement dans l'appel) :
+- Tu emménages ou viens de récupérer les clés : ${persona.newAddress}.
+- Mise en service électricité : ${persona.mesStatus}.
+- ${persona.hasContractAtNew
+                    ? "Tu as déjà choisi " + persona.supplier + " pour le nouveau logement."
+                    : "Tu n'as pas encore de contrat au nouveau logement — tu cherches quoi faire."}
+- Pas de facture ni historique de conso au nouveau logement.
+- PDL : ${persona.newPdlKnown ? persona.newPdl : "tu ne l'as pas encore / Enedis doit le fournir"}.
+- Tu poses des questions sur délais, premier contrat, compteur Linky, Enedis, sans engagement.
+- Si l'agent parle seulement d'économies sur l'ancienne facture, rappelle que c'est une mise en service / nouveau logement.`;
+            }
+            return "";
+        }
+
         function buildProspectFacts(persona) {
             const offer = persona.offerTarget;
-            return `TON MÉNAGE — FAITS FIXES (ne les contredis JAMAIS, même si tu es agressif ou méfiant) :
-- Particulier en France : tu as DE L'ÉLECTRICITÉ à domicile (logement normal).
+            const scenarioBlock = buildScenarioFacts(persona);
+            const base = persona.scenarioType === "standard"
+                ? `- Particulier en France : tu as DE L'ÉLECTRICITÉ à domicile (logement normal).
 - Fournisseur actuel : ${persona.supplier}, électricité SEULEMENT (pas de gaz).
 - Ancienneté : ${persona.yearsAtSupplier} chez ${persona.supplier}.
 - Facture électricité : environ ${persona.billAmount} €/mois.
 - Mail d'augmentation : non, tu ne l'as pas reçu.
 - PDL (14 chiffres) : ${persona.pdl} — tu l'as sur ta facture ; tu peux le donner si demandé.
-- Adresse : ${persona.address}.
-- Identité : ${persona.firstName} ${persona.lastName} — ce n'est PAS toi si l'agent se présente (Émilie, Eugénie, Génie…).
+- Adresse actuelle : ${persona.address}.`
+                : `- Identité : ${persona.firstName} ${persona.lastName}.
+- Électricité seulement (pas de gaz).
+- Adresse de référence pour l'appel : ${persona.address}.`;
+            return `TON MÉNAGE — FAITS FIXES (ne les contredis JAMAIS, même si tu es agressif ou méfiant) :
+${base}
+${scenarioBlock ? scenarioBlock + "\n" : ""}- Identité : ${persona.firstName} ${persona.lastName} — ce n'est PAS toi si l'agent se présente (Émilie, Eugénie, Génie…).
 - INTERDIT : te présenter avec le prénom/nom de l'AGENT. Tu es le CLIENT, pas le commercial.
 - INTERDIT : dire que tu n'as pas de PDL, pas d'électricité, ou inventer des personnes (« appelez Elsa », etc.).
 - Si tu n'as pas la facture sous les yeux → « Je ne l'ai pas sous la main » (PAS « je n'ai pas de PDL »).
-- Si l'agent propose ${offer} € au lieu de ${persona.billAmount} € → réagis au prix en français (« ${offer} euros ? D'accord, expliquez-moi »).
+- Si l'agent propose ${offer} €${persona.scenarioType === "standard" ? " au lieu de " + persona.billAmount + " €" : " pour le nouveau logement"} → réagis au prix en français (« ${offer} euros ? D'accord, expliquez-moi »).
 - UNIQUEMENT en français naturel. JAMAIS d'anglais (« stop speaking », etc.).
 - Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.
 - VARIÉTÉ OBLIGATOIRE : reformule à chaque réplique ; ne recycle pas une phrase d'une session précédente.`;
@@ -575,6 +1105,15 @@
             if (!said.length) return "";
             return "\n\nDÉJÀ DIT PAR TOI DANS CET APPEL (ne pas répéter mot pour mot, reformule) :\n"
                 + said.map(s => "- " + s.slice(0, 140)).join("\n");
+        }
+
+        function personaScenarioType() { return prospectPersona.scenarioType || "standard"; }
+        function personaIsMoving() { return personaScenarioType() === "demenagement"; }
+        function personaNeedsMes() {
+            return personaScenarioType() === "mise_en_service" || personaIsMoving();
+        }
+        function agentAskedMovingOrMes() {
+            return /\b(déménag|demenag|emménag|emmenag|mise en service|nouveau logement|nouvelle adresse|nouvel appart|nouvelle maison|enedis|linky|activation|premier contrat|les clés|clés du)\b/i.test(lastAgentText());
         }
 
         function personaSupplier() { return prospectPersona.supplier || "EDF"; }
@@ -787,7 +1326,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function createProspectPersona(profileKey) {
             const state = loadTrainingState();
             const recentKeys = new Set((state.recentPersonas || []).map(p =>
-                (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
+                (p.scenarioType || "standard") + "|" + (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
             ));
             let persona = null;
             for (let i = 0; i < 30; i++) {
@@ -798,25 +1337,58 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille"])
                     : pickRandom(PERSONA_FIRST_NAMES);
                 const lastName = pickRandom(PERSONA_LAST_NAMES);
-                const key = supplier + "|" + firstName + "|" + billAmount;
+                const scenarioType = pickScenarioType(state);
+                const oldAddress = pickRandom(PERSONA_ADDRESSES);
+                const newAddress = pickDifferentAddress(oldAddress);
+                const newPdl = randomPdl();
+                const key = scenarioType + "|" + supplier + "|" + firstName + "|" + billAmount;
                 if (!recentKeys.has(key) || i > 20) {
-                    persona = {
+                    const base = {
                         firstName, lastName,
                         supplier,
                         yearsAtSupplier: pickRandom(PERSONA_YEARS),
                         billAmount, offerTarget,
+                        scenarioType,
                         gaveFirst: false, gaveLast: false,
                         pdl: randomPdl(), gavePdl: false,
-                        address: pickRandom(PERSONA_ADDRESSES),
                         gaveAddress: false
                     };
+                    if (scenarioType === "demenagement") {
+                        const alreadyMoved = Math.random() > 0.55;
+                        persona = Object.assign(base, {
+                            oldAddress,
+                            newAddress,
+                            moveWhen: pickRandom(MOVE_WHEN_OPTIONS),
+                            alreadyMoved,
+                            address: alreadyMoved ? newAddress : oldAddress,
+                            newPdl,
+                            newPdlKnown: Math.random() > 0.45
+                        });
+                    } else if (scenarioType === "mise_en_service") {
+                        persona = Object.assign(base, {
+                            newAddress,
+                            address: newAddress,
+                            mesStatus: pickRandom(MES_STATUS_OPTIONS),
+                            hasContractAtNew: Math.random() > 0.55,
+                            newPdl,
+                            newPdlKnown: Math.random() > 0.5
+                        });
+                    } else {
+                        persona = Object.assign(base, {
+                            address: pickRandom(PERSONA_ADDRESSES)
+                        });
+                    }
+                    persona.gender = inferProspectGender(persona.firstName);
+                    persona.voiceId = VOICE_BY_GENDER[persona.gender];
+                    persona.mood = getProspectMood(profileKey, getLevel());
                     break;
                 }
             }
             return persona || {
                 firstName: "Jean", lastName: "Dupont",
                 supplier: "EDF", yearsAtSupplier: "plusieurs années",
-                billAmount: 70, offerTarget: 60,
+                billAmount: 70, offerTarget: 60, scenarioType: "standard",
+                gender: "male", voiceId: VOICE_BY_GENDER.male, mood: "calm",
                 gaveFirst: false, gaveLast: false,
                 pdl: randomPdl(), gavePdl: false,
                 address: pickRandom(PERSONA_ADDRESSES),
@@ -949,25 +1521,31 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         async function resumePendingEvaluation() {
             const raw = sessionStorage.getItem(PENDING_EVAL_KEY);
             if (!raw) return;
+            if (window.__evalResumeInProgress) return;
+
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             const result = cfg.lastSaveResult;
             if (!result?.ok || !result.conversation_id) {
-                sessionStorage.removeItem(PENDING_EVAL_KEY);
                 return;
             }
 
-            const pending = JSON.parse(raw);
-            sessionStorage.removeItem(PENDING_EVAL_KEY);
-            chatTurns = pending.chatTurns || [];
-            callStartedAt = pending.callStartedAt || null;
-            prospectPersona = pending.persona || prospectPersona;
-            callLevel = pending.level || callLevel;
-            lastConversationId = result.conversation_id;
+            window.__evalResumeInProgress = true;
+            try {
+                const pending = JSON.parse(raw);
+                sessionStorage.removeItem(PENDING_EVAL_KEY);
+                chatTurns = pending.chatTurns || [];
+                callStartedAt = pending.callStartedAt || null;
+                prospectPersona = pending.persona || prospectPersona;
+                callLevel = pending.level || callLevel;
+                lastConversationId = result.conversation_id;
 
-            setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
-            const evaluationData = await showEvaluation(pending.apiKey);
-            await updateConversationEvaluation(result.conversation_id, evaluationData);
-            resetUi();
+                setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
+                const evaluationData = await showEvaluation(pending.apiKey);
+                await updateConversationEvaluation(result.conversation_id, evaluationData);
+                resetUi();
+            } finally {
+                window.__evalResumeInProgress = false;
+            }
         }
 
         function applyHostedConfig() {
@@ -1027,6 +1605,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function countProspectObjections() {
             return chatTurns.filter(t => t.role === "assistant" && isHardObjection(t.content)).length;
+        }
+
+        function countProspectResistance() {
+            const soft = /préfère d'abord|par écrit|par mail|e-mail|email|pourquoi vous|comment avez|sans engagement|garanti|bloqué|habitude|étudier|réfléchir|pas sûr|hésite|intéressant mais|avant de donner|tranquillement|recontacte|recontact/i;
+            return chatTurns.filter(t =>
+                t.role === "assistant" && (isHardObjection(t.content) || soft.test(t.content))
+            ).length;
         }
 
         function agentMentionedProposition() {
@@ -1421,6 +2006,38 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return /\b(iban|rib|coordonnées bancaires|relevé d'identité bancaire|numéro de compte)\b/i.test(lastAgentText());
         }
 
+        function prospectObjectedToIban() {
+            return chatTurns.some(t => t.role === "assistant" &&
+                /\biban\b|rib\b|coordonnées bancaires/i.test(t.content) &&
+                /pourquoi|pas|refus|donne pas|préfère|mail|écrit|téléphone|confiance|sécuris|arnaque/i.test(t.content));
+        }
+
+        function agentExplainedIbanPurpose() {
+            const t = lastAgentText();
+            return /\b(prélèvement|prelevement|mandat sepa|sepa|résiliation|resiliation|ancien fournisseur|arrêter les prélèvements|arreter les prelevements|souscription|facturation|mise en place|paiement|débit|debit|domiciliation|finaliser le contrat)\b/i.test(t);
+        }
+
+        function agentReassuredOnIban() {
+            const t = lastAgentText();
+            return /\b(sécuris|securis|confidentiel|protég|protege|garanti|officiel|agréé|agree|réglementé|reglementé|sans risque|norme|certifié|données.*protég|cnil|rgpd)\b/i.test(t);
+        }
+
+        function agentHandledIbanObjection() {
+            const t = lastAgentText();
+            if (!t) return false;
+            if (agentExplainedIbanPurpose() || agentReassuredOnIban()) return true;
+            return /\b(pour (le|la|vos) (contrat|souscription|prélèvement)|indispensable (pour|à)|nécessaire (pour|à)|obligatoire pour|finaliser|clôturer|cloturer|mettre en place|arrêter.*ancien)\b/i.test(t);
+        }
+
+        function getIbanObjectionReply(profile) {
+            if (profile === "mefiant_rgpd" || profile === "mefiant_fournisseur") {
+                return "Pourquoi vous avez besoin de mon IBAN ? Comment mes données bancaires sont protégées ?";
+            }
+            if (profile === "agressif") return "Pourquoi l'IBAN ? Je ne fais pas confiance comme ça.";
+            if (profile === "presse") return "Pourquoi l'IBAN maintenant ? Faites court.";
+            return "Pourquoi vous avez besoin de mon IBAN, c'est pour quoi exactement ?";
+        }
+
         function stripPrematureIban(reply) {
             if (!reply || agentAskedIban()) return reply;
             if (!/\biban\b|\brib\b|\bcoordonnées bancaires\b/i.test(reply)) return reply;
@@ -1725,10 +2342,92 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return objections >= max && (agentAskedProposition() || agentMentionedProposition() || turns >= 7);
         }
 
+        function getScenarioContextReply(topic) {
+            if (personaIsMoving()) {
+                if (topic === "supplier") {
+                    return "À l'ancien logement je suis chez " + personaSupplier()
+                        + ", mais je déménage " + (prospectPersona.moveWhen || "bientôt")
+                        + " — je cherche quoi faire pour le nouveau.";
+                }
+                if (topic === "bill") {
+                    return "À l'ancien logement j'étais à environ " + personaBill()
+                        + " €/mois, mais au nouveau je ne sais pas encore.";
+                }
+                if (topic === "address") {
+                    return prospectPersona.alreadyMoved
+                        ? "Je suis au nouveau logement : " + prospectPersona.newAddress + "."
+                        : "Pour l'instant je suis encore au " + prospectPersona.oldAddress
+                            + ", je déménage " + (prospectPersona.moveWhen || "bientôt") + ".";
+                }
+                if (topic === "pdl") {
+                    if (prospectPersona.newPdlKnown && (agentAskedMovingOrMes() || prospectPersona.alreadyMoved)) {
+                        return prospectPersona.newPdl + ".";
+                    }
+                    if (!prospectPersona.newPdlKnown) {
+                        return "Je n'ai pas encore le PDL du nouveau logement, Enedis doit me le donner.";
+                    }
+                    return prospectPersona.pdl + " pour l'ancien logement.";
+                }
+                if (topic === "pitch") {
+                    return "D'ailleurs je déménage " + (prospectPersona.moveWhen || "bientôt")
+                        + ", vous gérez aussi la mise en service au nouveau logement ?";
+                }
+            }
+            if (personaScenarioType() === "mise_en_service") {
+                if (topic === "supplier") {
+                    return prospectPersona.hasContractAtNew
+                        ? "J'ai choisi " + personaSupplier() + " pour le nouveau logement."
+                        : "Je n'ai pas encore de fournisseur au nouveau logement, c'est pour la mise en service.";
+                }
+                if (topic === "bill") {
+                    return "Je n'ai pas encore de facture, c'est une mise en service au " + prospectPersona.newAddress + ".";
+                }
+                if (topic === "address") return "C'est pour le " + prospectPersona.newAddress + ".";
+                if (topic === "pdl") {
+                    return prospectPersona.newPdlKnown
+                        ? prospectPersona.newPdl + "."
+                        : "Je n'ai pas encore le PDL, la mise en service est " + (prospectPersona.mesStatus || "en cours") + ".";
+                }
+                if (topic === "pitch") {
+                    return "En fait c'est pour une mise en service au nouveau logement — "
+                        + (prospectPersona.mesStatus || "pas encore lancée") + ", vous pouvez m'aider ?";
+                }
+            }
+            return null;
+        }
+
         function tryFactualAnswer(profile, level) {
             const sup = personaSupplier();
             const bill = personaBill();
             const years = prospectPersona.yearsAtSupplier || "plusieurs années";
+
+            if (personaIsMoving() || personaScenarioType() === "mise_en_service") {
+                if (agentAskedMovingOrMes()) {
+                    const topic = agentAskedPdl() ? "pdl"
+                        : agentAskedPostalAddress() ? "address"
+                        : agentAskedSupplier() ? "supplier"
+                        : agentAskedBillAmount() ? "bill" : "pitch";
+                    const ctx = getScenarioContextReply(topic);
+                    if (ctx) return ctx;
+                }
+                if (agentAskedSupplier() && !prospectAlreadySaidSupplier()) {
+                    const ctx = getScenarioContextReply("supplier");
+                    if (ctx) return ctx;
+                }
+                if (agentAskedBillAmount()) {
+                    const ctx = getScenarioContextReply("bill");
+                    if (ctx) return ctx;
+                }
+                if (agentAskedPostalAddress()) {
+                    const ctx = getScenarioContextReply("address");
+                    if (ctx) return ctx;
+                }
+                if (agentAskedPdl()) {
+                    const ctx = getScenarioContextReply("pdl");
+                    if (ctx) return ctx;
+                }
+            }
+
             if (agentAskedSupplier() && !prospectAlreadySaidSupplier()) {
                 if (profile === "curieux" && level === "debutant") return "Je suis chez " + sup + ", depuis " + years + ".";
                 if (profile === "presse") return sup + ", mais faites vite.";
@@ -2094,11 +2793,17 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return "RAPPEL DÉBUTANT : accueil poli, facile à convaincre.";
             }
             if (level === "intermediaire") {
-                if (turns >= 5 && objections >= 2 && agentMentionedProposition()) {
-                    return "RAPPEL NIVEAU : tu peux accepter la proposition si l'agent a bien géré tes objections.";
+                const resistance = countProspectResistance();
+                if (turns >= 6 && resistance >= 3 && agentMentionedProposition()) {
+                    return "RAPPEL NIVEAU : tu peux envisager la proposition si l'agent a bien répondu à tes objections.";
                 }
-                if (objections < 2) return "RAPPEL NIVEAU : pose une objection du profil avant de céder.";
-                return "RAPPEL NIVEAU : 2-4 objections, ne cède pas trop vite.";
+                if (resistance < 2) return "RAPPEL NIVEAU : pose une objection ou question de méfiance avant de donner nom, adresse ou accepter l'offre.";
+                if (agentAskedIban()) {
+                    return agentHandledIbanObjection()
+                        ? "RAPPEL NIVEAU : l'agent a expliqué l'IBAN — tu peux coopérer si tu es convaincu."
+                        : "RAPPEL NIVEAU : objection IBAN — demande pourquoi et si c'est sécurisé, cède si l'agent répond bien.";
+                }
+                return "RAPPEL NIVEAU : 3+ objections, ne cède pas trop vite — mais coopère si l'agent traite bien chaque objection.";
             }
             if (turns < 5 || objections < 4) {
                 return "RAPPEL NIVEAU : très difficile — crie, menace de raccrocher, objection forte.";
@@ -2125,8 +2830,49 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return applyContextualCalibration(reply, "curieux");
         }
 
+        function applyLevelGuardsAlways(reply) {
+            if (!reply) return reply;
+            const level = getLevel();
+            if (level === "debutant") return reply;
+
+            const profile = getProfileKey();
+            const resistance = countProspectResistance();
+            const minResistance = level === "intermediaire" ? 2 : 4;
+
+            if (agentAskedIban() && !prospectAlreadyGaveIban()) {
+                if (agentHandledIbanObjection()) return reply;
+                if (!prospectObjectedToIban()) return getIbanObjectionReply(profile);
+                if (agentIgnoredProspectQuestion() || !agentHandledIbanObjection()) {
+                    return "Je ne suis pas encore convaincu sur l'IBAN. Expliquez-moi clairement à quoi il sert et comment c'est sécurisé.";
+                }
+                return reply;
+            }
+
+            if (agentAskedPostalAddress() && resistance < minResistance && !agentPresentingOffer()) {
+                return "Avant de donner mon adresse, je veux savoir concrètement ce que vous proposez et si c'est sans engagement.";
+            }
+
+            if (agentAskedIdentity() && level === "intermediaire" && resistance < 1 && countAgentTurns() < 4) {
+                return "Je m'appelle " + prospectPersona.firstName + ", mais je préfère d'abord comprendre ce que vous proposez exactement.";
+            }
+
+            if ((agentPresentingOffer() || agentAskedOfferAcceptance()) && isCooperativeReply(reply) && resistance < minResistance) {
+                const contextual = getContextualObjection(profile, level);
+                if (contextual && !prospectAlreadySaidLine(contextual)) return contextual;
+                return "Ça semble intéressant, mais j'ai besoin de voir l'offre par écrit avant de me décider.";
+            }
+
+            if (agentAskedEmailOrAddress() && /\bmail\b/i.test(lastAgentText()) && level === "intermediaire" && resistance < minResistance) {
+                return "Envoyez-moi d'abord un récapitulatif, je préfère l'étudier avant de donner mon e-mail.";
+            }
+
+            return reply;
+        }
+
         function applyLevelCalibration(reply) {
-            if (!reply || !isProfileCalibrationEnabled()) return reply;
+            if (!reply) return reply;
+            reply = applyLevelGuardsAlways(reply);
+            if (!isProfileCalibrationEnabled()) return reply;
 
             if (getProfileKey() === "presse") return applyPresseCalibration(reply);
             if (getProfileKey() === "agressif") return applyAgressifCalibration(reply);
@@ -2336,6 +3082,55 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             statusText.className = "status-badge " + cls;
         }
 
+        const prospectFrame = document.getElementById("prospectFrame");
+        const prospectStatusLabel = document.getElementById("prospectStatusLabel");
+        let prospectMouthTimer = null;
+
+        function setProspectSpeaking(active) {
+            if (!prospectFrame) return;
+            prospectFrame.classList.toggle("speaking", active);
+            prospectFrame.classList.toggle("thinking", false);
+            if (prospectStatusLabel) {
+                prospectStatusLabel.textContent = active ? "Le prospect parle…" : (callActive ? "À vous de parler" : "En attente d'appel");
+                prospectStatusLabel.classList.toggle("active", active);
+            }
+        }
+
+        function setProspectThinking(active) {
+            if (!prospectFrame || prospectFrame.classList.contains("speaking")) return;
+            prospectFrame.classList.toggle("thinking", active);
+            if (prospectStatusLabel && active) {
+                prospectStatusLabel.textContent = "Le prospect réfléchit…";
+                prospectStatusLabel.classList.add("active");
+            } else if (prospectStatusLabel && !callActive) {
+                prospectStatusLabel.textContent = "En attente d'appel";
+                prospectStatusLabel.classList.remove("active");
+            }
+        }
+
+        function estimateSpeechMs(text) {
+            return Math.min(14000, Math.max(1800, (text || "").length * 58));
+        }
+
+        function startProspectMouthAnim() {
+            clearTimeout(prospectMouthTimer);
+            setProspectThinking(false);
+            setProspectSpeaking(true);
+        }
+
+        function stopProspectMouthAnim() {
+            clearTimeout(prospectMouthTimer);
+            setProspectSpeaking(false);
+        }
+
+        function runProspectMouthForDuration(ms) {
+            startProspectMouthAnim();
+            return new Promise(resolve => {
+                clearTimeout(prospectMouthTimer);
+                prospectMouthTimer = setTimeout(() => { stopProspectMouthAnim(); resolve(); }, ms);
+            });
+        }
+
         function addLogMessage(sender, text, className) {
             logDiv.insertAdjacentHTML('beforeend',
                 `<div class="${className}"><strong>${sender} :</strong> ${text}</div>`);
@@ -2350,11 +3145,25 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 .trim();
         }
 
+        function pickFrenchVoiceForGender(gender) {
+            const voices = synth ? synth.getVoices() : [];
+            if (gender === "female") {
+                return voices.find(v => v.lang === "fr-FR" && /female|denise|amélie|amelie|audrey|marie|hortense|julie|virginie/i.test(v.name))
+                    || voices.find(v => v.lang && v.lang.startsWith("fr") && /female|femme/i.test(v.name))
+                    || voices.find(v => v.lang && v.lang.startsWith("fr"));
+            }
+            return voices.find(v => v.lang === "fr-FR" && /male|henri|thomas|paul|nicolas|damien|homme/i.test(v.name))
+                || voices.find(v => v.lang && v.lang.startsWith("fr") && !/female|femme|denise|amélie/i.test(v.name))
+                || voices.find(v => v.lang && v.lang.startsWith("fr"));
+        }
+
         function ensureVoices() {
             return new Promise((resolve) => {
                 const pick = () => {
                     const voices = synth ? synth.getVoices() : [];
-                    frenchVoice = voices.find(v => v.lang === "fr-FR")
+                    const gender = prospectPersona && prospectPersona.gender;
+                    frenchVoice = (gender && pickFrenchVoiceForGender(gender))
+                        || voices.find(v => v.lang === "fr-FR")
                         || voices.find(v => v.lang && v.lang.startsWith("fr"))
                         || voices.find(v => /Thomas|Amélie|Audrey|Marie|French/i.test(v.name))
                         || null;
@@ -2563,7 +3372,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
                     lastProspectAudio = null;
                 }
-                const url = getTtsServer() + "/tts?text=" + encodeURIComponent(text.slice(0, 500));
+                const url = getTtsServer() + "/tts?text=" + encodeURIComponent(text.slice(0, 500))
+                    + "&voice=" + encodeURIComponent((prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER.female);
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("TTS HTTP " + res.status);
                 const buf = await res.arrayBuffer();
@@ -2577,15 +3387,21 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 audio.preload = "auto";
                 lastProspectAudio = audio;
                 setStatus("Le prospect parle...", "status-thinking");
+                startProspectMouthAnim();
                 await new Promise((resolve, reject) => {
                     audio.onended = () => {
+                        stopProspectMouthAnim();
                         URL.revokeObjectURL(blobUrl);
                         resolve();
                     };
-                    audio.onerror = () => reject(new Error("Lecture audio échouée"));
+                    audio.onerror = () => {
+                        stopProspectMouthAnim();
+                        reject(new Error("Lecture audio échouée"));
+                    };
                     const playPromise = audio.play();
                     if (playPromise && playPromise.catch) {
                         playPromise.catch(err => {
+                            stopProspectMouthAnim();
                             if (err.name === "NotAllowedError") {
                                 reject(new Error("Cliquez d'abord sur « Tester la voix » ou « Initialiser » pour autoriser le son"));
                             } else {
@@ -2614,15 +3430,21 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 u.lang = "fr-FR";
                 u.volume = 1;
                 u.rate = 0.9;
-                if (frenchVoice) u.voice = frenchVoice;
+                const genderVoice = prospectPersona && pickFrenchVoiceForGender(prospectPersona.gender);
+                if (genderVoice) u.voice = genderVoice;
+                else if (frenchVoice) u.voice = frenchVoice;
                 let done = false;
                 const finish = (ok) => {
                     if (done) return;
                     done = true;
                     clearInterval(keepAlive);
+                    stopProspectMouthAnim();
                     resolve(ok);
                 };
-                u.onstart = () => setStatus("Le prospect parle...", "status-thinking");
+                u.onstart = () => {
+                    setStatus("Le prospect parle...", "status-thinking");
+                    startProspectMouthAnim();
+                };
                 u.onend = () => finish(true);
                 u.onerror = () => finish(false);
                 const keepAlive = setInterval(() => {
@@ -2636,7 +3458,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         async function speakProspect(rawText) {
             const text = cleanForSpeech(rawText);
             if (!text) return false;
-            if (!document.getElementById("voiceToggle").checked) return false;
+            const voiceOn = document.getElementById("voiceToggle").checked;
+
+            if (!voiceOn) {
+                await runProspectMouthForDuration(estimateSpeechMs(text));
+                return false;
+            }
 
             let ok = await speakLocalTTS(text);
             if (!ok) {
@@ -2720,7 +3547,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (/\b(pas d'?électricité|n'?ai pas d'?électricité|sans électricité|aucune électricité|j'?ai pas d'?électricité)\b/i.test(r)) return true;
             if (/\b(edf ne vend pas|ne vendent pas l'?électricité|edf.*pas.*électricité)\b/i.test(r)) return true;
             if (/\bprix fixe pour l'?appareil\b/i.test(r)) return true;
-            if (/\b(n'?ai pas de pdl|pas de pdl|j'?ai pas de pdl|aucun pdl)\b/i.test(r)) return true;
+            if (/\b(n'?ai pas de pdl|pas de pdl|j'?ai pas de pdl|aucun pdl)\b/i.test(r)) {
+                if (personaNeedsMes() && /pas encore|nouveau logement|nouvelle adresse|mise en service|enedis/i.test(r)) return false;
+                return true;
+            }
             if (/\b(gaz.*edf|edf.*gaz)\b/i.test(r) && !/\b(pas de gaz|électricité seulement|sans gaz)\b/i.test(r)) return true;
             return false;
         }
@@ -2749,13 +3579,23 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (offer) return offer;
             }
             if (agentAskedPdl()) {
+                const ctx = getScenarioContextReply("pdl");
+                if (ctx) return ctx;
                 if (mefiant || sec) return prospectPersona.pdl + ", mais pourquoi vous en avez besoin ?";
                 return prospectPersona.pdl + ".";
             }
-            if (agentAskedPostalAddress()) return prospectPersona.address + ".";
+            if (agentAskedPostalAddress()) {
+                const ctx = getScenarioContextReply("address");
+                if (ctx) return ctx;
+                if (level === "intermediaire" && countProspectResistance() < 2) {
+                    return "Je préfère d'abord voir ce que vous proposez avant de donner mon adresse.";
+                }
+                return prospectPersona.address + ".";
+            }
             if (agentAskedFacture()) return "Je ne l'ai pas sous la main là.";
             if (agentAskedIban()) {
-                return mefiant || sec ? "Pourquoi vous avez besoin de mon IBAN ?" : "D'accord, c'est pour quoi exactement ?";
+                if (agentHandledIbanObjection()) return "D'accord, si c'est bien pour le prélèvement et que c'est sécurisé, on peut avancer.";
+                return getIbanObjectionReply(profile);
             }
             if (/\b(pas d'?électricité|comment ça)\b/i.test(t)) {
                 return sec ? "Si si, j'ai de l'électricité. Électricité seulement, chez EDF." : "Oui j'ai de l'électricité, électricité seulement chez EDF.";
@@ -2764,14 +3604,26 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return sec ? "Électricité seulement, pas de gaz." : "Électricité seulement.";
             }
             if (agentAskedSupplier()) {
+                const ctx = getScenarioContextReply("supplier");
+                if (ctx) return ctx;
                 if (prospectAlreadySaidSupplier()) return sec ? "On l'a déjà dit : EDF." : "Comme je vous ai dit, EDF.";
                 return sec ? "EDF. Et alors ?" : "Je suis chez EDF.";
             }
             if (agentAskedDuration()) return "Ça fait plusieurs années.";
-            if (agentAskedBillAmount()) return sec ? "Environ 70 euros. Vous voulez quoi ?" : "Environ 70 euros par mois.";
+            if (agentAskedBillAmount()) {
+                const ctx = getScenarioContextReply("bill");
+                if (ctx) return ctx;
+                return sec ? "Environ 70 euros. Vous voulez quoi ?" : "Environ 70 euros par mois.";
+            }
             if (agentAskedMailOnly()) return sec ? "Non, je n'ai pas reçu de mail. C'est pour quoi ?" : "Non, pas à ma connaissance. C'est pour quoi ?";
             if (agentIgnoredProspectQuestion && agentIgnoredProspectQuestion()) {
                 return sec ? "Pourquoi moi ? Pourquoi vous m'appelez ?" : "C'est pour quoi exactement votre appel ?";
+            }
+            if ((personaIsMoving() || personaScenarioType() === "mise_en_service")
+                && countAgentTurns() >= 2 && agentIsCommercialPitch() && !agentAskedMovingOrMes()
+                && !prospectAlreadySaidPhrase(/déménag|demenag|mise en service|emménag|emmenag/i)) {
+                const pitch = getScenarioContextReply("pitch");
+                if (pitch) return pitch;
             }
             return sec ? "Bon, c'est pour quoi exactement ?" : "D'accord, c'est pour quoi ?";
         }
@@ -2857,6 +3709,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (keyErr) return alert(keyErr);
             addLogMessage("Agent (Vous)", userText, "agent-msg");
             setStatus("Le prospect réfléchit...", "status-thinking");
+            setProspectThinking(true);
             chatTurns.push({ role: "user", content: userText });
             rememberAgentFromMessage(userText);
 
@@ -3355,6 +4208,17 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return { html: renderEvaluationReport(fallback, "heuristic"), evaluation: fallback, source: "heuristic" };
         }
 
+        function revealEvaluationPanel() {
+            evaluationDiv.style.display = "block";
+            try {
+                evaluationDiv.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch (_) {}
+            if (window.Streamlit && typeof Streamlit.setFrameHeight === "function") {
+                const h = Math.max(1500, (document.body.scrollHeight || 0) + 80);
+                Streamlit.setFrameHeight(h);
+            }
+        }
+
         async function showEvaluation(apiKey) {
             setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
             const retryBtn = document.getElementById("retryEvalBtn");
@@ -3371,7 +4235,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
                 if (retryBtn) retryBtn.style.display = "block";
             }
-            evaluationDiv.style.display = "block";
+            revealEvaluationPanel();
             recordTrainingSession(evaluationData);
             return evaluationData;
         }
@@ -3384,6 +4248,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             sendTextBtn.disabled = true;
             textInput.disabled = true;
             stopBtn.disabled = true;
+            stopProspectMouthAnim();
+            setProspectThinking(false);
             setStatus("Ligne inactive", "status-idle");
         }
 
@@ -3405,6 +4271,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             const persona = createProspectPersona(profileKey);
             prospectPersona = persona;
+            updateProspectAvatar();
+            await ensureVoices();
 
             systemPromptText = `CONTEXTE : Simulation d'appel sortant (fournisseurs d'énergie en France).
 MISSION : Tu es le prospect au téléphone. Ne sors JAMAIS de ton rôle.
@@ -3425,7 +4293,9 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 - NE DIS JAMAIS "prospect", "agressif", "débutant", "ma réponse en tant que", "je reste dans le personnage", "Profil :".
 - 1 à 3 phrases maximum, en français naturel.`;
             compactSystemPromptText = "Prospect " + profileKey + " (" + level + "). "
-                + "FR oral, 1-3 phrases. " + persona.supplier + " élec ~" + persona.billAmount + "€. PDL " + persona.pdl + ". "
+                + "FR oral, 1-3 phrases. " + persona.supplier + " élec"
+                + (persona.scenarioType === "standard" ? " ~" + persona.billAmount + "€" : "")
+                + ". scénario:" + (persona.scenarioType || "standard") + ". PDL " + persona.pdl + ". "
                 + persona.firstName + " " + persona.lastName + ". Pas d'anglais. "
                 + profile.prompt.slice(0, 90);
             chatTurns = [{ role: "assistant", content: profile.start }];
@@ -3442,9 +4312,10 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             stopBtn.disabled = false;
 
             addLogMessage("Prospect", profile.start, "prospect-msg");
-            addLogMessage("Système", "Session #" + ((loadTrainingState().sessionCount || 0) + 1)
-                + " — " + persona.firstName + " " + persona.lastName + ", " + persona.supplier
-                + ", ~" + persona.billAmount + " €/mois (élec seule). Scénario différent à chaque entraînement.", "prospect-msg");
+            if (prospectStatusLabel) {
+                prospectStatusLabel.textContent = "En ligne";
+                prospectStatusLabel.classList.add("active");
+            }
             setStatus("Appel en cours", "status-listening");
             await speakProspect(profile.start);
             } catch (e) {
@@ -3501,6 +4372,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 talkBtn.style.background = "";
             }
             if (synth.speaking) synth.cancel();
+            stopProspectMouthAnim();
             if (lastProspectAudio) {
                 lastProspectAudio.pause();
                 if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
@@ -3513,6 +4385,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             if (useStreamlitSave()) {
                 stashPendingEvaluation(apiKey);
                 await saveConversationToDb(null);
+                setStatus("Appel enregistré — évaluation après sauvegarde…", "status-thinking");
                 return;
             }
 
@@ -3579,7 +4452,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 window.__SIMULATOR_CONFIG__ = window.__SIMULATOR_CONFIG__ || {};
                 window.__SIMULATOR_CONFIG__.lastSaveResult = data.result;
                 showLastSaveResult();
-                resumePendingEvaluation();
+                void resumePendingEvaluation();
             }
         });
 

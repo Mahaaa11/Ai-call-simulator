@@ -13,6 +13,12 @@ except ImportError:
     raise SystemExit(1)
 
 VOICE = "fr-FR-DeniseNeural"
+VOICES = {
+    "fr-FR-DeniseNeural": "fr-FR-DeniseNeural",
+    "fr-FR-HenriNeural": "fr-FR-HenriNeural",
+    "female": "fr-FR-DeniseNeural",
+    "male": "fr-FR-HenriNeural",
+}
 PORT = int(os.getenv("TTS_PORT", "8765"))
 BIND_HOST = os.getenv("BIND_HOST", "127.0.0.1")
 
@@ -28,8 +34,11 @@ _thread = threading.Thread(target=_run_loop, daemon=True)
 _thread.start()
 
 
-async def synthesize(text):
-    communicate = edge_tts.Communicate(text, VOICE)
+async def synthesize(text, voice=None):
+    voice_name = VOICES.get(voice or "", voice) or VOICE
+    if voice_name not in VOICES.values():
+        voice_name = VOICE
+    communicate = edge_tts.Communicate(text, voice_name)
     parts = []
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
@@ -40,8 +49,8 @@ async def synthesize(text):
     return audio
 
 
-def synthesize_sync(text):
-    future = asyncio.run_coroutine_threadsafe(synthesize(text), _loop)
+def synthesize_sync(text, voice=None):
+    future = asyncio.run_coroutine_threadsafe(synthesize(text, voice), _loop)
     return future.result(timeout=45)
 
 
@@ -92,9 +101,10 @@ class TTSHandler(BaseHTTPRequestHandler):
             self.send_error(400, "Paramètre text manquant")
             return
         text = text[:500]
+        voice = (qs.get("voice") or [""])[0].strip() or None
 
         try:
-            audio = synthesize_sync(text)
+            audio = synthesize_sync(text, voice)
         except Exception as e:
             print("Erreur synthèse:", e)
             self.send_error(500, str(e))
