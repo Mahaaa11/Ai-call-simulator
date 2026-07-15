@@ -1645,10 +1645,51 @@ ${scenarioBlock ? scenarioBlock + "\n" : ""}- Identité : ${persona.firstName} $
         }
 
         function getAntiRepeatContext() {
-            const said = chatTurns.filter(t => t.role === "assistant").map(t => t.content).slice(-5);
+            const said = chatTurns.filter(t => t.role === "assistant").map(t => t.content).slice(-8);
             if (!said.length) return "";
-            return "\n\nDÉJÀ DIT PAR TOI DANS CET APPEL (ne pas répéter mot pour mot, reformule) :\n"
-                + said.map(s => "- " + s.slice(0, 140)).join("\n");
+            return "\n\nDÉJÀ DIT PAR TOI DANS CET APPEL (INTERDIT de répéter — reformule ou passe à l'étape suivante) :\n"
+                + said.map(s => "- " + s.slice(0, 140)).join("\n")
+                + "\n- Avance la conversation : ne redis pas la même objection ni la même question.";
+        }
+
+        function recentProspectReplies(limit = 6) {
+            return chatTurns.filter(t => t.role === "assistant").map(t => t.content).slice(-limit);
+        }
+
+        function isRepeatOfRecentProspectReply(text, lookback = 5) {
+            const norm = normalizeReply(text);
+            if (!norm || norm.length < 8) return false;
+            return recentProspectReplies(lookback).some(prev => {
+                const p = normalizeReply(prev);
+                if (!p) return false;
+                if (p === norm) return true;
+                const slice = Math.min(32, norm.length);
+                if (norm.length > 14 && (p.includes(norm.slice(0, slice)) || norm.includes(p.slice(0, slice)))) return true;
+                const words = norm.split(" ").filter(w => w.length > 3);
+                const prevWords = new Set(p.split(" ").filter(w => w.length > 3));
+                if (words.length >= 3 && words.filter(w => prevWords.has(w)).length >= Math.max(2, words.length - 1)) return true;
+                return false;
+            });
+        }
+
+        const REPLY_VARIATION_POOL = [
+            "D'accord, continuez — soyez précis.",
+            "Bon, je vous écoute. Allez au concret.",
+            "OK, expliquez-moi la suite clairement.",
+            "Très bien, que proposez-vous exactement ?",
+            "Je vous suis, mais avancez sur le fond.",
+            "Oui, précisez votre proposition.",
+            "Entendu. Et concrètement, la prochaine étape ?"
+        ];
+
+        function ensureReplyVariety(reply) {
+            if (!reply || !isRepeatOfRecentProspectReply(reply)) return reply;
+            for (const alt of REPLY_VARIATION_POOL) {
+                if (!isRepeatOfRecentProspectReply(alt)) return alt;
+            }
+            const unused = pickNextUnusedLine(getProfileFallbacks());
+            if (unused && !isRepeatOfRecentProspectReply(unused)) return unused;
+            return reply.replace(/\.$/, "") + ", continuez.";
         }
 
         function personaScenarioType() { return prospectPersona.scenarioType || "standard"; }
@@ -1875,7 +1916,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function isProspectStaleReply(reply) {
             if (!reply) return false;
-            if (isSameAsLastProspectReply(reply)) return true;
+            if (isSameAsLastProspectReply(reply) || isRepeatOfRecentProspectReply(reply)) return true;
             if (prospectAlreadyGavePdl() && /\bpdl\b|12345678901234/.test(reply) &&
                 (agentInOfferStage() || agentAskedClosing())) {
                 return true;
@@ -2841,12 +2882,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (!list || !list.length) return null;
             if (preferMatcher) {
                 const preferred = findUnusedFallback(list, preferMatcher);
-                if (preferred && !isSameAsLastProspectReply(preferred)) return preferred;
+                if (preferred && !isRepeatOfRecentProspectReply(preferred)) return preferred;
             }
-            for (const line of list) {
-                if (!prospectAlreadySaidLine(line) && !isSameAsLastProspectReply(line)) return line;
-            }
-            return list[list.length - 1];
+            const fresh = list.filter(line => !prospectAlreadySaidLine(line) && !isRepeatOfRecentProspectReply(line));
+            if (fresh.length) return fresh[Math.floor(Math.random() * fresh.length)];
+            return REPLY_VARIATION_POOL.find(alt => !isRepeatOfRecentProspectReply(alt)) || list[list.length - 1];
         }
 
         function agentAnsweredProspectQuestion() {
@@ -3211,23 +3251,24 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const contextual = getContextualObjection(profile, level);
             if (contextual) {
                 const llmUsable = isUsableLlmReply(reply);
-                if (isSameAsLastProspectReply(contextual)) {
+                if (isRepeatOfRecentProspectReply(contextual) || prospectAlreadySaidLine(contextual)) {
                     const alt = pickNextUnusedLine(list);
-                    if (alt && !isSameAsLastProspectReply(alt)) return alt;
-                    if (llmUsable) return reply;
+                    if (alt && !isRepeatOfRecentProspectReply(alt)) return alt;
+                    if (llmUsable && !isRepeatOfRecentProspectReply(reply)) return reply;
+                    return ensureReplyVariety(contextual);
                 }
                 const mustObject = isBadProspectReply(reply) ||
                     (isCooperativeReply(reply) && !canCooperateNow(profile, level) && isHardObjection(contextual));
                 const llmMissesContext = llmUsable && !replyAddressesAgent(reply) &&
                     agentIgnoredProspectQuestion() && !prospectAlreadySaidLine(contextual);
                 if (mustObject || !llmUsable) {
-                    if (!prospectAlreadySaidLine(contextual) && !isSameAsLastProspectReply(contextual)) {
+                    if (!prospectAlreadySaidLine(contextual) && !isRepeatOfRecentProspectReply(contextual)) {
                         return contextual;
                     }
                     const alt = pickNextUnusedLine(list);
-                    if (alt && !isSameAsLastProspectReply(alt)) return alt;
-                    if (llmUsable) return reply;
-                    return contextual;
+                    if (alt && !isRepeatOfRecentProspectReply(alt)) return alt;
+                    if (llmUsable && !isRepeatOfRecentProspectReply(reply)) return reply;
+                    return ensureReplyVariety(contextual);
                 }
                 if (llmMissesContext) return contextual;
             }
@@ -3248,7 +3289,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return "D'accord, je vous écoute. Faites vite.";
             }
 
-            if (isSameAsLastProspectReply(reply)) {
+            if (isRepeatOfRecentProspectReply(reply)) {
                 const alt = pickNextUnusedLine(list);
                 if (alt) return alt;
             }
@@ -3293,13 +3334,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
                 if (level === "intermediaire") {
                     if (used < list.length - 1) {
-                        return "RAPPEL PRESSÉ INTER : objection " + (used + 1) + " — « " + list[used] + " ». Reste pressé mais coopératif.";
+                        return "RAPPEL PRESSÉ INTER : objection " + (used + 1) + " (nouvelle formulation, pas déjà dite), puis avance si l'agent répond bien.";
                     }
                     if (agentAskedIban()) return "RAPPEL PRESSÉ INTER : objection IBAN si pas encore dite.";
                     return "RAPPEL PRESSÉ INTER : tu peux conclure la VENTE si l'agent a bien répondu, en restant pressé.";
                 }
                 if (level === "avance") {
-                    if (used < 5) return "RAPPEL PRESSÉ AVANCÉ : objection " + (used + 1) + "+ — coupe, menace raccrochage. « " + list[Math.min(used, list.length - 1)] + " »";
+                    if (used < 5) return "RAPPEL PRESSÉ AVANCÉ : objection " + (used + 1) + " (formulation différente des précédentes), ton pressé.";
                     if (agentProposedRappel()) return "RAPPEL PRESSÉ AVANCÉ : tu peux accepter un RAPPEL.";
                     return "RAPPEL PRESSÉ AVANCÉ : VENTE, RAPPEL ou RACCROCHAGE selon la qualité de l'agent.";
                 }
@@ -3317,14 +3358,14 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
                 if (level === "intermediaire") {
                     if (used < objTotal) {
-                        return "RAPPEL AGRESSIF INTER : objection " + (used + 1) + "/" + objTotal + " — « " + list[used] + " ». Ton sec.";
+                        return "RAPPEL AGRESSIF INTER : objection " + (used + 1) + "/" + objTotal + " (ne répète pas les précédentes). Ton sec.";
                     }
                     if (agentAskedIban()) return "RAPPEL AGRESSIF INTER : objection IBAN si pas encore dite.";
                     return "RAPPEL AGRESSIF INTER : vente difficile — tu hésites, tu ne cèdes qu'à la fin.";
                 }
                 if (level === "avance") {
                     if (used < objTotal) {
-                        return "RAPPEL AGRESSIF AVANCÉ : objection " + (used + 1) + "/" + objTotal + " — très agressif. « " + list[used] + " »";
+                        return "RAPPEL AGRESSIF AVANCÉ : objection " + (used + 1) + "/" + objTotal + " (formulation nouvelle). Très agressif.";
                     }
                     return "RAPPEL AGRESSIF AVANCÉ : REFUS ou RACCROCHAGE — ne donne pas ton IBAN.";
                 }
@@ -3342,13 +3383,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
                 if (level === "intermediaire") {
                     if (used < objTotal) {
-                        return "RAPPEL MÉFIANT INTER : question/objection " + (used + 1) + "/" + objTotal + " — « " + list[used] + " ». Pose des questions.";
+                        return "RAPPEL MÉFIANT INTER : question/objection " + (used + 1) + "/" + objTotal + " (pas déjà dite). Pose des questions.";
                     }
                     return "RAPPEL MÉFIANT INTER : VENTE après explications — tu peux avancer si tout est clair.";
                 }
                 if (level === "avance") {
                     if (used < objTotal) {
-                        return "RAPPEL MÉFIANT AVANCÉ : objection " + (used + 1) + "/" + objTotal + " — très prudent. « " + list[used] + " »";
+                        return "RAPPEL MÉFIANT AVANCÉ : objection " + (used + 1) + "/" + objTotal + " (formulation différente). Très prudent.";
                     }
                     if (agentProposedRappel()) return "RAPPEL MÉFIANT AVANCÉ : tu peux accepter un RAPPEL.";
                     return "RAPPEL MÉFIANT AVANCÉ : REFUS ou RAPPEL — ne donne pas tes données.";
@@ -3367,13 +3408,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
                 if (level === "intermediaire") {
                     if (used < objTotal) {
-                        return "RAPPEL CURIEUX INTER : question " + (used + 1) + "/" + objTotal + " — « " + list[used] + " ». Curieux et ouvert.";
+                        return "RAPPEL CURIEUX INTER : question " + (used + 1) + "/" + objTotal + " (formulation nouvelle). Curieux et ouvert.";
                     }
                     return "RAPPEL CURIEUX INTER : VENTE — tu peux avancer si toutes tes questions ont une réponse.";
                 }
                 if (level === "avance") {
                     if (used < objTotal) {
-                        return "RAPPEL CURIEUX AVANCÉ : question " + (used + 1) + "/" + objTotal + " — analytique. « " + list[used] + " »";
+                        return "RAPPEL CURIEUX AVANCÉ : question " + (used + 1) + "/" + objTotal + " (ne répète pas). Analytique.";
                     }
                     return "RAPPEL CURIEUX AVANCÉ : VENTE si l'agent est excellent, sinon RÉFLEXION.";
                 }
@@ -4032,11 +4073,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function requestStreamlitHostedTts(text) {
             const requestId = "tts_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-            stashCallStateForAsync(PENDING_TTS_KEY, {
+            sessionStorage.setItem(PENDING_TTS_KEY, JSON.stringify({
                 request_id: requestId,
                 text: text,
                 at: Date.now()
-            });
+            }));
             setProspectThinking(true);
             setStatus("Synthèse voix française…", "status-thinking");
             pushToStreamlit({
@@ -4380,15 +4421,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function fallbackProspectReply() {
             if (agentAskedIdentity()) return getIdentityReply();
             if (!isProfileCalibrationEnabled()) {
-                return "Je vous écoute, qu'est-ce que vous voulez ?";
+                return ensureReplyVariety("Je vous écoute, qu'est-ce que vous voulez ?");
             }
             const profile = getProfileKey();
             const contextual = getContextualObjection(profile, getLevel());
-            if (contextual) return contextual;
+            if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
             const factual = tryFactualAnswer(profile, getLevel());
-            if (factual) return factual;
+            if (factual && !isRepeatOfRecentProspectReply(factual)) return factual;
             const list = getProfileFallbacks();
-            return list[0] || "Je vous écoute, mais je ne suis pas convaincu.";
+            return pickNextUnusedLine(list) || ensureReplyVariety("Je vous écoute, mais je ne suis pas convaincu.");
         }
 
         function isProspectNonsenseReply(reply) {
@@ -4479,6 +4520,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
             if (agentAskedMailOnly()) return sec ? "Non, je n'ai pas reçu de mail. C'est pour quoi ?" : "Non, pas à ma connaissance. C'est pour quoi ?";
             if (agentIgnoredProspectQuestion && agentIgnoredProspectQuestion()) {
+                if (prospectAlreadySaidPhrase(/c'est pour quoi|pour quoi exactement|pourquoi vous m'appelez/i)) {
+                    return sec ? "Vous tournez autour du pot. Dites-moi clairement votre offre." : "OK, mais concrètement, quel est votre objectif ?";
+                }
                 return sec ? "Pourquoi moi ? Pourquoi vous m'appelez ?" : "C'est pour quoi exactement votre appel ?";
             }
             if ((personaIsMoving() || personaScenarioType() === "mise_en_service")
@@ -4562,7 +4606,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
             reply = enforceConversationStage(reply);
             syncPersonaFromReply(reply);
-            return reply;
+            return ensureReplyVariety(reply);
         }
 
         async function sendAgentMessage(userText) {
