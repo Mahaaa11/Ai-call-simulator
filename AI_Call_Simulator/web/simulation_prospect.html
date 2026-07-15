@@ -214,10 +214,8 @@
         let callScenario = createCallScenario();
 
         function buildAgentOpening(level) {
-            const s = callScenario;
-            const civ = s.firstName.match(/^[A-ZÉÈÀÂÊÎÔÛaeéèàâêîôû]/) && /[aeiouéèàâêîôû]/i.test(s.firstName[s.firstName.length - 1]) ? "Madame" : "Monsieur";
             if (level === "debutant") {
-                return "Bonjour, je suis Émilie de Génie Énergie, partenaire Home Serve. Je vous appelle suite à une étude sur les augmentations de factures d'électricité. Vous êtes bien " + civ + " " + s.lastName + " ?";
+                return "Bonjour, je suis Émilie de Génie Énergie, partenaire Home Serve. Je vous appelle suite à une étude sur les augmentations de factures d'électricité — vous avez une petite minute ?";
             }
             if (level === "intermediaire") {
                 return "Bonjour, Émilie de Génie Énergie, partenaire Home Serve. Appel court pour vérifier si vous payez le bon tarif sur votre électricité — vous avez deux minutes ?";
@@ -259,6 +257,11 @@ STRUCTURE D'APPEL :
 3. Comparatif : indépendant, gratuit, sans engagement, 14 jours rétractation
 4. Proposition : tarif compétitif si économies possibles (adapte le montant à ce que le prospect a dit)
 5. Closing : IBAN seulement après accord, ou proposition email / rappel
+
+IDENTITÉ PROSPECT (CRITIQUE) :
+- Tu ne connais PAS le nom du prospect au début de l'appel (appels non nominatifs).
+- INTERDIT de dire « Monsieur/Madame [Nom] » ou de deviner un nom avant que le prospect se présente.
+- Si on te demande d'où tu as son nom : explique que tu ne le connais pas, appel non nominatif, étude tarifaire régionale.
 
 GESTION OBJECTIONS (empathie + reformulation + valeur) :
 - « Pas intéressé » → « Je comprends, ce n'est pas une vente forcée, juste une vérification rapide. »
@@ -349,13 +352,55 @@ RÈGLES FORMAT :
                 + "\n\nPROFIL DU PROSPECT (joué par l'humain) : " + p.label
                 + "\n" + p.agentContext
                 + "\nNIVEAU DE RÉSISTANCE : " + getLevel()
-                + "\n\nSCÉNARIO DE RÉFÉRENCE (si le prospect donne des infos cohérentes, utilise-les ; sinon pose des questions) :"
-                + "\n- Prospect type : " + s.firstName + " " + s.lastName
+                + "\n\nRÉFÉRENCE INTERNE (ne jamais révéler au prospect, découvre par tes questions) :"
                 + "\n- Fournisseur probable : " + s.supplier + " (électricité seule)"
                 + "\n- Facture indicative : ~" + s.billAmount + " €/mois"
                 + "\n- Économie possible à proposer : ~" + s.offerTarget + " €/mois si pertinent"
                 + "\n- Ne cite PAS EDF ni 70€ par défaut : adapte-toi aux réponses du prospect humain."
+                + "\n- Ne prononce JAMAIS le nom du prospect tant qu'il ne s'est pas présenté."
                 + loadCoachingTips();
+        }
+
+        function lastProspectText() {
+            const turns = chatTurns.filter(t => t.role === "user");
+            return turns.length ? turns[turns.length - 1].content : "";
+        }
+
+        function cleanAgentReply(raw) {
+            if (!raw) return "";
+            return raw
+                .replace(/\*\*([^*]+)\*\*/g, "$1")
+                .replace(/\*([^*]+)\*/g, "$1")
+                .replace(/^#+\s*/gm, "")
+                .replace(/\([^)]*(pause|ton|sourire)[^)]*\)/gi, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 500);
+        }
+
+        function getAgentFallbackReply(prospectText) {
+            const t = (prospectText || "").toLowerCase();
+            if (/qui (êtes|etes)|vous êtes qui|d'?où.*nom|comment.*nom|comment.*numéro|comment.*données|rgpd|données|protég/i.test(t)) {
+                return "Je comprends tout à fait. Je suis Émilie, conseillère Génie Énergie, partenaire Home Serve. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures d'électricité, sans engagement. Puis-je vous expliquer en deux minutes ?";
+            }
+            if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement/i.test(t)) {
+                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. C'est gratuit et sans engagement. Vous avez une minute ?";
+            }
+            if (/intéresse pas|pas le temps|occupé|laissez|tranquille/i.test(t)) {
+                return "Je comprends, je serai très brève. Ce n'est pas une vente forcée, juste une vérification tarifaire. Une seule question sur votre facture d'électricité, ça vous va ?";
+            }
+            if (/fournisseur|changer|satisfait/i.test(t)) {
+                return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive. Si elle l'est déjà, je vous le dirai honnêtement.";
+            }
+            return "Je vous entends. Je suis Émilie de Génie Énergie, partenaire Home Serve — appel court pour une vérification tarifaire électricité, sans engagement. Puis-je continuer ?";
+        }
+
+        function finalizeAgentReply(raw, prospectText) {
+            let reply = cleanAgentReply(raw);
+            if (!reply || reply.length < 8) {
+                reply = getAgentFallbackReply(prospectText);
+            }
+            return reply;
         }
 
         function setStatus(t, cls) {
@@ -377,28 +422,42 @@ RÈGLES FORMAT :
                     "HTTP-Referer": location.origin,
                     "X-Title": "AI Call Simulator v2"
                 },
-                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.82, frequency_penalty: 0.35, presence_penalty: 0.2 })
+                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.75, frequency_penalty: 0.15, presence_penalty: 0.1 })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
-            return (data.choices?.[0]?.message?.content || "").trim();
+            const content = (data.choices?.[0]?.message?.content || "").trim();
+            if (!content) throw new Error("Réponse IA vide — réessayez");
+            return content;
         }
 
         async function callAgentLLM(apiKey, extra) {
             const models = [getModel(), ...OPENROUTER_FALLBACK.filter(m => m !== getModel())];
-            const messages = [
-                { role: "system", content: systemPromptText + getAgentAntiRepeatContext() + (extra || "") },
-                ...chatTurns.slice(-12).map(t => ({
-                    role: t.role === "assistant" ? "assistant" : "user",
-                    content: t.content.slice(0, 400)
-                }))
+            const turnMessages = chatTurns.slice(-12).map(t => ({
+                role: t.role === "assistant" ? "assistant" : "user",
+                content: t.content.slice(0, 400)
+            }));
+            const plans = [
+                { system: systemPromptText + getAgentAntiRepeatContext() + (extra || ""), maxTokens: 280 },
+                { system: systemPromptText + (extra || ""), maxTokens: 220 },
+                { system: systemPromptText.split("\n").slice(0, 24).join("\n"), maxTokens: 180 }
             ];
             let lastErr = null;
             for (const model of models) {
-                try {
-                    return await callOpenRouter(messages, apiKey, model, 220);
-                } catch (e) { lastErr = e; }
+                for (const plan of plans) {
+                    const messages = [{ role: "system", content: plan.system }, ...turnMessages];
+                    try {
+                        const raw = await callOpenRouter(messages, apiKey, model, plan.maxTokens);
+                        const reply = finalizeAgentReply(raw, lastProspectText());
+                        if (reply) return reply;
+                    } catch (e) {
+                        lastErr = e;
+                        console.warn("Agent LLM retry", model, e.message);
+                    }
+                }
             }
+            const fallback = getAgentFallbackReply(lastProspectText());
+            if (fallback) return fallback;
             throw lastErr || new Error("Erreur OpenRouter");
         }
 
@@ -717,9 +776,9 @@ ${transcript.slice(0, 2500)}`;
             textInput.disabled = false;
             stopBtn.disabled = false;
             addLog("Agent IA", opening, "agent-msg");
-            addLog("Scénario", callScenario.firstName + " " + callScenario.lastName
-                + " — " + callScenario.supplier + ", ~" + callScenario.billAmount + " €/mois, élec seule. "
-                + "Jouez ce prospect avec vos objections.", "prospect-msg");
+            addLog("Scénario", "À jouer : " + callScenario.firstName + " " + callScenario.lastName
+                + " — " + callScenario.supplier + ", ~" + callScenario.billAmount + " €/mois (élec seule). "
+                + "L'agent IA ne connaît pas votre nom.", "prospect-msg");
             setStatus("L'agent IA vous appelle — répondez comme le prospect", "status-listening");
             await speakAgent(opening);
         });
