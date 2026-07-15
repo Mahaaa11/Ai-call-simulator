@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import streamlit.components.v1 as components
@@ -9,11 +10,24 @@ import streamlit.components.v1 as components
 _FRONTEND = Path(__file__).resolve().parent / "frontend"
 _FRONTEND_V1 = _FRONTEND / "v1"
 _FRONTEND_V2 = _FRONTEND / "v2"
+_LIB = _FRONTEND / "streamlit-component-lib.js"
 
-simulation_app = components.declare_component(
-    "simulation_app",
-    path=str(_FRONTEND),
-)
+
+def _ensure_frontend_dir(target: Path) -> None:
+    target.mkdir(parents=True, exist_ok=True)
+    lib_dst = target / "streamlit-component-lib.js"
+    if _LIB.exists() and not lib_dst.exists():
+        shutil.copy2(_LIB, lib_dst)
+    if not (target / "index.html").exists():
+        (target / "index.html").write_text(
+            "<!DOCTYPE html><html><body>Chargement…</body></html>",
+            encoding="utf-8",
+        )
+
+
+_ensure_frontend_dir(_FRONTEND_V1)
+_ensure_frontend_dir(_FRONTEND_V2)
+
 simulation_app_v1 = components.declare_component(
     "simulation_app_v1",
     path=str(_FRONTEND_V1),
