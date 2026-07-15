@@ -323,21 +323,6 @@
             opacity: 1;
         }
 
-        .prospect-video.did-layer {
-            opacity: 0;
-            z-index: 4;
-            transition: opacity 0.25s ease;
-        }
-
-        .prospect-frame.did-playing .prospect-video.did-layer {
-            opacity: 1;
-        }
-
-        .prospect-frame.did-playing .prospect-media,
-        .prospect-frame.did-playing .prospect-fallback {
-            opacity: 0;
-        }
-
         .prospect-fallback {
             display: none;
             position: absolute;
@@ -901,9 +886,6 @@
       if (typeof window.handleStreamlitTtsResult === "function") {
         window.handleStreamlitTtsResult();
       }
-      if (typeof window.resumePendingLipsync === "function") {
-        window.resumePendingLipsync();
-      }
       if (typeof window.resumePendingEvaluation === "function") {
         window.resumePendingEvaluation();
       }
@@ -981,9 +963,6 @@
                 <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
                 <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
             </select>
-            <label class="calibration-label" id="didLipsyncLabel" style="display:none;margin-top:10px;">
-                <input type="checkbox" id="didLipsyncToggle"> Lip-sync D-ID (bouche synchronisée, ~20 s/réplique — nécessite clé D-ID)
-            </label>
         </details>
 
         <button type="button" id="startBtn">📞 Décrocher — lancer la simulation</button>
@@ -999,7 +978,6 @@
                             src="assets/prospect-female-idle.mp4"></video>
                         <video class="prospect-video speaking-layer" id="prospectVideoSpeak" muted loop playsinline preload="auto"
                             src="assets/prospect-female-speaking.mp4"></video>
-                        <video class="prospect-video did-layer" id="prospectVideoDid" playsinline preload="auto"></video>
                     </div>
                     <img src="assets/prospect-female-calm.png" id="prospectAvatarImg" class="prospect-fallback" alt="Prospect au téléphone">
                     <div class="video-vignette"></div>
@@ -1989,9 +1967,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         let lastConversationId = null;
         const PENDING_EVAL_KEY = "simulator_pending_eval_v1";
         const CALL_STASH_KEY = "simulator_call_stash_v1";
-        const PENDING_LIPSYNC_KEY = "simulator_pending_lipsync_v1";
         const PENDING_TTS_KEY = "simulator_pending_tts_v1";
-        const DID_LIPSYNC_PREF_KEY = "simulator_did_lipsync_pref_v1";
         const AUDIO_UNLOCK_KEY = "simulator_audio_unlock_v1";
 
         function unlockAudioPlayback() {
@@ -3987,7 +3963,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const server = getTtsServer();
             if (!server) {
                 if (shouldUseHostedTts()) {
-                    el.innerHTML = "✅ Voix française hébergée (edge-tts via Streamlit)";
+                    el.innerHTML = "✅ Voix française (navigateur, secours serveur)";
                     el.style.color = "#16a34a";
                 } else if (isHostedMode()) {
                     el.innerHTML = "ℹ️ Mode hébergé : voix du navigateur";
@@ -4023,7 +3999,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             } else if (isHostedMode()) {
                 const cfg = getSimulatorConfig();
                 if (cfg.hostedTtsEnabled) {
-                    el.innerHTML = "✅ Voix française hébergée (edge-tts via Streamlit)";
+                    el.innerHTML = "✅ Voix française (navigateur, secours serveur)";
                 } else {
                     el.innerHTML = "ℹ️ Mode hébergé : voix du navigateur utilisée";
                 }
@@ -4039,40 +4015,6 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return !!(cfg.hostedTtsEnabled || cfg.hostedOnStreamlit || useStreamlitSave() || isStreamlitCloud());
         }
 
-        function useDidLipsync() {
-            const cfg = getSimulatorConfig();
-            if (!cfg.didLipsyncEnabled) return false;
-            const toggle = document.getElementById("didLipsyncToggle");
-            if (toggle && !toggle.checked) return false;
-            try {
-                const pref = localStorage.getItem(DID_LIPSYNC_PREF_KEY);
-                if (pref === "0") return false;
-            } catch (_) {}
-            return true;
-        }
-
-        function syncDidLipsyncUi() {
-            const cfg = getSimulatorConfig();
-            const label = document.getElementById("didLipsyncLabel");
-            const toggle = document.getElementById("didLipsyncToggle");
-            if (!label || !toggle) return;
-            if (cfg.didLipsyncEnabled) {
-                label.style.display = "flex";
-                try {
-                    const pref = localStorage.getItem(DID_LIPSYNC_PREF_KEY);
-                    if (pref === "0") toggle.checked = false;
-                    else if (pref === "1") toggle.checked = true;
-                } catch (_) {}
-            } else {
-                label.style.display = "none";
-            }
-            toggle.onchange = () => {
-                try {
-                    localStorage.setItem(DID_LIPSYNC_PREF_KEY, toggle.checked ? "1" : "0");
-                } catch (_) {}
-            };
-        }
-
         function stashCallStateForAsync(pendingKey, payload) {
             sessionStorage.setItem(pendingKey, JSON.stringify(payload));
             sessionStorage.setItem(CALL_STASH_KEY, JSON.stringify({
@@ -4086,14 +4028,6 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 agentPersona: agentPersona,
                 callElapsedSec: callElapsedSec
             }));
-        }
-
-        function stashCallStateForLipsync(requestId, text) {
-            stashCallStateForAsync(PENDING_LIPSYNC_KEY, {
-                request_id: requestId,
-                text: text,
-                at: Date.now()
-            });
         }
 
         function requestStreamlitHostedTts(text) {
@@ -4263,108 +4197,6 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
-        async function playDidVideo(videoUrl, captionText) {
-            const frame = document.getElementById("prospectFrame");
-            const didVid = document.getElementById("prospectVideoDid");
-            if (!frame || !didVid || !videoUrl) return false;
-            updateLiveCaption("Prospect", captionText, "prospect");
-            setProspectThinking(false);
-            setStatus("Le prospect parle (lip-sync)…", "status-thinking");
-            frame.classList.add("did-playing");
-            didVid.muted = false;
-            didVid.volume = 1;
-            didVid.src = videoUrl;
-            didVid.currentTime = 0;
-            try {
-                await didVid.play();
-            } catch (e) {
-                frame.classList.remove("did-playing");
-                didVid.removeAttribute("src");
-                throw e;
-            }
-            return new Promise((resolve) => {
-                const finish = () => {
-                    frame.classList.remove("did-playing");
-                    didVid.pause();
-                    didVid.removeAttribute("src");
-                    setProspectSpeaking(false);
-                    if (callActive) setStatus("À vous de parler", "status-listening");
-                    resolve(true);
-                };
-                didVid.onended = finish;
-                didVid.onerror = finish;
-            });
-        }
-
-        async function speakDidViaLocalApi(text) {
-            const api = CONVERSATION_API;
-            if (!api) throw new Error("API locale indisponible pour lip-sync");
-            setProspectThinking(true);
-            setStatus("Génération lip-sync D-ID (15–40 s)…", "status-thinking");
-            const res = await fetch(api + "/api/lipsync", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    text: text.slice(0, 500),
-                    gender: (prospectPersona && prospectPersona.gender) || "female"
-                })
-            });
-            const data = await res.json();
-            if (!res.ok || !data.ok || !data.video_url) {
-                throw new Error(data.error || ("HTTP " + res.status));
-            }
-            return playDidVideo(data.video_url, text);
-        }
-
-        function requestStreamlitDidLipsync(text) {
-            const requestId = "ls_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-            stashCallStateForLipsync(requestId, text);
-            setProspectThinking(true);
-            setStatus("Génération lip-sync D-ID (15–40 s)…", "status-thinking");
-            pushToStreamlit({
-                action: "lipsync",
-                request_id: requestId,
-                text: text.slice(0, 500),
-                gender: (prospectPersona && prospectPersona.gender) || "female"
-            });
-            return true;
-        }
-
-        async function resumePendingLipsync() {
-            const pendingRaw = sessionStorage.getItem(PENDING_LIPSYNC_KEY);
-            if (!pendingRaw) return false;
-            const cfg = getSimulatorConfig();
-            const result = cfg.lastLipsyncResult;
-            if (!result || !result.request_id) return false;
-            let pending;
-            try { pending = JSON.parse(pendingRaw); } catch (_) { return false; }
-            if (pending.request_id !== result.request_id) return false;
-            sessionStorage.removeItem(PENDING_LIPSYNC_KEY);
-            if (!result.ok || !result.video_url) {
-                const el = document.getElementById("ttsStatus");
-                if (el) {
-                    el.innerHTML = "⚠️ Lip-sync D-ID : " + (result.error || "erreur") + " — voix classique";
-                    el.style.color = "#d97706";
-                }
-                if (shouldUseHostedTts()) {
-                    requestStreamlitHostedTts(pending.text || "");
-                    return true;
-                }
-                return await speakBrowser(pending.text || "");
-            }
-            try {
-                await playDidVideo(result.video_url, pending.text || "");
-                return true;
-            } catch (e) {
-                console.warn("Lip-sync playback:", e);
-                if (shouldUseHostedTts()) {
-                    requestStreamlitHostedTts(pending.text || "");
-                    return true;
-                }
-                return await speakBrowser(pending.text || "");
-            }
-        }
-
         async function speakLocalTTS(text) {
             if (!text) return false;
             const server = getTtsServer();
@@ -4449,6 +4281,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     resolve(ok);
                 };
                 u.onstart = () => {
+                    updateLiveCaption("Prospect", text, "prospect");
                     setStatus("Le prospect parle...", "status-thinking");
                     startProspectMouthAnim();
                 };
@@ -4480,28 +4313,23 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return false;
             }
 
-            if (useDidLipsync()) {
-                try {
-                    if (useStreamlitSave()) {
-                        requestStreamlitDidLipsync(text);
-                        return true;
-                    }
-                    if (CONVERSATION_API) {
-                        return await speakDidViaLocalApi(text);
-                    }
-                } catch (e) {
-                    console.warn("D-ID lip-sync:", e);
-                }
-            }
+            unlockAudioPlayback();
+            await ensureVoices();
 
-            if (shouldUseHostedTts()) {
+            const onHosted = shouldUseHostedTts() || isStreamlitCloud() || getSimulatorConfig().hostedOnStreamlit;
+
+            if (onHosted) {
+                let ok = await speakBrowser(text);
+                if (ok) {
+                    if (callActive) setStatus("À vous de parler", "status-listening");
+                    return true;
+                }
                 requestStreamlitHostedTts(text);
                 return true;
             }
 
             let ok = await speakLocalTTS(text);
             if (!ok) {
-                await ensureVoices();
                 ok = await speakBrowser(text);
             }
 
@@ -5407,7 +5235,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             unlockAudioPlayback();
             const ok = await speakProspect("Bonjour, je suis le prospect. Oui bonjour ?");
             if (!ok) {
-                alert("Aucun son.\n\n1. Lancez : ./AI_Call_Simulator/web/start.sh (ou tts_server.py)\n2. Ouvrez http://localhost:8080/simulation.html depuis AI_Call_Simulator/web/\n3. Cochez « Voix du prospect »\n4. Vérifiez le volume du Mac");
+                alert("Aucun son.\n\n1. Vérifiez que « Voix du prospect » est cochée\n2. Vérifiez le volume du navigateur\n3. Utilisez Chrome ou Safari récent\n4. Cliquez « Décrocher » avant de tester");
             }
         });
 
@@ -5482,14 +5310,12 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 
         function onStreamlitConfigApplied() {
             applyHostedConfig();
-            syncDidLipsyncUi();
             showLastSaveResult();
             checkDbServer();
             checkTtsServer();
         }
         window.onStreamlitConfigApplied = onStreamlitConfigApplied;
         window.handleStreamlitTtsResult = function () { void resumePendingTts(); };
-        window.resumePendingLipsync = function () { void resumePendingLipsync(); };
         window.resumePendingEvaluation = function () { void resumePendingEvaluation(); };
 
         window.addEventListener("message", function (event) {
@@ -5510,17 +5336,14 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
         });
 
         applyHostedConfig();
-        syncDidLipsyncUi();
 
         (async function initSimulator() {
             await loadDeployConfig();
             applyHostedConfig();
-            syncDidLipsyncUi();
             try {
                 if (sessionStorage.getItem(AUDIO_UNLOCK_KEY) === "1") unlockAudioPlayback();
             } catch (_) {}
             restoreCallStateFromStash();
-            await resumePendingLipsync();
             await resumePendingTts();
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             const ready = !!(cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud());

@@ -79,9 +79,6 @@ class ConversationHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/conversations/") and path.endswith("/evaluation"):
             self._handle_update_evaluation(path)
             return
-        if path == "/api/lipsync":
-            self._handle_lipsync()
-            return
 
         self._json_response(404, {"ok": False, "error": "Not found"})
 
@@ -126,36 +123,6 @@ class ConversationHandler(BaseHTTPRequestHandler):
             self._json_response(200, {"ok": True, "conversation_id": conversation_id})
         except Exception as e:
             print("Erreur update eval:", e)
-            self._json_response(500, {"ok": False, "error": str(e)})
-
-    def _handle_lipsync(self) -> None:
-        import sys
-
-        root = Path(__file__).resolve().parents[1]
-        if str(root) not in sys.path:
-            sys.path.insert(0, str(root))
-        from ui.did_lipsync import create_talk_video
-
-        length = int(self.headers.get("Content-Length", "0") or "0")
-        raw = self.rfile.read(length).decode("utf-8") if length else "{}"
-        try:
-            payload = json.loads(raw or "{}")
-        except json.JSONDecodeError:
-            self._json_response(400, {"ok": False, "error": "JSON invalide"})
-            return
-
-        api_key = os.getenv("D_ID_API_KEY", "").strip()
-        if not api_key:
-            self._json_response(503, {"ok": False, "error": "D_ID_API_KEY manquante"})
-            return
-
-        text = str(payload.get("text") or "")
-        gender = str(payload.get("gender") or "female")
-        try:
-            video_url = create_talk_video(api_key, text, gender=gender)
-            self._json_response(200, {"ok": True, "video_url": video_url})
-        except Exception as e:
-            print("Erreur lipsync:", e)
             self._json_response(500, {"ok": False, "error": str(e)})
 
 

@@ -1,0 +1,102 @@
+%PDF-1.4
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>endobj
+4 0 obj<< /Length 3597 >>stream
+BT /F2 16 Tf 40 800 Td (Ohm Energie - Churn & CHF 2025) Tj ET
+BT /F1 8 Tf 40 782 Td (Source : AAF Ohm Energie 2025 | 11267 contrats | base activee 8551 \(hors annule / PP1 rejete\) | 09/07/2026) Tj ET
+BT /F2 12 Tf 40 754 Td (Indicateurs) Tj ET
+BT /F2 9 Tf 40 738 Td (Indicateur) Tj ET
+BT /F2 9 Tf 130 738 Td (Taux) Tj ET
+BT /F2 9 Tf 185 738 Td (Numerateur) Tj ET
+BT /F2 9 Tf 345 738 Td (Denominateur) Tj ET
+BT /F1 9 Tf 40 724 Td (Churn M+1) Tj ET
+BT /F1 9 Tf 130 724 Td (7,48 %) Tj ET
+BT /F1 9 Tf 185 724 Td (640 termine <= 30 j) Tj ET
+BT /F1 9 Tf 345 724 Td (8551 actives) Tj ET
+BT /F1 9 Tf 40 711 Td (Churn M+6) Tj ET
+BT /F1 9 Tf 130 711 Td (7,48 %) Tj ET
+BT /F1 9 Tf 185 711 Td (640 termine <= 180 j) Tj ET
+BT /F1 9 Tf 345 711 Td (8551 actives) Tj ET
+BT /F1 9 Tf 40 698 Td (Churn M+12) Tj ET
+BT /F1 9 Tf 130 698 Td (7,48 %) Tj ET
+BT /F1 9 Tf 185 698 Td (640 termine <= 365 j) Tj ET
+BT /F1 9 Tf 345 698 Td (8551 actives) Tj ET
+BT /F1 9 Tf 40 685 Td (CHF) Tj ET
+BT /F1 9 Tf 130 685 Td (58,19 %) Tj ET
+BT /F1 9 Tf 185 685 Td (4976 switche) Tj ET
+BT /F1 9 Tf 345 685 Td (8551 actives) Tj ET
+BT /F1 8 Tf 40 662 Td (Note : Les 640 contrats 'termine' ont une duree entre 2 et 30 jours \(mediane 10,5 j\).) Tj ET
+BT /F1 8 Tf 40 651 Td (Aucune resiliation au-dela du 1er mois -> Churn M+1 = M+6 = M+12.) Tj ET
+BT /F2 12 Tf 40 627 Td (Ventilation par energie) Tj ET
+BT /F2 9 Tf 40 611 Td (Energie) Tj ET
+BT /F2 9 Tf 150 611 Td (Base) Tj ET
+BT /F2 9 Tf 205 611 Td (Resiliations) Tj ET
+BT /F2 9 Tf 285 611 Td (Churn) Tj ET
+BT /F2 9 Tf 345 611 Td (Switche) Tj ET
+BT /F2 9 Tf 405 611 Td (CHF) Tj ET
+BT /F1 9 Tf 40 597 Td (Electricite \(EL\)) Tj ET
+BT /F1 9 Tf 150 597 Td (5503) Tj ET
+BT /F1 9 Tf 205 597 Td (462) Tj ET
+BT /F1 9 Tf 285 597 Td (8,40 %) Tj ET
+BT /F1 9 Tf 345 597 Td (3130) Tj ET
+BT /F1 9 Tf 405 597 Td (56,88 %) Tj ET
+BT /F1 9 Tf 40 584 Td (Gaz \(NG\)) Tj ET
+BT /F1 9 Tf 150 584 Td (3048) Tj ET
+BT /F1 9 Tf 205 584 Td (178) Tj ET
+BT /F1 9 Tf 285 584 Td (5,84 %) Tj ET
+BT /F1 9 Tf 345 584 Td (1846) Tj ET
+BT /F1 9 Tf 405 584 Td (60,56 %) Tj ET
+BT /F2 12 Tf 40 560 Td (Repartition des statuts \(tous AAF\)) Tj ET
+BT /F2 9 Tf 40 544 Td (Statut) Tj ET
+BT /F2 9 Tf 180 544 Td (Nombre) Tj ET
+BT /F2 9 Tf 250 544 Td (Part) Tj ET
+BT /F1 9 Tf 40 530 Td (switche) Tj ET
+BT /F1 9 Tf 180 530 Td (4976) Tj ET
+BT /F1 9 Tf 250 530 Td (44,16 %) Tj ET
+BT /F1 9 Tf 40 517 Td (re souscription) Tj ET
+BT /F1 9 Tf 180 517 Td (2929) Tj ET
+BT /F1 9 Tf 250 517 Td (26,00 %) Tj ET
+BT /F1 9 Tf 40 504 Td (annule) Tj ET
+BT /F1 9 Tf 180 504 Td (1723) Tj ET
+BT /F1 9 Tf 250 504 Td (15,29 %) Tj ET
+BT /F1 9 Tf 40 491 Td (PP1 rejete) Tj ET
+BT /F1 9 Tf 180 491 Td (993) Tj ET
+BT /F1 9 Tf 250 491 Td (8,81 %) Tj ET
+BT /F1 9 Tf 40 478 Td (termine) Tj ET
+BT /F1 9 Tf 180 478 Td (640) Tj ET
+BT /F1 9 Tf 250 478 Td (5,68 %) Tj ET
+BT /F1 9 Tf 40 465 Td (en attente) Tj ET
+BT /F1 9 Tf 180 465 Td (6) Tj ET
+BT /F1 9 Tf 250 465 Td (0,05 %) Tj ET
+BT /F2 12 Tf 40 438 Td (Duree de vie des contrats resilies) Tj ET
+BT /F2 9 Tf 40 422 Td (Tranche) Tj ET
+BT /F2 9 Tf 140 422 Td (Nombre) Tj ET
+BT /F1 9 Tf 40 408 Td (1-7 j) Tj ET
+BT /F1 9 Tf 140 408 Td (197) Tj ET
+BT /F1 9 Tf 40 395 Td (8-14 j) Tj ET
+BT /F1 9 Tf 140 395 Td (210) Tj ET
+BT /F1 9 Tf 40 382 Td (15-21 j) Tj ET
+BT /F1 9 Tf 140 382 Td (147) Tj ET
+BT /F1 9 Tf 40 369 Td (22-30 j) Tj ET
+BT /F1 9 Tf 140 369 Td (86) Tj ET
+BT /F2 12 Tf 40 340 Td (Methodologie) Tj ET
+BT /F1 9 Tf 40 326 Td (Resiliations = statut 'termine'. Duree = enddate - startdate.) Tj ET
+BT /F1 9 Tf 40 314 Td (Denominateur = contrats hors 'annule' et 'PP1 rejete'. CHF = statut 'switche' / base activee.) Tj ET
+endstream
+endobj
+5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+6 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000056 00000 n 
+0000000111 00000 n 
+0000000245 00000 n 
+0000003892 00000 n 
+0000003960 00000 n 
+trailer<< /Size 7 /Root 1 0 R >>
+startxref
+4033
+%%EOF

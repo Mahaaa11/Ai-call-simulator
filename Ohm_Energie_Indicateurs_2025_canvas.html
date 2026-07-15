@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Ohm Énergie — Indicateurs AAF 2025</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #111827;
+    margin: 0;
+    padding: 8px 4px;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px 0; font-weight: 700; }
+  h2 { font-size: 15px; margin: 22px 0 10px 0; font-weight: 650; }
+  .meta { color: #6B7280; font-size: 11px; margin-bottom: 18px; }
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .kpi {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 12px 10px;
+    background: #FAFAFA;
+  }
+  .kpi .value { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .kpi .label { color: #6B7280; font-size: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .kpi.warn .value { color: #C2410C; }
+  .kpi.info .value { color: #1D4ED8; }
+  .card {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .card-h {
+    padding: 10px 14px;
+    border-bottom: 1px solid #E5E7EB;
+    font-weight: 600;
+    background: #F9FAFB;
+  }
+  .card-b { padding: 12px 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+  th {
+    text-align: left;
+    padding: 8px 8px;
+    border-bottom: 1px solid #E5E7EB;
+    color: #6B7280;
+    font-weight: 600;
+    font-size: 10px;
+  }
+  td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #F3F4F6;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.warn td { background: #FFF7ED; }
+  tr.info td { background: #EFF6FF; }
+  tr.avg td { background: #EEF2FF; font-weight: 600; }
+  .chart-wrap { padding: 8px 4px 4px; }
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 160px;
+    border-bottom: 1px solid #E5E7EB;
+    padding: 0 4px;
+  }
+  .bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar-val { font-size: 8px; color: #6B7280; margin-bottom: 3px; }
+  .bar {
+    width: 100%;
+    background: #F59E0B;
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+  }
+  .bar-lab { font-size: 9px; color: #6B7280; margin-top: 6px; }
+  .caption { color: #9CA3AF; font-size: 9px; margin-top: 8px; }
+  .callout {
+    border: 1px solid #FDBA74;
+    background: #FFF7ED;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 8px;
+  }
+  .callout strong { display: block; margin-bottom: 4px; color: #9A3412; }
+  .right { text-align: right; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+  <h1>Ohm Énergie — Indicateurs AAF 2025</h1>
+  <div class="meta">Source : snapshot décembre 2025 · 11 267 souscriptions</div>
+
+  <div class="kpis">
+    <div class="kpi warn"><div class="value">15,51 %</div><div class="label">Rétractation</div></div>
+    <div class="kpi"><div class="value">7,17 %</div><div class="label">Churn M+1</div></div>
+    <div class="kpi"><div class="value">7,58 %</div><div class="label">Churn M+6</div></div>
+    <div class="kpi"><div class="value">7,07 %</div><div class="label">Churn M+12</div></div>
+    <div class="kpi info"><div class="value">70,21 %</div><div class="label">CHF</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Indicateurs annuels 2025</div>
+    <div class="card-b">
+      <table>
+        <thead>
+          <tr><th>Indicateur</th><th>Taux</th><th>Numérateur</th><th>Dénominateur</th></tr>
+        </thead>
+        <tbody>
+          <tr class="warn"><td>Rétractation</td><td>15,51 %</td><td>1 748 annule</td><td>11 267 souscriptions</td></tr>
+          <tr><td>Churn M+1</td><td>7,17 %</td><td>608 / 8 482</td><td>Taux global pondéré</td></tr>
+          <tr><td>Churn M+6</td><td>7,58 %</td><td>Moyenne M+1</td><td>Jan–Juin</td></tr>
+          <tr><td>Churn M+12</td><td>7,07 %</td><td>Moyenne M+1</td><td>Jan–Déc</td></tr>
+          <tr class="info"><td>CHF</td><td>70,21 %</td><td>5 955 switche</td><td>8 482 activés</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2>Taux de rétractation par mois</h2>
+  <div class="card">
+    <div class="card-h">Annulés / souscriptions du mois</div>
+    <div class="card-b chart-wrap">
+      <div class="bars" id="bars"></div>
+      <div class="caption">Source : snapshot déc. 2025 · cohorte = mois de contractsubscriptiondate</div>
+    </div>
+  </div>
+
+  <h2>Détail mensuel</h2>
+  <div class="card">
+    <div class="card-b">
+      <table>
+        <thead>
+          <tr>
+            <th>Mois</th><th class="right">Souscrip.</th><th class="right">Annulés</th>
+            <th class="right">Rétract. %</th><th class="right">Churn M+1 %</th><th class="right">CHF %</th>
+          </tr>
+        </thead>
+        <tbody id="monthly"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Décembre 2025</strong>
+    Le mois de décembre affiche un CHF bas (35,46 %) et un churn très bas (0,50 %) car 334 contrats sont encore « en attente » — les statuts ne sont pas encore stabilisés.
+  </div>
+
+<script>
+const MONTHLY = [
+  { m:"01", label:"Jan", total:1366, annule:228, retract:16.69, churn:6.15, chf:58.53 },
+  { m:"02", label:"Fév", total:1129, annule:120, retract:10.63, churn:8.5, chf:66.0 },
+  { m:"03", label:"Mar", total:1115, annule:168, retract:15.07, churn:5.54, chf:71.96 },
+  { m:"04", label:"Avr", total:1121, annule:161, retract:14.36, churn:8.07, chf:68.19 },
+  { m:"05", label:"Mai", total:1023, annule:204, retract:19.94, churn:7.92, chf:68.88 },
+  { m:"06", label:"Juin", total:991, annule:181, retract:18.26, churn:9.28, chf:74.12 },
+  { m:"07", label:"Juil", total:955, annule:153, retract:16.02, churn:9.52, chf:77.59 },
+  { m:"08", label:"Août", total:526, annule:79, retract:15.02, churn:6.57, chf:85.35 },
+  { m:"09", label:"Sep", total:702, annule:86, retract:12.25, churn:10.38, chf:80.51 },
+  { m:"10", label:"Oct", total:924, annule:163, retract:17.64, churn:8.84, chf:84.39 },
+  { m:"11", label:"Nov", total:728, annule:131, retract:17.99, churn:3.57, chf:84.67 },
+  { m:"12", label:"Déc", total:687, annule:74, retract:10.77, churn:0.5, chf:35.46 },
+];
+const maxR = Math.max(...MONTHLY.map(x => x.retract));
+const bars = document.getElementById('bars');
+MONTHLY.forEach(x => {
+  const col = document.createElement('div');
+  col.className = 'bar-col';
+  const h = Math.max(2, (x.retract / maxR) * 130);
+  col.innerHTML = `<div class="bar-val">${x.retract.toFixed(1)}</div><div class="bar" style="height:${h}px"></div><div class="bar-lab">${x.label}</div>`;
+  bars.appendChild(col);
+});
+const tbody = document.getElementById('monthly');
+MONTHLY.forEach(x => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${x.m}-2025</td><td class="right">${x.total.toLocaleString('fr-FR')}</td><td class="right">${x.annule}</td><td class="right">${x.retract.toFixed(2)} %</td><td class="right">${x.churn.toFixed(2)} %</td><td class="right">${x.chf.toFixed(2)} %</td>`;
+  tbody.appendChild(tr);
+});
+[["MOY. M+6","Jan–Juin","","","7,58 %",""],["MOY. M+12","Jan–Déc","","","7,07 %",""]].forEach(r => {
+  const tr = document.createElement('tr');
+  tr.className = 'avg';
+  tr.innerHTML = r.map((c,i)=>`<td class="${i>1?'right':''}">${c}</td>`).join('');
+  tbody.appendChild(tr);
+});
+</script>
+</body>
+</html>

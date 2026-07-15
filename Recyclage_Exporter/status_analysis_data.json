@@ -1,0 +1,950 @@
+{
+  "meta": {
+    "book2_rows": 1226,
+    "client09_rows": 1266,
+    "hist08_rows": 20661,
+    "hist09_rows": 25420,
+    "hist_total_rows": 46081
+  },
+  "book2_to_hist": {
+    "matched": 1187,
+    "unmatched": 39,
+    "ventes": 26,
+    "taux_vente_%": 2.19,
+    "summary": [
+      {
+        "statut_initial": "Pas de collaboration",
+        "total": 212,
+        "pct_du_fichier": 17.9,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 138,
+            "taux_%": 65.1
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 38,
+            "taux_%": 17.9
+          },
+          {
+            "statut": "Vente",
+            "n": 8,
+            "taux_%": 3.8
+          },
+          {
+            "statut": "Rappel Personnel",
+            "n": 8,
+            "taux_%": 3.8
+          },
+          {
+            "statut": "RACCROCHE AU NEZ",
+            "n": 5,
+            "taux_%": 2.4
+          },
+          {
+            "statut": "RELANCE",
+            "n": 4,
+            "taux_%": 1.9
+          },
+          {
+            "statut": "Refus",
+            "n": 4,
+            "taux_%": 1.9
+          },
+          {
+            "statut": "Faux Numéro",
+            "n": 3,
+            "taux_%": 1.4
+          },
+          {
+            "statut": "DETTES",
+            "n": 2,
+            "taux_%": 0.9
+          },
+          {
+            "statut": "Absent",
+            "n": 1,
+            "taux_%": 0.5
+          },
+          {
+            "statut": "Hors cible",
+            "n": 1,
+            "taux_%": 0.5
+          }
+        ]
+      },
+      {
+        "statut_initial": "Refus",
+        "total": 33,
+        "pct_du_fichier": 2.8,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 16,
+            "taux_%": 48.5
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 6,
+            "taux_%": 18.2
+          },
+          {
+            "statut": "Vente",
+            "n": 3,
+            "taux_%": 9.1
+          },
+          {
+            "statut": "Hors cible",
+            "n": 2,
+            "taux_%": 6.1
+          },
+          {
+            "statut": "RACCROCHE AU NEZ",
+            "n": 2,
+            "taux_%": 6.1
+          },
+          {
+            "statut": "Faux Numéro",
+            "n": 1,
+            "taux_%": 3.0
+          },
+          {
+            "statut": "Rappel Personnel",
+            "n": 1,
+            "taux_%": 3.0
+          },
+          {
+            "statut": "Pas décisionnaire",
+            "n": 1,
+            "taux_%": 3.0
+          },
+          {
+            "statut": "Refus",
+            "n": 1,
+            "taux_%": 3.0
+          }
+        ]
+      },
+      {
+        "statut_initial": "Répondeur",
+        "total": 942,
+        "pct_du_fichier": 79.4,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 747,
+            "taux_%": 79.3
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 96,
+            "taux_%": 10.2
+          },
+          {
+            "statut": "Refus",
+            "n": 22,
+            "taux_%": 2.3
+          },
+          {
+            "statut": "Rappel Personnel",
+            "n": 17,
+            "taux_%": 1.8
+          },
+          {
+            "statut": "Vente",
+            "n": 15,
+            "taux_%": 1.6
+          },
+          {
+            "statut": "RELANCE",
+            "n": 9,
+            "taux_%": 1.0
+          },
+          {
+            "statut": "Faux Numéro",
+            "n": 8,
+            "taux_%": 0.8
+          },
+          {
+            "statut": "RACCROCHE AU NEZ",
+            "n": 8,
+            "taux_%": 0.8
+          },
+          {
+            "statut": "Hors cible",
+            "n": 7,
+            "taux_%": 0.7
+          },
+          {
+            "statut": "Absent",
+            "n": 6,
+            "taux_%": 0.6
+          },
+          {
+            "statut": "Pas décisionnaire",
+            "n": 6,
+            "taux_%": 0.6
+          },
+          {
+            "statut": "DETTES",
+            "n": 1,
+            "taux_%": 0.1
+          }
+        ]
+      }
+    ],
+    "top_transitions": [
+      {
+        "initial": "Pas de collaboration",
+        "final": "Répondeur",
+        "n": 138,
+        "taux": 65.1
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Pas de collaboration",
+        "n": 38,
+        "taux": 17.9
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Vente",
+        "n": 8,
+        "taux": 3.8
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Rappel Personnel",
+        "n": 8,
+        "taux": 3.8
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "RACCROCHE AU NEZ",
+        "n": 5,
+        "taux": 2.4
+      },
+      {
+        "initial": "Refus",
+        "final": "Répondeur",
+        "n": 16,
+        "taux": 48.5
+      },
+      {
+        "initial": "Refus",
+        "final": "Pas de collaboration",
+        "n": 6,
+        "taux": 18.2
+      },
+      {
+        "initial": "Refus",
+        "final": "Vente",
+        "n": 3,
+        "taux": 9.1
+      },
+      {
+        "initial": "Refus",
+        "final": "Hors cible",
+        "n": 2,
+        "taux": 6.1
+      },
+      {
+        "initial": "Refus",
+        "final": "RACCROCHE AU NEZ",
+        "n": 2,
+        "taux": 6.1
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Répondeur",
+        "n": 747,
+        "taux": 79.3
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Pas de collaboration",
+        "n": 96,
+        "taux": 10.2
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Refus",
+        "n": 22,
+        "taux": 2.3
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Rappel Personnel",
+        "n": 17,
+        "taux": 1.8
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Vente",
+        "n": 15,
+        "taux": 1.6
+      }
+    ]
+  },
+  "client09_to_hist": {
+    "matched": 1242,
+    "unmatched": 24,
+    "ventes": 11,
+    "taux_vente_%": 0.89,
+    "summary": [
+      {
+        "statut_initial": "Pas de collaboration",
+        "total": 619,
+        "pct_du_fichier": 49.8,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 408,
+            "taux_%": 65.9
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 148,
+            "taux_%": 23.9
+          },
+          {
+            "statut": "Rappel Personnel",
+            "n": 17,
+            "taux_%": 2.7
+          },
+          {
+            "statut": "RACCROCHE AU NEZ",
+            "n": 12,
+            "taux_%": 1.9
+          },
+          {
+            "statut": "Refus",
+            "n": 10,
+            "taux_%": 1.6
+          },
+          {
+            "statut": "Faux Numéro",
+            "n": 7,
+            "taux_%": 1.1
+          },
+          {
+            "statut": "RELANCE",
+            "n": 4,
+            "taux_%": 0.6
+          },
+          {
+            "statut": "Vente",
+            "n": 4,
+            "taux_%": 0.6
+          },
+          {
+            "statut": "Hors cible",
+            "n": 3,
+            "taux_%": 0.5
+          },
+          {
+            "statut": "Ne jamais appeler",
+            "n": 3,
+            "taux_%": 0.5
+          },
+          {
+            "statut": "Pas décisionnaire",
+            "n": 2,
+            "taux_%": 0.3
+          },
+          {
+            "statut": "DETTES",
+            "n": 1,
+            "taux_%": 0.2
+          }
+        ]
+      },
+      {
+        "statut_initial": "Refus",
+        "total": 59,
+        "pct_du_fichier": 4.8,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 30,
+            "taux_%": 50.8
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 14,
+            "taux_%": 23.7
+          },
+          {
+            "statut": "Refus",
+            "n": 8,
+            "taux_%": 13.6
+          },
+          {
+            "statut": "Rappel Personnel",
+            "n": 4,
+            "taux_%": 6.8
+          },
+          {
+            "statut": "RACCROCHE AU NEZ",
+            "n": 1,
+            "taux_%": 1.7
+          },
+          {
+            "statut": "Faux Numéro",
+            "n": 1,
+            "taux_%": 1.7
+          },
+          {
+            "statut": "Hors cible",
+            "n": 1,
+            "taux_%": 1.7
+          }
+        ]
+      },
+      {
+        "statut_initial": "Répondeur",
+        "total": 564,
+        "pct_du_fichier": 45.4,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 396,
+            "taux_%": 70.2
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 110,
+            "taux_%": 19.5
+          },
+          {
+            "statut": "Refus",
+            "n": 13,
+            "taux_%": 2.3
+          },
+          {
+            "statut": "Faux Numéro",
+            "n": 11,
+            "taux_%": 2.0
+          },
+          {
+            "statut": "Vente",
+            "n": 7,
+            "taux_%": 1.2
+          },
+          {
+            "statut": "Absent",
+            "n": 5,
+            "taux_%": 0.9
+          },
+          {
+            "statut": "RACCROCHE AU NEZ",
+            "n": 5,
+            "taux_%": 0.9
+          },
+          {
+            "statut": "Hors cible",
+            "n": 5,
+            "taux_%": 0.9
+          },
+          {
+            "statut": "Rappel Personnel",
+            "n": 5,
+            "taux_%": 0.9
+          },
+          {
+            "statut": "RELANCE",
+            "n": 3,
+            "taux_%": 0.5
+          },
+          {
+            "statut": "Pas décisionnaire",
+            "n": 1,
+            "taux_%": 0.2
+          },
+          {
+            "statut": "DETTES",
+            "n": 1,
+            "taux_%": 0.2
+          },
+          {
+            "statut": "Ne jamais appeler",
+            "n": 1,
+            "taux_%": 0.2
+          },
+          {
+            "statut": "Autre",
+            "n": 1,
+            "taux_%": 0.2
+          }
+        ]
+      }
+    ],
+    "top_transitions": [
+      {
+        "initial": "Pas de collaboration",
+        "final": "Répondeur",
+        "n": 408,
+        "taux": 65.9
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Pas de collaboration",
+        "n": 148,
+        "taux": 23.9
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Rappel Personnel",
+        "n": 17,
+        "taux": 2.7
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "RACCROCHE AU NEZ",
+        "n": 12,
+        "taux": 1.9
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Refus",
+        "n": 10,
+        "taux": 1.6
+      },
+      {
+        "initial": "Refus",
+        "final": "Répondeur",
+        "n": 30,
+        "taux": 50.8
+      },
+      {
+        "initial": "Refus",
+        "final": "Pas de collaboration",
+        "n": 14,
+        "taux": 23.7
+      },
+      {
+        "initial": "Refus",
+        "final": "Refus",
+        "n": 8,
+        "taux": 13.6
+      },
+      {
+        "initial": "Refus",
+        "final": "Rappel Personnel",
+        "n": 4,
+        "taux": 6.8
+      },
+      {
+        "initial": "Refus",
+        "final": "RACCROCHE AU NEZ",
+        "n": 1,
+        "taux": 1.7
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Répondeur",
+        "n": 396,
+        "taux": 70.2
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Pas de collaboration",
+        "n": 110,
+        "taux": 19.5
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Refus",
+        "n": 13,
+        "taux": 2.3
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Faux Numéro",
+        "n": 11,
+        "taux": 2.0
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Vente",
+        "n": 7,
+        "taux": 1.2
+      }
+    ]
+  },
+  "book2_to_client09": {
+    "matched": 316,
+    "summary": [
+      {
+        "statut_initial": "Pas de collaboration",
+        "total": 48,
+        "pct_du_fichier": 15.2,
+        "outcomes": [
+          {
+            "statut": "Pas de collaboration",
+            "n": 47,
+            "taux_%": 97.9
+          },
+          {
+            "statut": "Répondeur",
+            "n": 1,
+            "taux_%": 2.1
+          }
+        ]
+      },
+      {
+        "statut_initial": "Refus",
+        "total": 6,
+        "pct_du_fichier": 1.9,
+        "outcomes": [
+          {
+            "statut": "Pas de collaboration",
+            "n": 5,
+            "taux_%": 83.3
+          },
+          {
+            "statut": "Refus",
+            "n": 1,
+            "taux_%": 16.7
+          }
+        ]
+      },
+      {
+        "statut_initial": "Répondeur",
+        "total": 262,
+        "pct_du_fichier": 82.9,
+        "outcomes": [
+          {
+            "statut": "Répondeur",
+            "n": 156,
+            "taux_%": 59.5
+          },
+          {
+            "statut": "Pas de collaboration",
+            "n": 106,
+            "taux_%": 40.5
+          }
+        ]
+      }
+    ],
+    "top_transitions": [
+      {
+        "initial": "Pas de collaboration",
+        "final": "Pas de collaboration",
+        "n": 47,
+        "taux": 97.9
+      },
+      {
+        "initial": "Pas de collaboration",
+        "final": "Répondeur",
+        "n": 1,
+        "taux": 2.1
+      },
+      {
+        "initial": "Refus",
+        "final": "Pas de collaboration",
+        "n": 5,
+        "taux": 83.3
+      },
+      {
+        "initial": "Refus",
+        "final": "Refus",
+        "n": 1,
+        "taux": 16.7
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Répondeur",
+        "n": 156,
+        "taux": 59.5
+      },
+      {
+        "initial": "Répondeur",
+        "final": "Pas de collaboration",
+        "n": 106,
+        "taux": 40.5
+      }
+    ]
+  },
+  "hist_transitions_book2_tels": [
+    {
+      "prior": "Absent",
+      "result": "Absent",
+      "n": 90,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "DETTES",
+      "result": "DETTES",
+      "n": 45,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "Faux Numéro",
+      "result": "Faux Numéro",
+      "n": 234,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "Hors cible",
+      "result": "Hors cible",
+      "n": 112,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "DETTES",
+      "n": 1,
+      "taux_%": 0.0
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "Hors cible",
+      "n": 1,
+      "taux_%": 0.0
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "Pas de collaboration",
+      "n": 4057,
+      "taux_%": 97.4
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "RACCROCHE AU NEZ",
+      "n": 3,
+      "taux_%": 0.1
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "Rappel Personnel",
+      "n": 3,
+      "taux_%": 0.1
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "Refus",
+      "n": 1,
+      "taux_%": 0.0
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "Répondeur",
+      "n": 100,
+      "taux_%": 2.4
+    },
+    {
+      "prior": "Pas de collaboration",
+      "result": "Vente",
+      "n": 1,
+      "taux_%": 0.0
+    },
+    {
+      "prior": "Pas décisionnaire",
+      "result": "Pas décisionnaire",
+      "n": 123,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "RACCROCHE AU NEZ",
+      "result": "RACCROCHE AU NEZ",
+      "n": 276,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "RELANCE",
+      "result": "RELANCE",
+      "n": 223,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "Rappel Personnel",
+      "result": "DETTES",
+      "n": 1,
+      "taux_%": 0.1
+    },
+    {
+      "prior": "Rappel Personnel",
+      "result": "Pas de collaboration",
+      "n": 1,
+      "taux_%": 0.1
+    },
+    {
+      "prior": "Rappel Personnel",
+      "result": "Pas décisionnaire",
+      "n": 1,
+      "taux_%": 0.1
+    },
+    {
+      "prior": "Rappel Personnel",
+      "result": "Rappel Personnel",
+      "n": 936,
+      "taux_%": 98.5
+    },
+    {
+      "prior": "Rappel Personnel",
+      "result": "Répondeur",
+      "n": 6,
+      "taux_%": 0.6
+    },
+    {
+      "prior": "Rappel Personnel",
+      "result": "Vente",
+      "n": 5,
+      "taux_%": 0.5
+    },
+    {
+      "prior": "Refus",
+      "result": "Refus",
+      "n": 329,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "Répondeur",
+      "result": "Pas de collaboration",
+      "n": 5,
+      "taux_%": 0.0
+    },
+    {
+      "prior": "Répondeur",
+      "result": "Rappel Personnel",
+      "n": 1,
+      "taux_%": 0.0
+    },
+    {
+      "prior": "Répondeur",
+      "result": "Répondeur",
+      "n": 13573,
+      "taux_%": 100.0
+    },
+    {
+      "prior": "Vente",
+      "result": "Vente",
+      "n": 430,
+      "taux_%": 100.0
+    }
+  ],
+  "daily_book2": [
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Absent",
+      "N": 80
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "DETTES",
+      "N": 9
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Faux Numéro",
+      "N": 90
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Hors cible",
+      "N": 71
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Pas de collaboration",
+      "N": 2803
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Pas décisionnaire",
+      "N": 77
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "RACCROCHE AU NEZ",
+      "N": 160
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "RELANCE",
+      "N": 186
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Rappel Personnel",
+      "N": 602
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Refus",
+      "N": 243
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Répondeur",
+      "N": 8641
+    },
+    {
+      "DATE_STR": "08/07",
+      "STATUT": "Vente",
+      "N": 283
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Absent",
+      "N": 17
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "DETTES",
+      "N": 39
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Faux Numéro",
+      "N": 156
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Hors cible",
+      "N": 51
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Pas de collaboration",
+      "N": 1504
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Pas décisionnaire",
+      "N": 53
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "RACCROCHE AU NEZ",
+      "N": 131
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "RELANCE",
+      "N": 50
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Rappel Personnel",
+      "N": 374
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Refus",
+      "N": 113
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Répondeur",
+      "N": 5839
+    },
+    {
+      "DATE_STR": "09/07",
+      "STATUT": "Vente",
+      "N": 173
+    }
+  ]
+}

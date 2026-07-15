@@ -1,0 +1,87 @@
+%PDF-1.4
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>endobj
+4 0 obj<< /Length 3458 >>stream
+BT /F2 14 Tf 40 800 Td (Ohm Energie - Indicateurs AAF 2025) Tj ET
+BT /F1 8 Tf 40 786 Td (Source : snapshot Decembre 2025 | 11267 souscriptions | calcule le 09/07/2026) Tj ET
+BT /F2 11 Tf 40 764 Td (Indicateurs annuels) Tj ET
+BT /F2 8 Tf 40 750 Td (Indicateur              Taux        Detail) Tj ET
+BT /F1 9 Tf 40 739 Td (Retractation            15.51 %     1748 annule / 11267) Tj ET
+BT /F1 9 Tf 40 727 Td (Churn M+1                7.17 %     taux global 608 / 8482) Tj ET
+BT /F1 9 Tf 40 715 Td (Churn M+6                7.58 %     moyenne M+1 Jan-Juin) Tj ET
+BT /F1 9 Tf 40 703 Td (Churn M+12               7.07 %     moyenne M+1 Jan-Dec) Tj ET
+BT /F1 9 Tf 40 691 Td (CHF                     70.21 %     5955 switche / 8482) Tj ET
+BT /F2 11 Tf 40 669 Td (Taux de retractation par mois) Tj ET
+0.12 0.25 0.45 rg
+55.0 533.0 28.0 83.7 re f
+95.0 533.0 28.0 53.3 re f
+135.0 533.0 28.0 75.6 re f
+175.0 533.0 28.0 72.0 re f
+215.0 533.0 28.0 100.0 re f
+255.0 533.0 28.0 91.6 re f
+295.0 533.0 28.0 80.3 re f
+335.0 533.0 28.0 75.3 re f
+375.0 533.0 28.0 61.4 re f
+415.0 533.0 28.0 88.5 re f
+455.0 533.0 28.0 90.2 re f
+495.0 533.0 28.0 54.0 re f
+0 g
+BT /F1 7 Tf 57 521 Td (Jan) Tj ET
+BT /F1 7 Tf 97 521 Td (Fev) Tj ET
+BT /F1 7 Tf 137 521 Td (Mar) Tj ET
+BT /F1 7 Tf 177 521 Td (Avr) Tj ET
+BT /F1 7 Tf 217 521 Td (Mai) Tj ET
+BT /F1 7 Tf 257 521 Td (Juin) Tj ET
+BT /F1 7 Tf 297 521 Td (Juil) Tj ET
+BT /F1 7 Tf 337 521 Td (Aout) Tj ET
+BT /F1 7 Tf 377 521 Td (Sep) Tj ET
+BT /F1 7 Tf 417 521 Td (Oct) Tj ET
+BT /F1 7 Tf 457 521 Td (Nov) Tj ET
+BT /F1 7 Tf 497 521 Td (Dec) Tj ET
+BT /F1 6 Tf 55 619.7011033099297 Td (16.7) Tj ET
+BT /F1 6 Tf 95 589.3099297893681 Td (10.6) Tj ET
+BT /F1 6 Tf 135 611.5767301905718 Td (15.1) Tj ET
+BT /F1 6 Tf 175 608.0160481444333 Td (14.4) Tj ET
+BT /F1 6 Tf 215 636.0 Td (19.9) Tj ET
+BT /F1 6 Tf 255 627.5747241725176 Td (18.3) Tj ET
+BT /F1 6 Tf 295 616.3410230692076 Td (16.0) Tj ET
+BT /F1 6 Tf 335 611.3259779338014 Td (15.0) Tj ET
+BT /F1 6 Tf 375 597.4343029087262 Td (12.2) Tj ET
+BT /F1 6 Tf 415 624.4653961885657 Td (17.6) Tj ET
+BT /F1 6 Tf 455 626.2206619859578 Td (18.0) Tj ET
+BT /F1 6 Tf 495 590.012036108325 Td (10.8) Tj ET
+BT /F2 11 Tf 40 497 Td (Detail mensuel) Tj ET
+BT /F2 7 Tf 40 483 Td (Mois     Souscrip  Annule  Retract%  ChurnM1%   CHF%) Tj ET
+BT /F1 7 Tf 40 473 Td (01        1366     228    16.69     6.15   58.53) Tj ET
+BT /F1 7 Tf 40 464 Td (02        1129     120    10.63     8.50   66.00) Tj ET
+BT /F1 7 Tf 40 455 Td (03        1115     168    15.07     5.54   71.96) Tj ET
+BT /F1 7 Tf 40 446 Td (04        1121     161    14.36     8.07   68.19) Tj ET
+BT /F1 7 Tf 40 437 Td (05        1023     204    19.94     7.92   68.88) Tj ET
+BT /F1 7 Tf 40 428 Td (06         991     181    18.26     9.28   74.12) Tj ET
+BT /F1 7 Tf 40 419 Td (07         955     153    16.02     9.52   77.59) Tj ET
+BT /F1 7 Tf 40 410 Td (08         526      79    15.02     6.57   85.35) Tj ET
+BT /F1 7 Tf 40 401 Td (09         702      86    12.25    10.38   80.51) Tj ET
+BT /F1 7 Tf 40 392 Td (10         924     163    17.64     8.84   84.39) Tj ET
+BT /F1 7 Tf 40 383 Td (11         728     131    17.99     3.57   84.67) Tj ET
+BT /F1 7 Tf 40 374 Td (12         687      74    10.77     0.50   35.46) Tj ET
+BT /F2 8 Tf 40 359 Td (Moyenne Churn M+6  \(Jan-Juin\) = 7.58 %) Tj ET
+BT /F2 8 Tf 40 348 Td (Moyenne Churn M+12 \(Jan-Dec\)  = 7.07 %) Tj ET
+BT /F1 7 Tf 40 334 Td (Note: Decembre - churn et CHF bas car contrats encore en attente.) Tj ET
+endstream
+endobj
+5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+6 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000056 00000 n 
+0000000111 00000 n 
+0000000245 00000 n 
+0000003753 00000 n 
+0000003821 00000 n 
+trailer<< /Size 7 /Root 1 0 R >>
+startxref
+3894
+%%EOF
