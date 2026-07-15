@@ -227,71 +227,136 @@
         }
 
         .call-experience {
-            display: grid;
-            grid-template-columns: minmax(280px, 380px) 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
-            align-items: stretch;
+        }
+
+        .call-stage {
+            display: grid;
+            grid-template-columns: minmax(260px, 400px) 1fr;
+            gap: 20px;
+            align-items: start;
+            background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 45, 88, 0.18);
         }
 
         @media (max-width: 900px) {
-            .call-experience { grid-template-columns: 1fr; }
+            .call-stage { grid-template-columns: 1fr; }
         }
 
-        .prospect-stage-card {
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            overflow: hidden;
+        .video-shell {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
         }
 
-        .prospect-stage-card h3 { padding: 20px 22px 0; }
+        .prospect-stage-card { display: none; }
 
-        .prospect-frame-wrap {
-            position: relative;
-            flex: 1;
-            min-height: 340px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 16px 20px 20px;
-        }
+        .prospect-frame-wrap { display: contents; }
 
         .prospect-frame {
             position: relative;
             width: 100%;
-            max-width: 320px;
-            aspect-ratio: 3 / 4;
-            border-radius: 16px;
+            aspect-ratio: 9 / 16;
+            max-height: min(72vh, 720px);
+            border-radius: 20px;
             overflow: hidden;
             box-shadow:
-                0 0 0 3px rgba(0, 45, 88, 0.15),
-                0 16px 40px rgba(0, 45, 88, 0.12);
-            transition: box-shadow 0.4s, transform 0.3s;
+                0 0 0 2px rgba(255, 255, 255, 0.08),
+                0 24px 48px rgba(0, 0, 0, 0.45);
+            transition: box-shadow 0.4s, transform 0.35s;
+            background: #111827;
         }
 
         .prospect-frame.speaking {
             box-shadow:
                 0 0 0 3px var(--lc-teal),
-                0 0 30px rgba(0, 130, 127, 0.35),
-                0 16px 40px rgba(0, 45, 88, 0.15);
-            transform: scale(1.02);
+                0 0 40px rgba(0, 130, 127, 0.45),
+                0 24px 48px rgba(0, 0, 0, 0.5);
+            animation: videoSpeakPulse 0.85s ease-in-out infinite alternate;
+        }
+
+        @keyframes videoSpeakPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.015); }
         }
 
         .prospect-frame.thinking {
             box-shadow:
                 0 0 0 3px var(--lc-orange),
-                0 0 24px rgba(217, 128, 46, 0.25),
-                0 16px 40px rgba(0, 45, 88, 0.12);
+                0 0 30px rgba(217, 128, 46, 0.35),
+                0 24px 48px rgba(0, 0, 0, 0.45);
         }
 
         .prospect-frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center 15%;
+            object-position: center 18%;
             display: block;
-            transition: filter 0.4s;
+            transition: filter 0.4s, transform 0.35s;
+        }
+
+        .prospect-frame.gender-female img { object-position: center 15%; }
+        .prospect-frame.gender-male img { object-position: center 22%; }
+
+        .prospect-frame.speaking img {
+            filter: brightness(1.06) saturate(1.08);
+            animation: imgSpeak 0.75s ease-in-out infinite alternate;
+        }
+
+        @keyframes imgSpeak {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.03); }
+        }
+
+        .video-vignette {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(0, 0, 0, 0.05) 0%,
+                transparent 35%,
+                transparent 55%,
+                rgba(0, 0, 0, 0.82) 100%
+            );
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .live-caption {
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 56px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            font-size: 15px;
+            line-height: 1.45;
+            text-align: center;
+            z-index: 6;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.25s, transform 0.25s;
+            border-left: 4px solid transparent;
+        }
+
+        .live-caption.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .live-caption.prospect { border-left-color: var(--lc-orange); }
+        .live-caption.agent { border-left-color: var(--lc-teal); }
+        .live-caption.listening {
+            border-left-color: #60a5fa;
+            font-style: italic;
         }
 
         .prospect-frame.mood-tense img {
@@ -302,57 +367,16 @@
             filter: contrast(1.12) saturate(1.1) brightness(0.94) sepia(0.08);
         }
 
-        .prospect-frame.speaking img { filter: brightness(1.05) saturate(1.05); }
-        .prospect-frame.speaking.mood-angry img { filter: contrast(1.1) saturate(1.15) brightness(1); }
-        .prospect-frame.speaking.mood-tense img { filter: contrast(1.05) saturate(0.95) brightness(1.02); }
-
-        .prospect-frame.gender-female .mouth-overlay {
-            bottom: 33%;
-            left: 50%;
-            width: 10%;
-        }
-
-        .prospect-frame.gender-male .mouth-overlay {
-            bottom: 36%;
-            left: 54%;
-            width: 11%;
-        }
-
-        .mouth-overlay {
-            position: absolute;
-            bottom: 36%;
-            left: 54%;
-            width: 11%;
-            height: 3.5%;
-            background: linear-gradient(180deg, #5c3d2e 0%, #3d2518 100%);
-            border-radius: 50% 50% 40% 40%;
-            transform: translateX(-50%) scaleY(0.15);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s;
-            z-index: 3;
-        }
-
-        .prospect-frame.speaking .mouth-overlay {
-            opacity: 0.9;
-            animation: mouthTalk 0.11s ease-in-out infinite alternate;
-        }
-
-        @keyframes mouthTalk {
-            0% { transform: translateX(-50%) scaleY(0.15) scaleX(0.9); }
-            100% { transform: translateX(-50%) scaleY(1.3) scaleX(1.15); }
-        }
-
         .speak-waves {
             position: absolute;
-            bottom: 12%;
+            bottom: 18px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 6px;
             opacity: 0;
             transition: opacity 0.3s;
-            z-index: 4;
+            z-index: 5;
         }
 
         .prospect-frame.speaking .speak-waves { opacity: 1; }
@@ -361,7 +385,7 @@
             display: block;
             width: 5px;
             height: 20px;
-            background: var(--lc-teal);
+            background: #fff;
             border-radius: 3px;
             animation: waveBar 0.5s ease-in-out infinite;
         }
@@ -376,60 +400,87 @@
 
         .call-ring {
             position: absolute;
-            inset: -8px;
+            inset: -6px;
             border-radius: 24px;
             border: 2px solid transparent;
             pointer-events: none;
-            z-index: 2;
+            z-index: 1;
         }
 
         .prospect-frame.speaking .call-ring {
-            border-color: rgba(0, 130, 127, 0.5);
+            border-color: rgba(0, 130, 127, 0.55);
             animation: ringPulse 1.2s ease-out infinite;
         }
 
         @keyframes ringPulse {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.08); opacity: 0; }
+            100% { transform: scale(1.06); opacity: 0; }
+        }
+
+        .prospect-meta {
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .prospect-name {
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.02em;
         }
 
         .prospect-status-label {
-            margin-top: 14px;
+            margin-top: 8px;
             padding: 8px 16px;
             border-radius: 999px;
-            background: var(--dark-elevated);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             font-size: 13px;
             font-weight: 600;
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.7);
+            display: inline-block;
             transition: color 0.3s, border-color 0.3s;
         }
 
         .prospect-status-label.active {
             color: var(--lc-teal);
-            border-color: rgba(0, 130, 127, 0.4);
+            border-color: rgba(0, 130, 127, 0.5);
+            background: rgba(0, 130, 127, 0.12);
         }
 
         .controls-dock {
-            padding: 16px 22px 22px;
-            border-top: 1px solid var(--border);
-            background: var(--dark-elevated);
+            padding: 8px 4px 4px;
+            align-self: stretch;
         }
+
+        .call-stage .controls-dock {
+            background: transparent;
+            border: none;
+        }
+
+        .call-stage .controls-dock .status-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .call-stage .hint { color: rgba(255, 255, 255, 0.55); }
+        .call-stage label { color: rgba(255, 255, 255, 0.75); }
 
         .controls-dock .status-badge { margin-bottom: 12px; }
 
         .transcript-card {
             display: flex;
             flex-direction: column;
-            min-height: 520px;
+            min-height: 360px;
         }
 
         .transcript-card h3 { flex-shrink: 0; }
 
         #log {
             flex: 1;
-            min-height: 400px;
-            max-height: 520px;
+            min-height: 280px;
+            max-height: none;
             overflow-y: auto;
             padding: 16px;
             background: #fafbfc;
@@ -437,6 +488,10 @@
             border: 1px solid var(--border);
             scroll-behavior: smooth;
         }
+
+        body.call-active .hero { display: none; }
+        body.call-active .settings-card { display: none; }
+        body.call-active .app-shell { padding-top: 12px; }
 
         #log::-webkit-scrollbar { width: 6px; }
         #log::-webkit-scrollbar-thumb { background: #d0d5db; border-radius: 3px; }
@@ -843,16 +898,19 @@
     </div>
 
     <div class="call-experience">
-        <div class="card prospect-stage-card">
-            <h3>Prospect en ligne</h3>
-            <div class="prospect-frame-wrap">
+        <div class="call-stage">
+            <div class="video-shell">
                 <div class="prospect-frame" id="prospectFrame">
-                    <img src="assets/prospect-male-calm.png" id="prospectAvatarImg" alt="Prospect au téléphone">
-                    <div class="mouth-overlay" id="prospectMouth"></div>
+                    <img src="assets/prospect-female-calm.png" id="prospectAvatarImg" alt="Prospect au téléphone">
+                    <div class="video-vignette"></div>
+                    <div class="live-caption" id="liveCaption" aria-live="polite"></div>
                     <div class="speak-waves" id="prospectWaves"><span></span><span></span><span></span></div>
                     <div class="call-ring" id="prospectCallRing"></div>
                 </div>
-                <div class="prospect-status-label" id="prospectStatusLabel">En attente d'appel</div>
+                <div class="prospect-meta">
+                    <div class="prospect-name" id="prospectDisplayName">Prospect</div>
+                    <div class="prospect-status-label" id="prospectStatusLabel">En attente d'appel</div>
+                </div>
             </div>
             <div class="controls-dock">
                 <div style="text-align:center;">
@@ -1268,6 +1326,11 @@
             if (prospectFrame) {
                 prospectFrame.classList.remove("gender-male", "gender-female", "mood-calm", "mood-tense", "mood-angry");
                 prospectFrame.classList.add("gender-" + gender, "mood-" + mood);
+            }
+            const nameEl = document.getElementById("prospectDisplayName");
+            if (nameEl) {
+                const full = [prospectPersona.firstName, prospectPersona.lastName].filter(Boolean).join(" ").trim();
+                nameEl.textContent = full || "Prospect";
             }
             if (prospectStatusLabel && callActive) {
                 const moodLabel = mood === "angry" ? " — profil difficile" : mood === "tense" ? " — pressé/méfiant" : "";
@@ -3486,10 +3549,32 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             });
         }
 
+        function syncStreamlitFrameHeight() {
+            if (!window.Streamlit) return;
+            const h = Math.max(1400, document.documentElement.scrollHeight + 48);
+            Streamlit.setFrameHeight(h);
+        }
+
+        function updateLiveCaption(sender, text, mode) {
+            const el = document.getElementById("liveCaption");
+            if (!el) return;
+            const clean = (text || "").trim();
+            if (!clean) {
+                el.textContent = "";
+                el.className = "live-caption";
+                return;
+            }
+            el.textContent = clean;
+            const role = mode || (sender === "Vous" ? "agent" : "prospect");
+            el.className = "live-caption visible " + role;
+        }
+
         function addLogMessage(sender, text, className) {
             logDiv.insertAdjacentHTML('beforeend',
                 `<div class="${className}"><strong>${sender} :</strong> ${text}</div>`);
             logDiv.scrollTop = logDiv.scrollHeight;
+            updateLiveCaption(sender, text);
+            syncStreamlitFrameHeight();
         }
 
         function cleanForSpeech(text) {
@@ -4114,10 +4199,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 finalText = finalText.trim();
                 if (finalText) {
                     speechTranscript = finalText;
-                    return;
+                } else {
+                    const last = e.results[e.results.length - 1];
+                    if (last && last[0]) speechTranscript = last[0].transcript.trim();
                 }
-                const last = e.results[e.results.length - 1];
-                if (last && last[0]) speechTranscript = last[0].transcript.trim();
+                if (isListening && speechTranscript) {
+                    updateLiveCaption("Vous", speechTranscript, "listening");
+                }
             };
             recognition.onerror = (e) => {
                 if (e.error === "aborted") return;
@@ -4140,6 +4228,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             };
             recognition.start();
             isListening = true;
+            updateLiveCaption("Vous", "Écoute en cours…", "listening");
             setStatus("🎤 Parlez maintenant…", "status-listening");
             recordTimer.textContent = "Enregistrement — cliquez Arrêter quand vous avez fini";
             talkBtn.textContent = "⏹ Arrêter et envoyer";
@@ -4599,6 +4688,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function resetUi() {
             callActive = false;
+            document.body.classList.remove("call-active");
+            updateLiveCaption("", "");
             isListening = false;
             startBtn.disabled = false;
             talkBtn.disabled = true;
@@ -4663,6 +4754,8 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             logDiv.innerHTML = "";
             evaluationDiv.style.display = "none";
             callActive = true;
+            document.body.classList.add("call-active");
+            syncStreamlitFrameHeight();
             startBtn.disabled = true;
             talkBtn.disabled = !speechRecAvailable;
             sendTextBtn.disabled = false;
@@ -4670,6 +4763,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             stopBtn.disabled = false;
 
             addLogMessage("Prospect", profile.start, "prospect-msg");
+            document.getElementById("log").scrollIntoView({ behavior: "smooth", block: "nearest" });
             if (prospectStatusLabel) {
                 prospectStatusLabel.textContent = "En ligne";
                 prospectStatusLabel.classList.add("active");
@@ -4828,6 +4922,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             ensureVoices();
             updateProfilePreview();
+            syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
             document.getElementById("levelSelect").addEventListener("change", updateProfilePreview);
             if (!ready) {
