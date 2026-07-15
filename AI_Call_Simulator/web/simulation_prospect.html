@@ -184,11 +184,68 @@
             }
         };
 
-        const AGENT_OPENINGS = {
-            debutant: "Bonjour, je suis Émilie de Génie Énergie, partenaire Home Serve. Je vous appelle suite à une étude sur les augmentations de factures d'électricité. Vous êtes bien Monsieur Dupont ?",
-            intermediaire: "Bonjour, Émilie de Génie Énergie, partenaire Home Serve. Appel court pour vérifier si vous payez le bon tarif sur votre électricité — vous avez deux minutes ?",
-            avance: "Bonjour, Émilie, Génie Énergie Home Serve. Étude nationale sur les hausses de factures énergie — je serai brève, promis."
-        };
+        const COACHING_KEY = "simulator_agent_coaching_v2";
+        const SCENARIO_SUPPLIERS = ["EDF", "Engie", "TotalEnergies", "Vattenfall", "Ekwateur"];
+        const SCENARIO_FIRST = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas"];
+        const SCENARIO_LAST = ["Dupont", "Martin", "Bernard", "Leroy", "Moreau", "Petit"];
+
+        function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        function createCallScenario() {
+            const bill = pickRandom([58, 65, 72, 78, 84, 91]);
+            const offer = Math.max(48, bill - pickRandom([8, 10, 12, 15]));
+            return {
+                firstName: pickRandom(SCENARIO_FIRST),
+                lastName: pickRandom(SCENARIO_LAST),
+                supplier: pickRandom(SCENARIO_SUPPLIERS),
+                yearsAtSupplier: pickRandom(["2 ans", "3 ans", "plus de 4 ans", "5 ans"]),
+                billAmount: bill,
+                offerTarget: offer,
+                pdl: (function () {
+                    let s = "";
+                    for (let i = 0; i < 14; i++) s += Math.floor(Math.random() * 10);
+                    return s;
+                })()
+            };
+        }
+
+        let callScenario = createCallScenario();
+
+        function buildAgentOpening(level) {
+            const s = callScenario;
+            const civ = s.firstName.match(/^[A-ZÉÈÀÂÊÎÔÛaeéèàâêîôû]/) && /[aeiouéèàâêîôû]/i.test(s.firstName[s.firstName.length - 1]) ? "Madame" : "Monsieur";
+            if (level === "debutant") {
+                return "Bonjour, je suis Émilie de Génie Énergie, partenaire Home Serve. Je vous appelle suite à une étude sur les augmentations de factures d'électricité. Vous êtes bien " + civ + " " + s.lastName + " ?";
+            }
+            if (level === "intermediaire") {
+                return "Bonjour, Émilie de Génie Énergie, partenaire Home Serve. Appel court pour vérifier si vous payez le bon tarif sur votre électricité — vous avez deux minutes ?";
+            }
+            return "Bonjour, Émilie, Génie Énergie Home Serve. Étude nationale sur les hausses de factures énergie — je serai brève, promis.";
+        }
+
+        function getAgentAntiRepeatContext() {
+            const said = chatTurns.filter(t => t.role === "assistant").map(t => t.content).slice(-4);
+            if (!said.length) return "";
+            return "\n\nTES RÉPLIQUES DÉJÀ DITES (ne pas répéter mot pour mot, reformule et avance dans l'appel) :\n"
+                + said.map(s => "- " + s.slice(0, 150)).join("\n");
+        }
+
+        function loadCoachingTips() {
+            try {
+                const raw = localStorage.getItem(COACHING_KEY);
+                if (!raw) return "";
+                const tips = JSON.parse(raw);
+                if (!tips.length) return "";
+                return "\n\nAXES D'AMÉLIORATION DE TA DERNIÈRE SESSION (à appliquer maintenant) :\n"
+                    + tips.map(t => "- " + t).join("\n");
+            } catch (_) { return ""; }
+        }
+
+        function saveCoachingTips(evaluation) {
+            const tips = (evaluation && evaluation.axes_amelioration) || [];
+            if (!tips.length) return;
+            try { localStorage.setItem(COACHING_KEY, JSON.stringify(tips.slice(0, 4))); } catch (_) {}
+        }
 
         const AGENT_SCRIPT = `Tu es Émilie (ou Eugénie), conseillère commerciale Génie Énergie, partenaire Home Serve.
 CONTEXTE : Appel SORTANT énergie en France. Tu appelles le prospect pour une étude / vérification tarifaire électricité (et gaz si pertinent).
@@ -196,9 +253,9 @@ MISSION : Tu es l'AGENT COMMERCIAL uniquement. Ne joue JAMAIS le prospect. Ne di
 
 STRUCTURE D'APPEL :
 1. Accroche : te présenter, Home Serve / Génie Énergie, objet = vérification augmentations (pas vente forcée)
-2. Découverte : fournisseur actuel, ancienneté, montant facture (~70€ élec seule typique), nom/prénom
+2. Découverte : fournisseur actuel, ancienneté, montant facture — POSE DES QUESTIONS, n'invente pas les réponses du prospect
 3. Comparatif : indépendant, gratuit, sans engagement, 14 jours rétractation
-4. Proposition : tarif compétitif si économies possibles
+4. Proposition : tarif compétitif si économies possibles (adapte le montant à ce que le prospect a dit)
 5. Closing : IBAN seulement après accord, ou proposition email / rappel
 
 GESTION OBJECTIONS (empathie + reformulation + valeur) :
@@ -211,7 +268,8 @@ GESTION OBJECTIONS (empathie + reformulation + valeur) :
 RÈGLES FORMAT :
 - 2 à 4 phrases max, oral naturel, français
 - Pas de markdown, pas de listes, pas de didascalies
-- Professionnel, chaleureux, jamais agressif face à un prospect difficile`;
+- Professionnel, chaleureux, jamais agressif face à un prospect difficile
+- VARIÉTÉ : ne répète pas la même phrase deux fois ; fais progresser l'appel à chaque tour`;
 
         let systemPromptText = "";
         let chatTurns = [];
@@ -275,9 +333,18 @@ RÈGLES FORMAT :
 
         function buildSystemPrompt() {
             const p = PROFILES[getProfile()];
-            return AGENT_SCRIPT + "\n\nPROFIL DU PROSPECT (joué par l'humain) : " + p.label
+            const s = callScenario;
+            return AGENT_SCRIPT
+                + "\n\nPROFIL DU PROSPECT (joué par l'humain) : " + p.label
                 + "\n" + p.agentContext
-                + "\nNIVEAU DE RÉSISTANCE : " + getLevel();
+                + "\nNIVEAU DE RÉSISTANCE : " + getLevel()
+                + "\n\nSCÉNARIO DE RÉFÉRENCE (si le prospect donne des infos cohérentes, utilise-les ; sinon pose des questions) :"
+                + "\n- Prospect type : " + s.firstName + " " + s.lastName
+                + "\n- Fournisseur probable : " + s.supplier + " (électricité seule)"
+                + "\n- Facture indicative : ~" + s.billAmount + " €/mois"
+                + "\n- Économie possible à proposer : ~" + s.offerTarget + " €/mois si pertinent"
+                + "\n- Ne cite PAS EDF ni 70€ par défaut : adapte-toi aux réponses du prospect humain."
+                + loadCoachingTips();
         }
 
         function setStatus(t, cls) {
@@ -299,7 +366,7 @@ RÈGLES FORMAT :
                     "HTTP-Referer": location.origin,
                     "X-Title": "AI Call Simulator v2"
                 },
-                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.7 })
+                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.82, frequency_penalty: 0.35, presence_penalty: 0.2 })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
@@ -309,7 +376,7 @@ RÈGLES FORMAT :
         async function callAgentLLM(apiKey, extra) {
             const models = [getModel(), ...OPENROUTER_FALLBACK.filter(m => m !== getModel())];
             const messages = [
-                { role: "system", content: systemPromptText + (extra || "") },
+                { role: "system", content: systemPromptText + getAgentAntiRepeatContext() + (extra || "") },
                 ...chatTurns.slice(-12).map(t => ({
                     role: t.role === "assistant" ? "assistant" : "user",
                     content: t.content.slice(0, 400)
@@ -368,7 +435,12 @@ RÈGLES FORMAT :
                 model: getModel(),
                 started_at: callStartedAt,
                 ended_at: new Date().toISOString(),
-                persona: { firstName: "Jean", lastName: "Dupont" },
+                persona: {
+                    firstName: callScenario.firstName,
+                    lastName: callScenario.lastName,
+                    supplier: callScenario.supplier,
+                    billAmount: callScenario.billAmount
+                },
                 evaluation: evaluation || null,
                 messages: chatTurns.map(t => ({ role: t.role, content: t.content }))
             };
@@ -488,6 +560,7 @@ ${transcript.slice(0, 2500)}`;
             lastConversationId = result.conversation_id;
             setStatus("Analyse de l'agent IA…", "status-thinking");
             const ev = await evaluateAgent(pending.apiKey);
+            saveCoachingTips(ev);
             evalContent.innerHTML = renderEval(ev);
             evalDiv.style.display = "block";
             await updateEvalInDb(result.conversation_id, ev);
@@ -521,8 +594,9 @@ ${transcript.slice(0, 2500)}`;
         startBtn.addEventListener("click", async () => {
             const apiKey = getApiKey();
             if (!apiKey) return alert("Clé OpenRouter requise.");
+            callScenario = createCallScenario();
             systemPromptText = buildSystemPrompt();
-            const opening = AGENT_OPENINGS[getLevel()] || AGENT_OPENINGS.debutant;
+            const opening = buildAgentOpening(getLevel());
             chatTurns = [{ role: "assistant", content: opening }];
             callStartedAt = new Date().toISOString();
             logDiv.innerHTML = "";
@@ -534,6 +608,9 @@ ${transcript.slice(0, 2500)}`;
             textInput.disabled = false;
             stopBtn.disabled = false;
             addLog("Agent IA", opening, "agent-msg");
+            addLog("Scénario", callScenario.firstName + " " + callScenario.lastName
+                + " — " + callScenario.supplier + ", ~" + callScenario.billAmount + " €/mois, élec seule. "
+                + "Jouez ce prospect avec vos objections.", "prospect-msg");
             setStatus("L'agent IA vous appelle — répondez comme le prospect", "status-listening");
             await speakAgent(opening);
         });
@@ -591,6 +668,7 @@ ${transcript.slice(0, 2500)}`;
             await saveToDb(null);
             setStatus("Analyse de l'agent IA…", "status-thinking");
             const ev = await evaluateAgent(apiKey);
+            saveCoachingTips(ev);
             evalContent.innerHTML = renderEval(ev);
             evalDiv.style.display = "block";
             if (lastConversationId) await updateEvalInDb(lastConversationId, ev);

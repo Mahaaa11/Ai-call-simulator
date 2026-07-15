@@ -2,10 +2,11 @@
 
 Deux interfaces pour entraîner les agents sur des appels sortants énergie en français :
 
-| Interface | Stack | Usage |
-|-----------|-------|--------|
-| **`web/simulation.html`** | OpenRouter + Nemotron, TTS edge, MySQL | Simulateur principal (voix, profils calibrés, /100) |
-| **`ui/streamlit_app.py`** | Ollama + Whisper + knowledge base | Version Python modulaire + import d'appels réels |
+| Interface | Rôle | Usage |
+|-----------|------|--------|
+| **`web/simulation.html`** (v1) | **Vous = agent** · IA = prospect | Entraînement vente, évaluation /100 |
+| **`web/simulation_prospect.html`** (v2) | **Vous = prospect** · IA = agent | Observer comment l'IA traite les objections |
+| **`ui/streamlit_app.py`** | Ollama + Whisper | Version Python modulaire |
 
 ---
 
@@ -32,7 +33,16 @@ chmod +x start.sh
 ./start.sh
 ```
 
-Puis ouvrir **http://localhost:8080/simulation.html** (Cmd+Shift+R).
+Puis ouvrir **http://localhost:8080/simulation.html** (v1) ou **simulation_prospect.html** (v2).
+
+### Streamlit Cloud (les deux modes)
+
+```bash
+streamlit run app.py              # v1 — vous êtes l'agent
+streamlit run app_prospect.py     # v2 — vous êtes le prospect
+```
+
+Avec `streamlit run app.py`, le mode v2 est aussi accessible via la sidebar : **Mode Prospect IA**.
 
 ### Hébergement production (VPS + Docker)
 

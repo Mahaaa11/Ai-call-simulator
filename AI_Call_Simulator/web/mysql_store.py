@@ -257,3 +257,55 @@ def check_mysql_connection() -> tuple[bool, str]:
         return True, db_name
     except Exception as exc:
         return False, str(exc)
+
+
+def list_conversations(limit: int = 50) -> list[dict]:
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, profile_key, level_key, training_mode, model,
+                       prospect_first_name, prospect_last_name,
+                       score_total, score_level, created_at
+                FROM conversations
+                ORDER BY id DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            return list(cur.fetchall())
+    finally:
+        conn.close()
+
+
+def get_conversation(conversation_id: int) -> dict | None:
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM conversations WHERE id = %s", (conversation_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def get_conversation_messages(conversation_id: int) -> list[dict]:
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT seq, speaker, content
+                FROM conversation_messages
+                WHERE conversation_id = %s
+                ORDER BY seq
+                """,
+                (conversation_id,),
+            )
+            return list(cur.fetchall())
+    finally:
+        conn.close()

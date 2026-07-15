@@ -461,21 +461,64 @@
 4. PROPOSITION — comparatif (plus facile en débutant)
 5. CLOSING — seulement si proposition bien menée`;
 
-        const PROSPECT_FACTS = `TON MÉNAGE — FAITS FIXES (ne les contredis JAMAIS, même si tu es agressif ou méfiant) :
+        const PERSONA_FIRST_NAMES = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc"];
+        const PERSONA_LAST_NAMES = ["Dupont", "Martin", "Bernard", "Leroy", "Moreau", "Petit", "Garcia", "Roux"];
+        const PERSONA_SUPPLIERS = ["EDF", "Engie", "TotalEnergies", "Vattenfall", "Ekwateur", "Mint Énergie"];
+        const PERSONA_ADDRESSES = [
+            "25 rue de la Montagne Sainte-Catherine, 75003 Paris",
+            "12 avenue des Champs, 69003 Lyon",
+            "8 allée des Tilleuls, 33000 Bordeaux",
+            "45 rue Nationale, 59000 Lille",
+            "3 impasse du Moulin, 31000 Toulouse",
+            "17 boulevard Gambetta, 06000 Nice"
+        ];
+        const PERSONA_YEARS = ["2 ans", "3 ans", "plus de 4 ans", "5 ans", "depuis 6 ans", "plusieurs années"];
+
+        function pickRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function randomPdl() {
+            let s = "";
+            for (let i = 0; i < 14; i++) s += Math.floor(Math.random() * 10);
+            return s;
+        }
+
+        function randomBillAmount() {
+            return pickRandom([55, 62, 68, 72, 78, 82, 88, 95]);
+        }
+
+        function buildProspectFacts(persona) {
+            const offer = persona.offerTarget;
+            return `TON MÉNAGE — FAITS FIXES (ne les contredis JAMAIS, même si tu es agressif ou méfiant) :
 - Particulier en France : tu as DE L'ÉLECTRICITÉ à domicile (logement normal).
-- Fournisseur actuel : EDF, électricité SEULEMENT (pas de gaz).
-- Ancienneté : plusieurs années chez EDF.
-- Facture électricité : environ 70 €/mois.
+- Fournisseur actuel : ${persona.supplier}, électricité SEULEMENT (pas de gaz).
+- Ancienneté : ${persona.yearsAtSupplier} chez ${persona.supplier}.
+- Facture électricité : environ ${persona.billAmount} €/mois.
 - Mail d'augmentation : non, tu ne l'as pas reçu.
-- PDL (14 chiffres) : 12345678901234 — tu l'as sur ta facture ; tu peux le donner si demandé.
-- Adresse : 25 rue de la Montagne Sainte-Catherine, 75003 Paris.
-- Identité : Jean Dupont (prénom Jean, nom Dupont) — ce n'est PAS toi si l'agent se présente (Émilie, Eugénie, Génie…).
+- PDL (14 chiffres) : ${persona.pdl} — tu l'as sur ta facture ; tu peux le donner si demandé.
+- Adresse : ${persona.address}.
+- Identité : ${persona.firstName} ${persona.lastName} — ce n'est PAS toi si l'agent se présente (Émilie, Eugénie, Génie…).
 - INTERDIT : te présenter avec le prénom/nom de l'AGENT. Tu es le CLIENT, pas le commercial.
 - INTERDIT : dire que tu n'as pas de PDL, pas d'électricité, ou inventer des personnes (« appelez Elsa », etc.).
 - Si tu n'as pas la facture sous les yeux → « Je ne l'ai pas sous la main » (PAS « je n'ai pas de PDL »).
-- Si l'agent propose 60 € au lieu de 70 € → réagis au prix en français (« 60 euros ? D'accord, expliquez-moi »).
+- Si l'agent propose ${offer} € au lieu de ${persona.billAmount} € → réagis au prix en français (« ${offer} euros ? D'accord, expliquez-moi »).
 - UNIQUEMENT en français naturel. JAMAIS d'anglais (« stop speaking », etc.).
-- Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.`;
+- Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.
+- VARIÉTÉ OBLIGATOIRE : reformule à chaque réplique ; ne recycle pas la même phrase qu'une réponse précédente dans CET appel.`;
+        }
+
+        function getAntiRepeatContext() {
+            const said = chatTurns.filter(t => t.role === "assistant").map(t => t.content).slice(-5);
+            if (!said.length) return "";
+            return "\n\nDÉJÀ DIT PAR TOI DANS CET APPEL (ne pas répéter mot pour mot, reformule) :\n"
+                + said.map(s => "- " + s.slice(0, 140)).join("\n");
+        }
+
+        function personaSupplier() { return prospectPersona.supplier || "EDF"; }
+        function personaBill() { return prospectPersona.billAmount || 70; }
+        function personaOffer() { return prospectPersona.offerTarget || Math.max(45, personaBill() - 10); }
+        function personaPdl() { return prospectPersona.pdl || "12345678901234"; }
 
         const EVAL_GRID = [
             { section: "1. Accroche et prise de contact", max: 15, items: [
@@ -624,6 +667,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         let speechTranscript = "";
         let prospectPersona = {
             firstName: "Jean", lastName: "Dupont",
+            supplier: "EDF", yearsAtSupplier: "plusieurs années",
+            billAmount: 70, offerTarget: 60,
             gaveFirst: false, gaveLast: false,
             pdl: "12345678901234", gavePdl: false,
             address: "25 rue de la Montagne Sainte-Catherine, 75003 Paris",
@@ -669,7 +714,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function isProspectStaleReply(reply) {
             if (!reply) return false;
             if (isSameAsLastProspectReply(reply)) return true;
-            if (prospectAlreadyGavePdl() && /\bpdl\b|12345678901234/.test(reply) &&
+            if (prospectAlreadyGavePdl() && (/\bpdl\b/i.test(reply) || reply.includes(personaPdl())) &&
                 (agentInOfferStage() || agentAskedClosing())) {
                 return true;
             }
@@ -678,22 +723,29 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function createProspectPersona(profileKey) {
-            if (profileKey === "curieux") {
-                return {
-                    firstName: "Thomas", lastName: "Bernard",
-                    gaveFirst: false, gaveLast: false,
-                    pdl: "12345678901234", gavePdl: false,
-                    address: "12 avenue des Champs, 69003 Lyon",
-                    gaveAddress: false
-                };
-            }
-            return {
-                firstName: "Jean", lastName: "Dupont",
+            const billAmount = randomBillAmount();
+            const offerTarget = Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15]));
+            const supplier = pickRandom(PERSONA_SUPPLIERS);
+            const base = {
+                supplier,
+                yearsAtSupplier: pickRandom(PERSONA_YEARS),
+                billAmount,
+                offerTarget,
                 gaveFirst: false, gaveLast: false,
-                pdl: "12345678901234", gavePdl: false,
-                address: "25 rue de la Montagne Sainte-Catherine, 75003 Paris",
+                pdl: randomPdl(), gavePdl: false,
+                address: pickRandom(PERSONA_ADDRESSES),
                 gaveAddress: false
             };
+            if (profileKey === "curieux") {
+                return Object.assign(base, {
+                    firstName: pickRandom(["Thomas", "Claire", "Julie", "Nicolas"]),
+                    lastName: pickRandom(["Bernard", "Dubois", "Faure", "Girard"])
+                });
+            }
+            return Object.assign(base, {
+                firstName: pickRandom(PERSONA_FIRST_NAMES),
+                lastName: pickRandom(PERSONA_LAST_NAMES)
+            });
         }
         let frenchVoice = null;
         let lastProspectAudio = null;
@@ -998,7 +1050,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     return "Oui, je suis là. On avance ?";
                 }
                 if (/\bpdl|compteur|adresse|facture|consommation\b/i.test(prevAgent) || /\bpdl|compteur|adresse|facture\b/i.test(lastAgentText())) {
-                    return "Oui, je suis là. Le PDL c'est 12345678901234. Faites vite.";
+                    return "Oui, je suis là. Le PDL c'est " + personaPdl() + ". Faites vite.";
                 }
                 return "Oui, je vous écoute. Allez-y, faites court.";
             }
@@ -1014,12 +1066,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
                 if (!prospectAlreadyGavePdl() && (agentAskedPdl() || agentRequestingConsommationAccess())) {
                     if (agentAskedFacture() || /\bfacture\b/i.test(lastAgentText())) {
-                        return "Je n'ai pas la facture sous la main, mais le PDL c'est 12345678901234. Faites vite.";
+                        return "Je n'ai pas la facture sous la main, mais le PDL c'est " + personaPdl() + ". Faites vite.";
                     }
-                    return "Le PDL c'est 12345678901234. Allez-y, faites court.";
+                    return "Le PDL c'est " + personaPdl() + ". Allez-y, faites court.";
                 }
                 if (agentAskedPostalAddress() || (/\badresse\b/i.test(lastAgentText()) && !agentAskedIban())) {
-                    return "12 rue de la République, 59000 Lille. Faites vite, s'il vous plaît.";
+                    return prospectPersona.address + ". Faites vite, s'il vous plaît.";
                 }
                 if (agentAskedIban() && !prospectAlreadyGaveIban()) {
                     return "D'accord : FR76 3000 6000 0112 3456 7890 123. On avance ?";
@@ -1160,7 +1212,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function prospectAlreadyGavePdl() {
-            return chatTurns.some(t => t.role === "assistant" && /12345678901234|\d{14}/.test(t.content));
+            const pdl = personaPdl();
+            return chatTurns.some(t => t.role === "assistant" && (t.content.includes(pdl) || /\d{14}/.test(t.content)));
         }
 
         function prospectAlreadyGaveIban() {
@@ -1201,17 +1254,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     (level === "debutant" ? "Oui, si c'est vraiment moins cher, on avance. Faites court." : "D'accord, montrez-moi l'offre.");
             }
             if (profile === "agressif") {
-                if (level === "debutant") return "Bon, 60 euros au lieu de 70, ça m'intéresse. Expliquez-moi.";
-                if (level === "intermediaire") return "60 euros au lieu de 70 ? Bon, expliquez-moi comment ça marche.";
-                return "Bon, si c'est vraiment 60 euros, continuez, mais je ne signe rien tout de suite.";
+                const o = personaOffer(), b = personaBill();
+                if (level === "debutant") return "Bon, " + o + " euros au lieu de " + b + ", ça m'intéresse. Expliquez-moi.";
+                if (level === "intermediaire") return o + " euros au lieu de " + b + " ? Bon, expliquez-moi comment ça marche.";
+                return "Bon, si c'est vraiment " + o + " euros, continuez, mais je ne signe rien tout de suite.";
             }
             if (profile === "mefiant_rgpd" || profile === "mefiant_fournisseur") {
                 return "D'accord, mais j'ai besoin de comprendre les conditions avant de m'engager.";
             }
             if (profile === "curieux") {
-                return "Intéressant, 60 euros. Et la qualité de l'électricité, c'est pareil ?";
+                return "Intéressant, " + personaOffer() + " euros. Et la qualité de l'électricité, c'est pareil ?";
             }
-            return "Bon, si c'est vraiment 60 euros, vous m'expliquez les conditions ?";
+            return "Bon, si c'est vraiment " + personaOffer() + " euros, vous m'expliquez les conditions ?";
         }
 
         function isProspectWrongName(reply) {
@@ -1225,8 +1279,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function enforceConversationStage(reply) {
             const offer = getOfferStageReply();
-            if (offer && (agentInOfferStage() || (prospectAlreadyGavePdl() && /\bpdl\b|12345678901234/.test(reply || "")))) {
-                if (agentInOfferStage() && (/\bpdl\b|12345678901234/.test(reply || "") || isSameAsLastProspectReply(reply))) {
+            if (offer && (agentInOfferStage() || (prospectAlreadyGavePdl() && (/\bpdl\b/i.test(reply || "") || (reply || "").includes(personaPdl()))))) {
+                if (agentInOfferStage() && ((/\bpdl\b/i.test(reply || "") || (reply || "").includes(personaPdl())) || isSameAsLastProspectReply(reply))) {
                     return offer;
                 }
             }
@@ -1262,7 +1316,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const profile = getProfileKey();
             const level = getLevel();
 
-            if (prospectAlreadyGavePdl() && /12345678901234|\bpdl\b/i.test(reply)) {
+            if (prospectAlreadyGavePdl() && (/\bpdl\b/i.test(reply) || reply.includes(personaPdl()))) {
                 const sales = getOfferStageReply() || (getProfileKey() === "presse" ? getPresseSalesStageReply(level) : null);
                 if (sales && !isSameAsLastProspectReply(sales)) return sales;
                 if (agentInOfferStage()) {
@@ -1279,7 +1333,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return sales || "D'accord, on avance.";
             }
 
-            if (isSameAsLastProspectReply(reply) && /12345678901234/.test(reply)) {
+            if (isSameAsLastProspectReply(reply) && reply.includes(personaPdl())) {
                 const sales = profile === "presse" ? getPresseSalesStageReply(level) : null;
                 if (sales) return sales;
                 const alt = pickNextUnusedLine(getProfileFallbacks(level), l => /avance|intéresse|offre/i.test(l));
@@ -1598,37 +1652,40 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function tryFactualAnswer(profile, level) {
+            const sup = personaSupplier();
+            const bill = personaBill();
+            const years = prospectPersona.yearsAtSupplier || "plusieurs années";
             if (agentAskedSupplier() && !prospectAlreadySaidSupplier()) {
-                if (profile === "curieux" && level === "debutant") return "Je suis chez EDF, depuis un peu plus de 3 ans.";
-                if (profile === "presse") return "EDF, mais faites vite.";
-                if (profile === "agressif" && level !== "debutant") return "EDF. Et alors ?";
-                if (profile === "mefiant_fournisseur") return "Je suis chez EDF, pourquoi vous m'appelez ?";
-                return "Je suis chez EDF.";
+                if (profile === "curieux" && level === "debutant") return "Je suis chez " + sup + ", depuis " + years + ".";
+                if (profile === "presse") return sup + ", mais faites vite.";
+                if (profile === "agressif" && level !== "debutant") return sup + ". Et alors ?";
+                if (profile === "mefiant_fournisseur") return "Je suis chez " + sup + ", pourquoi vous m'appelez ?";
+                return "Je suis chez " + sup + ".";
             }
             if (agentAskedDuration()) {
                 if (profile === "presse") {
-                    if (agentAskedEnergyType()) return "Plusieurs années. Électricité seulement, allez à l'essentiel.";
-                    return "Plusieurs années, allez à l'essentiel.";
+                    if (agentAskedEnergyType()) return years + ". Électricité seulement, allez à l'essentiel.";
+                    return years + ", allez à l'essentiel.";
                 }
-                if (profile === "curieux" && level === "debutant") return "Un peu plus de 3 ans.";
-                return "Ça fait plusieurs années.";
+                if (profile === "curieux" && level === "debutant") return years + ".";
+                return "Ça fait " + years + ".";
             }
             if (agentAskedBillAmount()) {
-                if (profile === "presse") return "Environ 70 euros, pourquoi ?";
-                if (profile === "curieux" && level === "debutant") return "Je paie environ 90 euros par mois.";
-                if (profile === "agressif") return "Environ 70 euros. Vous voulez quoi ?";
-                if (profile === "mefiant_rgpd" && level !== "debutant") return "Environ 70 euros. Pourquoi vous demandez ça ?";
-                return "Environ 70 euros par mois.";
+                if (profile === "presse") return "Environ " + bill + " euros, pourquoi ?";
+                if (profile === "curieux" && level === "debutant") return "Je paie environ " + bill + " euros par mois.";
+                if (profile === "agressif") return "Environ " + bill + " euros. Vous voulez quoi ?";
+                if (profile === "mefiant_rgpd" && level !== "debutant") return "Environ " + bill + " euros. Pourquoi vous demandez ça ?";
+                return "Environ " + bill + " euros par mois.";
             }
             if (agentAskedEnergyType()) {
-                if (profile === "curieux" && level === "debutant") return "Oui, j'ai uniquement l'électricité chez EDF.";
+                if (profile === "curieux" && level === "debutant") return "Oui, j'ai uniquement l'électricité chez " + sup + ".";
                 return "Électricité seulement.";
             }
             if (agentAskedMailOnly()) {
                 if (profile === "agressif") return "Non, je n'ai pas reçu de mail. C'est pour quoi ?";
                 if (profile === "presse") return "Non, pas à ma connaissance. Allez-y, faites court.";
                 if (profile === "mefiant_rgpd") return "Je ne me souviens pas. Comment avez-vous eu mon numéro d'ailleurs ?";
-                if (profile === "mefiant_fournisseur") return "Non, pas reçu. Je suis chez EDF, pourquoi cet appel ?";
+                if (profile === "mefiant_fournisseur") return "Non, pas reçu. Je suis chez " + sup + ", pourquoi cet appel ?";
                 return "Non, je n'ai pas reçu de mail récemment. C'est pour quoi exactement ?";
             }
             if (agentAskedFacture() && profile === "presse" && level === "avance") {
@@ -1952,9 +2009,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (agentSaidGoodbye()) return "RAPPEL : l'agent dit au revoir — réponds brièvement « Au revoir ».";
                 if (agentAskedIdentity()) return "RAPPEL DÉBUTANT : réponds par ton prénom ou nom de famille demandé, pas « comparatif ».";
                 if (agentAskedProposition()) return "RAPPEL DÉBUTANT : accepte le comparatif/proposition (« D'accord, on peut vérifier »).";
-                if (agentAskedSupplier()) return "RAPPEL DÉBUTANT : réponds ton fournisseur (ex: EDF), sans refuser.";
+                if (agentAskedSupplier()) return "RAPPEL DÉBUTANT : réponds ton fournisseur (" + personaSupplier() + "), sans refuser.";
                 if (agentAskedDuration()) return "RAPPEL DÉBUTANT : réponds depuis combien de temps, sans objection.";
-                if (agentAskedBillAmount()) return "RAPPEL DÉBUTANT : donne un montant approximatif (ex: 70 euros par mois).";
+                if (agentAskedBillAmount()) return "RAPPEL DÉBUTANT : donne un montant approximatif (ex: " + personaBill() + " euros par mois).";
                 if (turns >= 2 && agentMentionedProposition()) {
                     return "RAPPEL DÉBUTANT : accepte la proposition/comparatif, reste coopératif.";
                 }
@@ -2141,6 +2198,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             let system = opts.compact ? compactSystemPromptText : systemPromptText;
             if (includeLevelHint && !opts.compact) system += "\n\n" + getLevelHint();
             if (extraSystem) system += "\n\n" + extraSystem;
+            if (!opts.compact && !extraSystem) system += getAntiRepeatContext();
             let turns = chatTurns;
             if (opts.maxTurns && turns.length > opts.maxTurns) {
                 turns = turns.slice(-opts.maxTurns);
@@ -2624,17 +2682,22 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return mefiant || sec ? "Pourquoi vous avez besoin de mon IBAN ?" : "D'accord, c'est pour quoi exactement ?";
             }
             if (/\b(pas d'?électricité|comment ça)\b/i.test(t)) {
-                return sec ? "Si si, j'ai de l'électricité. Électricité seulement, chez EDF." : "Oui j'ai de l'électricité, électricité seulement chez EDF.";
+                const sup = personaSupplier();
+                return sec ? "Si si, j'ai de l'électricité. Électricité seulement, chez " + sup + "." : "Oui j'ai de l'électricité, électricité seulement chez " + sup + ".";
             }
             if (agentAskedEnergyType() || /\b(gaz|électricité)\b/i.test(t)) {
                 return sec ? "Électricité seulement, pas de gaz." : "Électricité seulement.";
             }
             if (agentAskedSupplier()) {
-                if (prospectAlreadySaidSupplier()) return sec ? "On l'a déjà dit : EDF." : "Comme je vous ai dit, EDF.";
-                return sec ? "EDF. Et alors ?" : "Je suis chez EDF.";
+                const sup = personaSupplier();
+                if (prospectAlreadySaidSupplier()) return sec ? "On l'a déjà dit : " + sup + "." : "Comme je vous ai dit, " + sup + ".";
+                return sec ? sup + ". Et alors ?" : "Je suis chez " + sup + ".";
             }
-            if (agentAskedDuration()) return "Ça fait plusieurs années.";
-            if (agentAskedBillAmount()) return sec ? "Environ 70 euros. Vous voulez quoi ?" : "Environ 70 euros par mois.";
+            if (agentAskedDuration()) return "Ça fait " + (prospectPersona.yearsAtSupplier || "plusieurs années") + ".";
+            if (agentAskedBillAmount()) {
+                const bill = personaBill();
+                return sec ? "Environ " + bill + " euros. Vous voulez quoi ?" : "Environ " + bill + " euros par mois.";
+            }
             if (agentAskedMailOnly()) return sec ? "Non, je n'ai pas reçu de mail. C'est pour quoi ?" : "Non, pas à ma connaissance. C'est pour quoi ?";
             if (agentIgnoredProspectQuestion && agentIgnoredProspectQuestion()) {
                 return sec ? "Pourquoi moi ? Pourquoi vous m'appelez ?" : "C'est pour quoi exactement votre appel ?";
@@ -3267,6 +3330,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
             const levelBlock = profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant;
 
+            const persona = createProspectPersona(profileKey);
+            prospectPersona = persona;
+
             systemPromptText = `CONTEXTE : Simulation d'appel sortant (fournisseurs d'énergie en France).
 MISSION : Tu es le prospect au téléphone. Ne sors JAMAIS de ton rôle.
 COMPORTEMENT : ${profile.prompt}
@@ -3274,7 +3340,7 @@ IMPORTANT : Le NIVEAU ci-dessous prime sur le profil — un profil agressif en D
 
 ${levelBlock}
 
-${PROSPECT_FACTS}
+${buildProspectFacts(persona)}
 
 ${CALL_STRUCTURE}
 
@@ -3284,14 +3350,12 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 - PAS de didascalies (*ton agacé*, (pause), (regardant ailleurs), etc.).
 - NE DIS JAMAIS "prospect", "agressif", "débutant", "ma réponse en tant que", "je reste dans le personnage", "Profil :".
 - 1 à 3 phrases maximum, en français naturel.`;
-            const persona = createProspectPersona(profileKey);
             compactSystemPromptText = "Prospect " + profileKey + " (" + level + "). "
-                + "FR oral, 1-3 phrases. EDF élec seule ~70€. PDL " + persona.pdl + ". "
+                + "FR oral, 1-3 phrases. " + persona.supplier + " élec seule ~" + persona.billAmount + "€. PDL " + persona.pdl + ". "
                 + persona.firstName + " " + persona.lastName + ". Pas d'anglais. "
                 + profile.prompt.slice(0, 90);
             chatTurns = [{ role: "assistant", content: profile.start }];
             callStartedAt = new Date().toISOString();
-            prospectPersona = persona;
             agentPersona = { firstNames: [], lastNames: [], tokens: [] };
 
             logDiv.innerHTML = "";
@@ -3304,6 +3368,8 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             stopBtn.disabled = false;
 
             addLogMessage("Prospect", profile.start, "prospect-msg");
+            addLogMessage("Système", "Persona : " + persona.firstName + " " + persona.lastName
+                + " — " + persona.supplier + ", ~" + persona.billAmount + " €/mois (élec seule)", "prospect-msg");
             setStatus("Appel en cours", "status-listening");
             await speakProspect(profile.start);
         });
