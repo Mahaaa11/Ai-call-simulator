@@ -275,7 +275,8 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 - INTERDIT : réflexion interne, analyse, plan d'action, méta-commentaire (« je dois », « le prospect a dit », etc.).
 - INTERDIT : anglais, markdown, listes, didascalies, citations des consignes du prompt.
 - 2 à 4 phrases max, naturel, professionnel et chaleureux.
-- Ne répète pas la même phrase ; fais progresser l'appel à chaque tour.`;
+- Ne répète pas la même phrase ; fais progresser l'appel à chaque tour.
+- Ne répète JAMAIS mot pour mot la réplique du prospect : tu es l'AGENT commercial, pas le client.`;
 
         let systemPromptText = "";
         let chatTurns = [];
@@ -367,6 +368,28 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return turns.length ? turns[turns.length - 1].content : "";
         }
 
+        function normalizeReply(text) {
+            return (text || "").toLowerCase()
+                .normalize("NFD").replace(/\p{M}/gu, "")
+                .replace(/[^\w\s']/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function isAgentEcho(reply, prospectText) {
+            const a = normalizeReply(reply);
+            const p = normalizeReply(prospectText);
+            if (!a || !p || a.length < 6) return false;
+            if (a === p) return true;
+            if (a.includes(p) || p.includes(a)) return true;
+            const aWords = a.split(" ").filter(w => w.length > 2);
+            const pWords = new Set(p.split(" ").filter(w => w.length > 2));
+            if (aWords.length >= 3 && aWords.filter(w => pWords.has(w)).length >= aWords.length - 1) {
+                return true;
+            }
+            return false;
+        }
+
         function isAgentMetaLeak(reply) {
             if (!reply) return true;
             const r = reply.toLowerCase();
@@ -424,8 +447,8 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement/i.test(t)) {
                 return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. C'est gratuit et sans engagement. Vous avez une minute ?";
             }
-            if (/intéresse pas|pas le temps|occupé|laissez|tranquille/i.test(t)) {
-                return "Je comprends, je serai très brève. Ce n'est pas une vente forcée, juste une vérification tarifaire. Une seule question sur votre facture d'électricité, ça vous va ?";
+            if (/intéressé|intéresse pas|pas intéress|ca m'interesse pas|ça m'intéresse pas|pas le temps|occupé|laissez|tranquille/i.test(t)) {
+                return "Je comprends tout à fait. Ce n'est pas une vente forcée, juste une vérification rapide de votre facture d'électricité. Je serai très brève — une seule question, ça vous va ?";
             }
             if (/fournisseur|changer|satisfait/i.test(t)) {
                 return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive. Si elle l'est déjà, je vous le dirai honnêtement.";
@@ -435,10 +458,22 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         function finalizeAgentReply(raw, prospectText) {
             let reply = cleanAgentReply(raw);
-            if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
+            if (!reply || reply.length < 8 || isAgentMetaLeak(reply) || isAgentEcho(reply, prospectText)) {
                 reply = getAgentFallbackReply(prospectText);
             }
             return reply;
+        }
+
+        function buildAgentTurnMessages() {
+            return chatTurns.slice(-12).map(t => {
+                if (t.role === "assistant") {
+                    return { role: "assistant", content: t.content.slice(0, 400) };
+                }
+                return {
+                    role: "user",
+                    content: ("[Le prospect au téléphone dit] : " + t.content).slice(0, 420)
+                };
+            });
         }
 
         function setStatus(t, cls) {
@@ -471,14 +506,15 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         async function callAgentLLM(apiKey, extra) {
             const models = [getModel(), ...OPENROUTER_FALLBACK.filter(m => m !== getModel())];
-            const turnMessages = chatTurns.slice(-12).map(t => ({
-                role: t.role === "assistant" ? "assistant" : "user",
-                content: t.content.slice(0, 400)
-            }));
+            const turnMessages = buildAgentTurnMessages();
+            const prospectLine = lastProspectText();
+            const turnHint = prospectLine
+                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 180) + " »\nRéponds UNIQUEMENT en tant qu'Émilie l'agent commercial (français oral). Ne répète pas le prospect."
+                : "";
             const plans = [
-                { system: systemPromptText + getAgentAntiRepeatContext() + (extra || ""), maxTokens: 280 },
-                { system: systemPromptText + (extra || ""), maxTokens: 220 },
-                { system: systemPromptText.split("\n").slice(0, 24).join("\n"), maxTokens: 180 }
+                { system: systemPromptText + getAgentAntiRepeatContext() + turnHint + (extra || ""), maxTokens: 280 },
+                { system: systemPromptText + turnHint + (extra || ""), maxTokens: 220 },
+                { system: systemPromptText.split("\n").slice(0, 24).join("\n") + turnHint, maxTokens: 180 }
             ];
             let lastErr = null;
             for (const model of models) {
@@ -486,9 +522,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                     const messages = [{ role: "system", content: plan.system }, ...turnMessages];
                     try {
                         const raw = await callOpenRouter(messages, apiKey, model, plan.maxTokens);
-                        const reply = finalizeAgentReply(raw, lastProspectText());
-                        if (reply && !isAgentMetaLeak(reply)) return reply;
-                        lastErr = new Error("Réponse méta IA filtrée");
+                        const reply = finalizeAgentReply(raw, prospectLine);
+                        if (reply && !isAgentMetaLeak(reply) && !isAgentEcho(reply, prospectLine)) return reply;
+                        lastErr = new Error("Réponse IA invalide (écho ou méta)");
                     } catch (e) {
                         lastErr = e;
                         console.warn("Agent LLM retry", model, e.message);
