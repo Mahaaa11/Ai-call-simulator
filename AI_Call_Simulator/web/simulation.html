@@ -545,59 +545,295 @@
         }
 
         .calibration-label input { width: auto; margin: 0; accent-color: var(--primary); }
+
+        .hero-deco {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .hero { position: relative; overflow: hidden; }
+
+        .hero-deco span {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(217, 128, 46, 0.08);
+            animation: floatOrb 8s ease-in-out infinite;
+        }
+
+        .hero-deco span:nth-child(1) { top: -30px; left: 10%; animation-delay: 0s; }
+        .hero-deco span:nth-child(2) { bottom: -40px; right: 15%; width: 80px; height: 80px; animation-delay: 2s; }
+        .hero-deco span:nth-child(3) { top: 40%; right: 5%; width: 50px; height: 50px; animation-delay: 4s; }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+            50% { transform: translateY(-12px) scale(1.05); opacity: 1; }
+        }
+
+        .hero-logo {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 8px;
+        }
+
+        .hero-logo em { color: var(--lc-orange); font-style: normal; }
+
+        .settings-card { position: relative; overflow: hidden; }
+
+        .settings-card::after {
+            content: "";
+            position: absolute;
+            top: 0; right: 0;
+            width: 140px; height: 140px;
+            background: radial-gradient(circle, rgba(0,130,127,0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .profile-preview {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            margin: 12px 0 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0,45,88,0.05), rgba(0,130,127,0.06));
+            border: 1px solid var(--border);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .profile-preview-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            background: var(--lc-navy);
+            color: white;
+        }
+
+        .profile-preview-text strong {
+            display: block;
+            font-size: 14px;
+            color: var(--lc-navy);
+        }
+
+        .profile-preview-text span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .profile-preview.mood-angry { border-color: rgba(217,128,46,0.4); background: linear-gradient(135deg, rgba(217,128,46,0.08), rgba(192,57,43,0.04)); }
+        .profile-preview.mood-angry .profile-preview-icon { background: var(--lc-orange); }
+        .profile-preview.mood-tense .profile-preview-icon { background: #5a6a7a; }
+
+        .call-journey {
+            display: flex;
+            gap: 6px;
+            margin: 0 0 16px;
+            padding: 4px;
+            background: var(--dark-elevated);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .journey-step {
+            flex: 1;
+            text-align: center;
+            padding: 10px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 8px;
+            transition: all 0.35s;
+            line-height: 1.2;
+        }
+
+        .journey-step.active {
+            background: var(--lc-navy);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,45,88,0.2);
+        }
+
+        .journey-step.done {
+            background: rgba(0,130,127,0.15);
+            color: var(--lc-teal);
+        }
+
+        .live-stats {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .live-stats.visible { display: grid; }
+
+        .stat-pill {
+            text-align: center;
+            padding: 10px 8px;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .stat-pill .stat-val {
+            display: block;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--lc-navy);
+            line-height: 1.1;
+        }
+
+        .stat-pill .stat-lbl {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .stat-pill.highlight .stat-val { color: var(--lc-teal); }
+        .stat-pill.warn .stat-val { color: var(--lc-orange); }
+
+        #startBtn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #startBtn::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            animation: btnShine 3s ease-in-out infinite;
+        }
+
+        @keyframes btnShine {
+            0% { left: -100%; }
+            60%, 100% { left: 150%; }
+        }
+
+        details.advanced-options {
+            margin: 12px 0 4px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        details.advanced-options summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--lc-navy);
+            padding: 8px 0;
+        }
+
+        details.advanced-options[open] summary { margin-bottom: 8px; }
+
+        .transcript-card h3 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .live-dot {
+            display: none;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: livePulse 1.2s ease-in-out infinite;
+        }
+
+        .live-dot.on { display: inline-block; }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        #log:empty::before {
+            content: "La conversation s'affichera ici en temps réel…";
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
     <header class="hero">
-        <div class="hero-badge">Lead & Connect</div>
-        <h1>Simulateur d'Appels Sortants</h1>
-        <p>Externalisation de centre d'appels — Entraînement agent commercial</p>
+        <div class="hero-deco"><span></span><span></span><span></span></div>
+        <div class="hero-logo">LEAD <em>&amp;</em> CONNECT</div>
+        <div class="hero-badge">Simulateur IA</div>
+        <h1>Appels Sortants — Entraînement</h1>
+        <p>Objections · Closing · Évaluation /100 en direct</p>
         <a href="simulation_prospect.html" id="v2Link">Version 2 : jouer le prospect →</a>
     </header>
 
     <div class="app-shell">
 
-    <div class="card">
-        <h3>Paramètres de formation</h3>
+    <div class="card settings-card">
+        <h3>Configuration de l'appel</h3>
+
         <div id="apiKeySection">
-            <label for="apiKey">Clé API OpenRouter :</label>
+            <label for="apiKey">Clé API OpenRouter</label>
             <input type="password" id="apiKey" placeholder="sk-or-v1-...">
         </div>
-        <p class="hint" id="apiKeyStatus" style="display:none;color:#16a34a;">✅ Clé API configurée par l'administrateur</p>
-        <p class="hint" id="apiHint">OpenRouter : <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> · Modèle NVIDIA Nemotron · <strong id="appUrlLabel"></strong></p>
-
-        <label for="nvidiaModelSelect">Modèle NVIDIA (OpenRouter) :</label>
-        <select id="nvidiaModelSelect">
-            <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit) — recommandé</option>
-            <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
-            <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
-        </select>
+        <p class="hint" id="apiKeyStatus" style="display:none;">✅ Clé configurée</p>
+        <p class="hint" id="apiHint">OpenRouter : <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> · <strong id="appUrlLabel"></strong></p>
 
         <div class="settings-grid">
             <div>
-                <label for="profileSelect">Scénario / Profil de Prospect :</label>
+                <label for="profileSelect">Profil prospect</label>
                 <select id="profileSelect">
-                    <option value="agressif">Profil 1 — Prospect agressif (Objection: Ça ne m'intéresse pas)</option>
-                    <option value="presse">Profil 2 — Prospect pressé (Objection: Je suis occupé / Pas le temps)</option>
-                    <option value="mefiant_fournisseur">Profil 3 — Prospect méfiant (Objection: Je ne veux pas changer de fournisseur)</option>
-                    <option value="mefiant_rgpd">Profil 4 — Prospect méfiant avancé (Objection: Comment avez-vous eu mon nom ?)</option>
-                    <option value="curieux">Profil 5 — Prospect curieux (Pose des questions, ouvert à la vente)</option>
+                    <option value="agressif">😤 Agressif — « Ça ne m'intéresse pas »</option>
+                    <option value="presse">⏱️ Pressé — « Je suis occupé »</option>
+                    <option value="mefiant_fournisseur">🛡️ Méfiant — « Je ne veux pas changer »</option>
+                    <option value="mefiant_rgpd">🔒 RGPD — « Comment avez-vous mon numéro ? »</option>
+                    <option value="curieux">💡 Curieux — ouvert, pose des questions</option>
                 </select>
             </div>
             <div>
-                <label for="levelSelect">Niveau de Difficulté Pédagogique :</label>
+                <label for="levelSelect">Difficulté</label>
                 <select id="levelSelect">
-                    <option value="debutant">Débutant (Réactions et validation faciles)</option>
-                    <option value="intermediaire">Intermédiaire (Objections multiples et interruptions)</option>
-                    <option value="avance">Avancé (Forte pression, agressivité et sautes d'humeur)</option>
+                    <option value="debutant">🟢 Débutant</option>
+                    <option value="intermediaire">🟠 Intermédiaire</option>
+                    <option value="avance">🔴 Avancé</option>
                 </select>
             </div>
         </div>
+
+        <div class="profile-preview" id="profilePreview">
+            <div class="profile-preview-icon" id="profilePreviewIcon">😤</div>
+            <div class="profile-preview-text">
+                <strong id="profilePreviewTitle">Prospect agressif</strong>
+                <span id="profilePreviewDesc">Objection directe, ton sec — idéal pour travailler l'accroche</span>
+            </div>
+        </div>
+
         <label class="calibration-label">
-            <input type="checkbox" id="calibrationToggle"> Calibration par scripts (objections prédéfinies)
+            <input type="checkbox" id="calibrationToggle"> Scripts d'objections prédéfinies
         </label>
-        <button type="button" id="startBtn">📞 Initialiser et décrocher</button>
+
+        <details class="advanced-options" id="advancedOptions">
+            <summary>Options avancées (modèle IA)</summary>
+            <label for="nvidiaModelSelect">Modèle NVIDIA OpenRouter</label>
+            <select id="nvidiaModelSelect">
+                <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit)</option>
+                <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
+                <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
+            </select>
+        </details>
+
+        <button type="button" id="startBtn">📞 Décrocher — lancer la simulation</button>
     </div>
 
     <div class="call-experience">
@@ -635,7 +871,18 @@
         </div>
 
         <div class="card transcript-card">
-            <h3>Transcription en direct</h3>
+            <h3>Transcription <span class="live-dot" id="liveDot"></span></h3>
+            <div class="call-journey" id="callJourney">
+                <div class="journey-step" data-step="0">📞 Accroche</div>
+                <div class="journey-step" data-step="1">🔍 Découverte</div>
+                <div class="journey-step" data-step="2">💼 Proposition</div>
+                <div class="journey-step" data-step="3">✅ Closing</div>
+            </div>
+            <div class="live-stats" id="liveStats">
+                <div class="stat-pill"><span class="stat-val" id="statDuration">00:00</span><span class="stat-lbl">Durée</span></div>
+                <div class="stat-pill warn"><span class="stat-val" id="statObjections">0</span><span class="stat-lbl">Objections</span></div>
+                <div class="stat-pill highlight"><span class="stat-val" id="statTurns">0</span><span class="stat-lbl">Échanges</span></div>
+            </div>
             <div id="log"></div>
         </div>
     </div>
@@ -784,6 +1031,93 @@
                 }
             }
         };
+
+        const PROFILE_UI = {
+            agressif: { icon: "😤", title: "Prospect agressif", desc: "Objection directe, ton sec — travaillez l'accroche et la répartie" },
+            presse: { icon: "⏱️", title: "Prospect pressé", desc: "Manque de temps, réponses courtes — soyez efficace" },
+            mefiant_fournisseur: { icon: "🛡️", title: "Méfiant fournisseur", desc: "Ne veut pas changer — argumentez sur les économies" },
+            mefiant_rgpd: { icon: "🔒", title: "Méfiant RGPD", desc: "Protège ses données — rassurez et expliquez" },
+            curieux: { icon: "💡", title: "Prospect curieux", desc: "Ouvert et questionneur — convertissez par la pédagogie" }
+        };
+
+        let callTimerInterval = null;
+        let callElapsedSec = 0;
+
+        function updateProfilePreview() {
+            const key = document.getElementById("profileSelect").value;
+            const ui = PROFILE_UI[key] || PROFILE_UI.agressif;
+            const mood = getProspectMood(key, getLevel());
+            const el = document.getElementById("profilePreview");
+            const icon = document.getElementById("profilePreviewIcon");
+            const title = document.getElementById("profilePreviewTitle");
+            const desc = document.getElementById("profilePreviewDesc");
+            if (icon) icon.textContent = ui.icon;
+            if (title) title.textContent = ui.title;
+            if (desc) desc.textContent = ui.desc;
+            if (el) {
+                el.classList.remove("mood-calm", "mood-tense", "mood-angry");
+                el.classList.add("mood-" + mood);
+            }
+        }
+
+        function getCallJourneyStep() {
+            const turns = countAgentTurns();
+            if (agentAskedClosing() || agentAskedIban()) return 3;
+            if (agentMentionedProposition() || agentInOfferStage()) return 2;
+            if (turns >= 2 || agentAskedSupplier() || agentAskedBillAmount()) return 1;
+            return 0;
+        }
+
+        function updateCallJourney() {
+            const step = getCallJourneyStep();
+            document.querySelectorAll(".journey-step").forEach(el => {
+                const s = Number(el.dataset.step);
+                el.classList.remove("active", "done");
+                if (s < step) el.classList.add("done");
+                else if (s === step) el.classList.add("active");
+            });
+        }
+
+        function formatCallTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+        }
+
+        function updateLiveStats() {
+            const stats = document.getElementById("liveStats");
+            if (!stats || !callActive) return;
+            stats.classList.add("visible");
+            const dur = document.getElementById("statDuration");
+            const obj = document.getElementById("statObjections");
+            const turns = document.getElementById("statTurns");
+            if (dur) dur.textContent = formatCallTime(callElapsedSec);
+            if (obj) obj.textContent = String(countProspectResistance());
+            if (turns) turns.textContent = String(countAgentTurns());
+            updateCallJourney();
+        }
+
+        function startCallTimer() {
+            callElapsedSec = 0;
+            clearInterval(callTimerInterval);
+            const liveDot = document.getElementById("liveDot");
+            if (liveDot) liveDot.classList.add("on");
+            callTimerInterval = setInterval(() => {
+                callElapsedSec++;
+                updateLiveStats();
+            }, 1000);
+            updateLiveStats();
+        }
+
+        function stopCallTimer() {
+            clearInterval(callTimerInterval);
+            callTimerInterval = null;
+            const liveDot = document.getElementById("liveDot");
+            if (liveDot) liveDot.classList.remove("on");
+            const stats = document.getElementById("liveStats");
+            if (stats) stats.classList.remove("visible");
+            document.querySelectorAll(".journey-step").forEach(el => el.classList.remove("active", "done"));
+        }
 
         const PROFILE_LEVEL_PROMPTS = {
             agressif: {
@@ -1549,16 +1883,26 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function applyHostedConfig() {
+            const cfg = window.__SIMULATOR_CONFIG__ || {};
             const key = getInjectedApiKey();
             const section = document.getElementById("apiKeySection");
             const status = document.getElementById("apiKeyStatus");
-            if (key || isStreamlitCloud()) {
+            const hint = document.getElementById("apiHint");
+            const hosted = !!(cfg.hostedOnStreamlit || cfg.openrouterApiKey || isStreamlitCloud());
+            if (hosted) {
                 const input = document.getElementById("apiKey");
                 if (input && key) input.value = key;
                 if (section) section.style.display = "none";
-                if (status && key) status.style.display = "block";
+                if (status) status.style.display = "none";
+                if (hint) hint.style.display = "none";
+                const adv = document.getElementById("advancedOptions");
+                if (adv) adv.style.display = "none";
+            } else if (key) {
+                const input = document.getElementById("apiKey");
+                if (input) input.value = key;
+                if (section) section.style.display = "none";
+                if (status) status.style.display = "none";
             }
-            const cfg = window.__SIMULATOR_CONFIG__ || {};
             if (cfg.hostedOnStreamlit || isStreamlitCloud()) {
                 const v2 = document.getElementById("v2Link");
                 if (v2) v2.style.display = "none";
@@ -3712,6 +4056,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             setProspectThinking(true);
             chatTurns.push({ role: "user", content: userText });
             rememberAgentFromMessage(userText);
+            updateLiveStats();
 
             if (agentSaidGoodbye()) {
                 const reply = "Au revoir.";
@@ -3727,6 +4072,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const reply = finalizeProspectReply(rawReply);
                 chatTurns.push({ role: "assistant", content: reply });
                 addLogMessage("Prospect", reply, "prospect-msg");
+                updateLiveStats();
                 await speakProspect(reply);
             } catch (e) {
                 chatTurns.pop();
@@ -4250,6 +4596,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             stopBtn.disabled = true;
             stopProspectMouthAnim();
             setProspectThinking(false);
+            stopCallTimer();
             setStatus("Ligne inactive", "status-idle");
         }
 
@@ -4316,6 +4663,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 prospectStatusLabel.textContent = "En ligne";
                 prospectStatusLabel.classList.add("active");
             }
+            startCallTimer();
             setStatus("Appel en cours", "status-listening");
             await speakProspect(profile.start);
             } catch (e) {
@@ -4465,6 +4813,9 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 await resumePendingEvaluation();
             }
             ensureVoices();
+            updateProfilePreview();
+            document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
+            document.getElementById("levelSelect").addEventListener("change", updateProfilePreview);
             if (!ready) {
                 const el = document.getElementById("dbStatus");
                 if (el) {

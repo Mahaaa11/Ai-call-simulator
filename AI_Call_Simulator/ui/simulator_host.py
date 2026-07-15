@@ -246,16 +246,9 @@ def _render_status_bar(api_key: str, mysql_enabled: bool, mysql_ok: bool, mysql_
 
 def _render_save_feedback(config: dict) -> None:
     result = config.get("lastSaveResult")
-    if not result:
+    if not result or result.get("ok"):
         return
-    if result.get("ok"):
-        cid = result.get("conversation_id")
-        if result.get("updated"):
-            st.success(f"Évaluation enregistrée — conversation #{cid}")
-        else:
-            st.success(f"Conversation #{cid} enregistrée dans TiDB")
-    else:
-        st.error(f"Sauvegarde MySQL échouée : {result.get('error', 'erreur inconnue')}")
+    st.error(f"Sauvegarde MySQL échouée : {result.get('error', 'erreur inconnue')}")
 
 
 def _recent_v1_training_sessions(mysql_ok: bool, limit: int = 8) -> list[dict]:
@@ -335,14 +328,13 @@ def run_simulator(
         """
         <style>
         header[data-testid="stHeader"] { background: transparent; }
-        .block-container { padding-top: 0.5rem; padding-bottom: 0; max-width: 100%; }
+        .block-container { padding-top: 0; padding-bottom: 0; max-width: 100%; }
         iframe { border: none; }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    _render_status_bar(api_key, mysql_enabled, mysql_ok, mysql_detail)
     _render_save_feedback(config)
 
     incoming = component(height=iframe_height, key=html_path.stem)
