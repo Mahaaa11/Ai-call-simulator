@@ -100,7 +100,7 @@ def _strip_api_key_ui(html: str) -> str:
     """Remove API key inputs from hosted HTML so they never render in Streamlit."""
     html = re.sub(
         r'\s*<div id="apiKeySection">[\s\S]*?</div>\s*',
-        "\n        <!-- apiKeySection: masqué (hébergement Streamlit) -->\n",
+        '\n        <input type="hidden" id="apiKey" autocomplete="off">\n',
         html,
         count=1,
     )
@@ -128,7 +128,7 @@ def _inject_config(html: str, config: dict) -> str:
     if config.get("hostedOnStreamlit"):
         injection += (
             '<script>document.documentElement.dataset.hosted="1";</script>'
-            '<style>#apiKeySection,#apiKeyStatus,#apiHint,#advancedOptions'
+            '<style>#apiKeySection,#apiKeyStatus,#apiHint'
             "{display:none!important}</style>"
         )
     cleaned = re.sub(
@@ -142,7 +142,7 @@ def _inject_config(html: str, config: dict) -> str:
         cleaned,
     )
     cleaned = re.sub(
-        r"<style>#apiKeySection,#apiKeyStatus,#apiHint,#advancedOptions"
+        r"<style>#apiKeySection,#apiKeyStatus,#apiHint"
         r"\{display:none!important\}</style>\s*",
         "",
         cleaned,

@@ -527,8 +527,7 @@
 
         html[data-hosted="1"] #apiKeySection,
         html[data-hosted="1"] #apiKeyStatus,
-        html[data-hosted="1"] #apiHint,
-        html[data-hosted="1"] #advancedOptions {
+        html[data-hosted="1"] #apiHint {
             display: none !important;
         }
         #ttsStatus, #dbStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; text-align: center; }
@@ -1909,8 +1908,6 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (section) section.style.display = "none";
                 if (status) status.style.display = "none";
                 if (hint) hint.style.display = "none";
-                const adv = document.getElementById("advancedOptions");
-                if (adv) adv.style.display = "none";
             } else if (key) {
                 const input = document.getElementById("apiKey");
                 if (input) input.value = key;
@@ -1927,7 +1924,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function getApiKey() {
             const injected = getInjectedApiKey();
             if (injected) return injected;
-            return document.getElementById('apiKey').value.trim();
+            const input = document.getElementById("apiKey");
+            return input ? input.value.trim() : "";
         }
 
         function validateApiKey(key) {
@@ -3242,7 +3240,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function getNvidiaModel() {
-            return document.getElementById("nvidiaModelSelect").value;
+            const el = document.getElementById("nvidiaModelSelect");
+            return el ? el.value : "nvidia/nemotron-3-super-120b-a12b:free";
         }
 
         function extractOpenRouterText(data) {
