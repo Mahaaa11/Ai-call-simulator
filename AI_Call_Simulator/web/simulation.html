@@ -323,6 +323,21 @@
             opacity: 1;
         }
 
+        .prospect-video.did-layer {
+            opacity: 0;
+            z-index: 4;
+            transition: opacity 0.25s ease;
+        }
+
+        .prospect-frame.did-playing .prospect-video.did-layer {
+            opacity: 1;
+        }
+
+        .prospect-frame.did-playing .prospect-media,
+        .prospect-frame.did-playing .prospect-fallback {
+            opacity: 0;
+        }
+
         .prospect-fallback {
             display: none;
             position: absolute;
@@ -928,6 +943,9 @@
                 <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
                 <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
             </select>
+            <label class="calibration-label" id="didLipsyncLabel" style="display:none;margin-top:10px;">
+                <input type="checkbox" id="didLipsyncToggle" checked> Lip-sync D-ID (bouche synchronisée, ~20 s/réplique)
+            </label>
         </details>
 
         <button type="button" id="startBtn">📞 Décrocher — lancer la simulation</button>
@@ -943,6 +961,7 @@
                             src="assets/prospect-female-idle.mp4"></video>
                         <video class="prospect-video speaking-layer" id="prospectVideoSpeak" muted loop playsinline preload="auto"
                             src="assets/prospect-female-speaking.mp4"></video>
+                        <video class="prospect-video did-layer" id="prospectVideoDid" playsinline preload="auto"></video>
                     </div>
                     <img src="assets/prospect-female-calm.png" id="prospectAvatarImg" class="prospect-fallback" alt="Prospect au téléphone">
                     <div class="video-vignette"></div>
@@ -1919,6 +1938,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         let audioUnlocked = false;
         let lastConversationId = null;
         const PENDING_EVAL_KEY = "simulator_pending_eval_v1";
+        const CALL_STASH_KEY = "simulator_call_stash_v1";
+        const PENDING_LIPSYNC_KEY = "simulator_pending_lipsync_v1";
+        const DID_LIPSYNC_PREF_KEY = "simulator_did_lipsync_pref_v1";
 
         function unlockAudioPlayback() {
             if (audioUnlocked) return;
@@ -3914,6 +3936,192 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
+        function useDidLipsync() {
+            const cfg = getSimulatorConfig();
+            if (!cfg.didLipsyncEnabled) return false;
+            const toggle = document.getElementById("didLipsyncToggle");
+            if (toggle && !toggle.checked) return false;
+            try {
+                const pref = localStorage.getItem(DID_LIPSYNC_PREF_KEY);
+                if (pref === "0") return false;
+            } catch (_) {}
+            return true;
+        }
+
+        function syncDidLipsyncUi() {
+            const cfg = getSimulatorConfig();
+            const label = document.getElementById("didLipsyncLabel");
+            const toggle = document.getElementById("didLipsyncToggle");
+            if (!label || !toggle) return;
+            if (cfg.didLipsyncEnabled) {
+                label.style.display = "flex";
+                try {
+                    const pref = localStorage.getItem(DID_LIPSYNC_PREF_KEY);
+                    if (pref === "0") toggle.checked = false;
+                    else if (pref === "1") toggle.checked = true;
+                } catch (_) {}
+            } else {
+                label.style.display = "none";
+            }
+            toggle.onchange = () => {
+                try {
+                    localStorage.setItem(DID_LIPSYNC_PREF_KEY, toggle.checked ? "1" : "0");
+                } catch (_) {}
+            };
+        }
+
+        function stashCallStateForLipsync(requestId, text) {
+            sessionStorage.setItem(PENDING_LIPSYNC_KEY, JSON.stringify({
+                request_id: requestId,
+                text: text,
+                at: Date.now()
+            }));
+            sessionStorage.setItem(CALL_STASH_KEY, JSON.stringify({
+                chatTurns: chatTurns,
+                callActive: callActive,
+                prospectPersona: prospectPersona,
+                callLevel: callLevel || getLevel(),
+                callStartedAt: callStartedAt,
+                systemPromptText: systemPromptText,
+                compactSystemPromptText: compactSystemPromptText,
+                agentPersona: agentPersona,
+                callElapsedSec: callElapsedSec
+            }));
+        }
+
+        function restoreCallStateFromStash() {
+            const raw = sessionStorage.getItem(CALL_STASH_KEY);
+            if (!raw) return false;
+            sessionStorage.removeItem(CALL_STASH_KEY);
+            try {
+                const data = JSON.parse(raw);
+                if (!data.callActive) return false;
+                chatTurns = data.chatTurns || [];
+                callActive = true;
+                prospectPersona = data.prospectPersona || prospectPersona;
+                callLevel = data.callLevel || callLevel;
+                callStartedAt = data.callStartedAt || callStartedAt;
+                systemPromptText = data.systemPromptText || systemPromptText;
+                compactSystemPromptText = data.compactSystemPromptText || compactSystemPromptText;
+                agentPersona = data.agentPersona || agentPersona;
+                callElapsedSec = data.callElapsedSec || 0;
+                document.body.classList.add("call-active");
+                startBtn.disabled = true;
+                talkBtn.disabled = !speechRecAvailable;
+                sendTextBtn.disabled = false;
+                textInput.disabled = false;
+                stopBtn.disabled = false;
+                updateProspectAvatar();
+                if (logDiv && chatTurns.length) {
+                    logDiv.innerHTML = "";
+                    chatTurns.forEach(t => {
+                        if (t.role === "assistant") addLogMessage("Prospect", t.content, "prospect-msg");
+                        else if (t.role === "user") addLogMessage("Vous", t.content, "agent-msg");
+                    });
+                }
+                startCallTimer();
+                setStatus("Appel en cours", "status-listening");
+                return true;
+            } catch (e) {
+                console.warn("Restore call stash:", e);
+                return false;
+            }
+        }
+
+        async function playDidVideo(videoUrl, captionText) {
+            const frame = document.getElementById("prospectFrame");
+            const didVid = document.getElementById("prospectVideoDid");
+            if (!frame || !didVid || !videoUrl) return false;
+            updateLiveCaption("Prospect", captionText, "prospect");
+            setProspectThinking(false);
+            setStatus("Le prospect parle (lip-sync)…", "status-thinking");
+            frame.classList.add("did-playing");
+            didVid.src = videoUrl;
+            didVid.currentTime = 0;
+            try {
+                await didVid.play();
+            } catch (e) {
+                frame.classList.remove("did-playing");
+                didVid.removeAttribute("src");
+                throw e;
+            }
+            return new Promise((resolve) => {
+                const finish = () => {
+                    frame.classList.remove("did-playing");
+                    didVid.pause();
+                    didVid.removeAttribute("src");
+                    setProspectSpeaking(false);
+                    if (callActive) setStatus("À vous de parler", "status-listening");
+                    resolve(true);
+                };
+                didVid.onended = finish;
+                didVid.onerror = finish;
+            });
+        }
+
+        async function speakDidViaLocalApi(text) {
+            const api = CONVERSATION_API;
+            if (!api) throw new Error("API locale indisponible pour lip-sync");
+            setProspectThinking(true);
+            setStatus("Génération lip-sync D-ID (15–40 s)…", "status-thinking");
+            const res = await fetch(api + "/api/lipsync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: text.slice(0, 500),
+                    gender: (prospectPersona && prospectPersona.gender) || "female"
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok || !data.video_url) {
+                throw new Error(data.error || ("HTTP " + res.status));
+            }
+            return playDidVideo(data.video_url, text);
+        }
+
+        function requestStreamlitDidLipsync(text) {
+            const requestId = "ls_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+            stashCallStateForLipsync(requestId, text);
+            setProspectThinking(true);
+            setStatus("Génération lip-sync D-ID (15–40 s)…", "status-thinking");
+            pushToStreamlit({
+                action: "lipsync",
+                request_id: requestId,
+                text: text.slice(0, 500),
+                gender: (prospectPersona && prospectPersona.gender) || "female"
+            });
+            return true;
+        }
+
+        async function resumePendingLipsync() {
+            const pendingRaw = sessionStorage.getItem(PENDING_LIPSYNC_KEY);
+            if (!pendingRaw) return false;
+            const cfg = getSimulatorConfig();
+            const result = cfg.lastLipsyncResult;
+            if (!result || !result.request_id) return false;
+            let pending;
+            try { pending = JSON.parse(pendingRaw); } catch (_) { return false; }
+            if (pending.request_id !== result.request_id) return false;
+            sessionStorage.removeItem(PENDING_LIPSYNC_KEY);
+            if (!result.ok || !result.video_url) {
+                const el = document.getElementById("dbStatus");
+                if (el) {
+                    el.innerHTML = "⚠️ Lip-sync D-ID : " + (result.error || "erreur");
+                    el.style.color = "#dc2626";
+                }
+                if (callActive) setStatus("À vous de parler", "status-listening");
+                return false;
+            }
+            try {
+                await playDidVideo(result.video_url, pending.text || "");
+                return true;
+            } catch (e) {
+                console.warn("Lip-sync playback:", e);
+                if (callActive) setStatus("À vous de parler", "status-listening");
+                return false;
+            }
+        }
+
         async function speakLocalTTS(text) {
             if (!text) return false;
             try {
@@ -4013,6 +4221,25 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (!voiceOn) {
                 await runProspectMouthForDuration(estimateSpeechMs(text));
                 return false;
+            }
+
+            if (useDidLipsync()) {
+                try {
+                    if (useStreamlitSave()) {
+                        requestStreamlitDidLipsync(text);
+                        return true;
+                    }
+                    if (CONVERSATION_API) {
+                        return await speakDidViaLocalApi(text);
+                    }
+                } catch (e) {
+                    console.warn("D-ID lip-sync:", e);
+                    const el = document.getElementById("ttsStatus");
+                    if (el) {
+                        el.innerHTML = "⚠️ Lip-sync indisponible — voix classique : " + (e.message || e);
+                        el.style.color = "#d97706";
+                    }
+                }
             }
 
             let ok = await speakLocalTTS(text);
@@ -4997,6 +5224,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 
         function onStreamlitConfigApplied() {
             applyHostedConfig();
+            syncDidLipsyncUi();
             showLastSaveResult();
             checkDbServer();
             checkTtsServer();
@@ -5020,14 +5248,18 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
         });
 
         applyHostedConfig();
+        syncDidLipsyncUi();
 
         (async function initSimulator() {
             await loadDeployConfig();
             applyHostedConfig();
+            syncDidLipsyncUi();
+            restoreCallStateFromStash();
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             const ready = !!(cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud());
             if (ready) {
                 onStreamlitConfigApplied();
+                await resumePendingLipsync();
                 await resumePendingEvaluation();
             }
             ensureVoices();

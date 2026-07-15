@@ -91,6 +91,10 @@ def _get_openrouter_api_key() -> str:
     return _get_secret_or_env("OPENROUTER_API_KEY")
 
 
+def _get_did_api_key() -> str:
+    return _get_secret_or_env("D_ID_API_KEY")
+
+
 def _is_local_api_url(url: str) -> bool:
     lower = url.lower()
     return any(token in lower for token in ("127.0.0.1", "localhost", "0.0.0.0"))
@@ -204,6 +208,12 @@ def _build_streamlit_config(
     save_feedback = st.session_state.pop("save_feedback", None)
     if save_feedback:
         config["lastSaveResult"] = save_feedback
+    lipsync_feedback = st.session_state.pop("lipsync_feedback", None)
+    if lipsync_feedback:
+        config["lastLipsyncResult"] = lipsync_feedback
+    did_key = _get_did_api_key()
+    if did_key:
+        config["didLipsyncEnabled"] = True
     return config
 
 
@@ -258,11 +268,52 @@ def _process_eval_update(incoming: dict) -> bool:
     return True
 
 
+def _process_lipsync(incoming: dict) -> bool:
+    from ui.did_lipsync import create_talk_video
+
+    request_id = str(incoming.get("request_id") or "")
+    text = str(incoming.get("text") or "")
+    gender = str(incoming.get("gender") or "female")
+    if not request_id or not text.strip():
+        return False
+    key = _payload_key(incoming)
+    lipsync_key = f"lipsync:{key}"
+    if st.session_state.get("last_lipsync_key") == lipsync_key:
+        return False
+    api_key = _get_did_api_key()
+    if not api_key:
+        st.session_state.lipsync_feedback = {
+            "ok": False,
+            "request_id": request_id,
+            "error": "D_ID_API_KEY manquante dans Secrets Streamlit",
+        }
+        st.session_state.last_lipsync_key = lipsync_key
+        return True
+    try:
+        with st.spinner("Génération lip-sync D-ID (15–40 s)…"):
+            video_url = create_talk_video(api_key, text, gender=gender)
+        st.session_state.lipsync_feedback = {
+            "ok": True,
+            "request_id": request_id,
+            "video_url": video_url,
+        }
+    except Exception as exc:
+        st.session_state.lipsync_feedback = {
+            "ok": False,
+            "request_id": request_id,
+            "error": str(exc),
+        }
+    st.session_state.last_lipsync_key = lipsync_key
+    return True
+
+
 def _handle_incoming(incoming: dict | object) -> bool:
     if not incoming:
         return False
     if isinstance(incoming, dict) and incoming.get("action") == "update_eval":
         return _process_eval_update(incoming)
+    if isinstance(incoming, dict) and incoming.get("action") == "lipsync":
+        return _process_lipsync(incoming)
     if isinstance(incoming, dict) and incoming.get("action") == "save":
         return _process_bridge_payload(incoming.get("payload") or {})
     if isinstance(incoming, dict):
