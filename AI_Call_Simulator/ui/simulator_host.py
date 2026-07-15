@@ -124,9 +124,16 @@ def _strip_api_key_ui(html: str) -> str:
 
 
 def _inject_config(html: str, config: dict) -> str:
+    script_config = dict(config)
+    tts = script_config.get("lastTtsResult") or {}
+    if tts.get("audio_b64"):
+        script_config["lastTtsResult"] = {
+            k: v for k, v in tts.items() if k != "audio_b64"
+        }
+        script_config["lastTtsResult"]["has_audio"] = True
     injection = (
         "<script>window.__SIMULATOR_CONFIG__ = "
-        + json.dumps(config, ensure_ascii=False)
+        + json.dumps(script_config, ensure_ascii=False)
         + ";</script>"
     )
     if config.get("hostedOnStreamlit"):
@@ -153,6 +160,14 @@ def _inject_config(html: str, config: dict) -> str:
     )
     if config.get("hostedOnStreamlit"):
         cleaned = _strip_api_key_ui(cleaned)
+    tts = config.get("lastTtsResult") or {}
+    if tts.get("ok") and tts.get("audio_b64"):
+        mime = tts.get("mime") or "audio/mpeg"
+        injection += (
+            '<audio id="injectedTts" autoplay playsinline '
+            f'src="data:{mime};base64,{tts["audio_b64"]}" '
+            'style="position:absolute;width:0;height:0;opacity:0;pointer-events:none"></audio>'
+        )
     if "</head>" in cleaned:
         return cleaned.replace("</head>", injection + "\n</head>", 1)
     return injection + cleaned

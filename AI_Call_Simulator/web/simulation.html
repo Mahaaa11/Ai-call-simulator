@@ -1952,6 +1952,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         const PENDING_LIPSYNC_KEY = "simulator_pending_lipsync_v1";
         const PENDING_TTS_KEY = "simulator_pending_tts_v1";
         const DID_LIPSYNC_PREF_KEY = "simulator_did_lipsync_pref_v1";
+        const AUDIO_UNLOCK_KEY = "simulator_audio_unlock_v1";
 
         function unlockAudioPlayback() {
             if (audioUnlocked) return;
@@ -1965,6 +1966,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 ping.volume = 0.01;
                 ping.play().catch(() => {});
                 audioUnlocked = true;
+                try { sessionStorage.setItem(AUDIO_UNLOCK_KEY, "1"); } catch (_) {}
                 playProspectVideo(document.getElementById("prospectVideoIdle"));
             } catch (_) {}
         }
@@ -4095,6 +4097,34 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (pending.request_id !== result.request_id) return false;
             sessionStorage.removeItem(PENDING_TTS_KEY);
             setProspectThinking(false);
+            unlockAudioPlayback();
+
+            const injected = document.getElementById("injectedTts");
+            if (injected && result.ok && (result.audio_b64 || result.has_audio)) {
+                try {
+                    updateLiveCaption("Prospect", pending.text || "", "prospect");
+                    setStatus("Le prospect parle…", "status-thinking");
+                    startProspectMouthAnim();
+                    injected.volume = 1;
+                    injected.muted = false;
+                    await new Promise((resolve, reject) => {
+                        const done = () => {
+                            stopProspectMouthAnim();
+                            if (callActive) setStatus("À vous de parler", "status-listening");
+                            resolve();
+                        };
+                        injected.onended = done;
+                        injected.onerror = () => reject(new Error("Lecture auto échouée"));
+                        const p = injected.play();
+                        if (p && p.catch) p.catch(reject);
+                    });
+                    audioUnlocked = true;
+                    return true;
+                } catch (e) {
+                    console.warn("Injected TTS:", e);
+                }
+            }
+
             if (!result.ok || !result.audio_b64) {
                 const el = document.getElementById("ttsStatus");
                 if (el) {
@@ -4109,8 +4139,33 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return true;
             } catch (e) {
                 console.warn("Hosted TTS playback:", e);
-                return await speakBrowser(pending.text || "");
+                showPlaySoundButton(pending.text || "", result.audio_b64, result.mime);
+                return false;
             }
+        }
+
+        function showPlaySoundButton(text, b64, mime) {
+            let btn = document.getElementById("playSoundBtn");
+            if (!btn) {
+                btn = document.createElement("button");
+                btn.id = "playSoundBtn";
+                btn.type = "button";
+                btn.style.cssText = "width:100%;margin:10px 0;padding:14px;background:#D9802E;color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;";
+                const dock = document.querySelector(".controls-dock");
+                if (dock) dock.insertBefore(btn, dock.firstChild);
+            }
+            btn.textContent = "🔊 Cliquer pour écouter le prospect";
+            btn.onclick = async () => {
+                btn.disabled = true;
+                try {
+                    await playAudioBase64(b64, mime, text);
+                    btn.remove();
+                    if (callActive) setStatus("À vous de parler", "status-listening");
+                } catch (_) {
+                    btn.disabled = false;
+                    alert("Impossible de lire le son — vérifiez le volume du navigateur.");
+                }
+            };
         }
 
         function restoreCallStateFromStash() {
@@ -5188,6 +5243,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         startBtn.addEventListener('click', async () => {
             try {
             unlockAudioPlayback();
+            try { sessionStorage.setItem(AUDIO_UNLOCK_KEY, "1"); } catch (_) {}
             const apiKey = getApiKey();
             if (!apiKey) return alert("Veuillez saisir votre clé API OpenRouter.");
             const keyErr = validateApiKey(apiKey);
@@ -5400,13 +5456,16 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             await loadDeployConfig();
             applyHostedConfig();
             syncDidLipsyncUi();
+            try {
+                if (sessionStorage.getItem(AUDIO_UNLOCK_KEY) === "1") unlockAudioPlayback();
+            } catch (_) {}
             restoreCallStateFromStash();
+            await resumePendingLipsync();
+            await resumePendingTts();
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             const ready = !!(cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud());
             if (ready) {
                 onStreamlitConfigApplied();
-                await resumePendingLipsync();
-                await resumePendingTts();
                 await resumePendingEvaluation();
             }
             ensureVoices();
