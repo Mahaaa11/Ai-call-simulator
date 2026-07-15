@@ -31,13 +31,45 @@ from mysql_store import (
 
 _STREAMLIT_BOOT = """
 <script src="streamlit-component-lib.js"></script>
+<script>window.__SIMULATOR_CONFIG__ = window.__SIMULATOR_CONFIG__ || {};</script>
+<script>document.documentElement.dataset.hosted = "1";</script>
+<style>#apiKeySection,#apiKeyStatus,#apiHint{display:none!important}</style>
 <script>
+  function applyStreamlitSimulatorConfig() {
+    if (!window.Streamlit || !Streamlit.args) return;
+    var raw = Streamlit.args.simulator_config;
+    if (!raw) return;
+    try {
+      var cfg = typeof raw === "string" ? JSON.parse(raw) : raw;
+      window.__SIMULATOR_CONFIG__ = Object.assign(
+        window.__SIMULATOR_CONFIG__ || {},
+        cfg
+      );
+      document.documentElement.dataset.hosted = "1";
+      if (typeof window.onStreamlitConfigApplied === "function") {
+        window.onStreamlitConfigApplied();
+      }
+      if (typeof window.handleStreamlitTtsResult === "function") {
+        window.handleStreamlitTtsResult();
+      }
+      if (typeof window.resumePendingLipsync === "function") {
+        window.resumePendingLipsync();
+      }
+      if (typeof window.resumePendingEvaluation === "function") {
+        window.resumePendingEvaluation();
+      }
+    } catch (e) {
+      console.warn("Simulator config:", e);
+    }
+  }
   window.addEventListener("load", function () {
     if (window.Streamlit) Streamlit.setComponentReady();
+    setTimeout(applyStreamlitSimulatorConfig, 80);
   });
   if (window.Streamlit) {
     Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function () {
-      var h = (Streamlit.args && Streamlit.args.height) || 1180;
+      applyStreamlitSimulatorConfig();
+      var h = (Streamlit.args && Streamlit.args.height) || 2200;
       Streamlit.setFrameHeight(h);
     });
   }
@@ -173,17 +205,36 @@ def _inject_config(html: str, config: dict) -> str:
     return injection + cleaned
 
 
-def _prepare_component_html(html_path: Path, config: dict) -> str:
-    html = _inject_config(html_path.read_text(encoding="utf-8"), config)
-    return html.replace("</head>", _STREAMLIT_BOOT + "\n</head>", 1)
+def _build_static_component_html(html_path: Path) -> str:
+    html = html_path.read_text(encoding="utf-8")
+    html = re.sub(
+        r"<script>window\.__SIMULATOR_CONFIG__\s*=\s*[\s\S]*?;</script>\s*",
+        "",
+        html,
+    )
+    html = re.sub(
+        r'<script>document\.documentElement\.dataset\.hosted="1";</script>\s*',
+        "",
+        html,
+    )
+    html = re.sub(
+        r"<style>#apiKeySection,#apiKeyStatus,#apiHint"
+        r"\{display:none!important\}</style>\s*",
+        "",
+        html,
+    )
+    html = re.sub(r'<audio id="injectedTts"[\s\S]*?</audio>\s*', "", html)
+    html = _strip_api_key_ui(html)
+    if "</head>" in html:
+        return html.replace("</head>", _STREAMLIT_BOOT + "\n</head>", 1)
+    return _STREAMLIT_BOOT + html
 
 
-def _sync_component_index(html_path: Path, config: dict, frontend_dir: Path) -> None:
-    frontend_dir.mkdir(parents=True, exist_ok=True)
+def _sync_component_assets(frontend_dir: Path) -> None:
     lib_src = COMPONENT_FRONTEND / "streamlit-component-lib.js"
     lib_dst = frontend_dir / "streamlit-component-lib.js"
-    if lib_src.exists() and not lib_dst.exists():
-        lib_dst.write_bytes(lib_src.read_bytes())
+    if lib_src.exists():
+        shutil.copy2(lib_src, lib_dst)
     assets_src = WEB_DIR / "assets"
     assets_dst = frontend_dir / "assets"
     if assets_src.is_dir():
@@ -191,10 +242,19 @@ def _sync_component_index(html_path: Path, config: dict, frontend_dir: Path) -> 
         for asset in assets_src.iterdir():
             if asset.is_file():
                 shutil.copy2(asset, assets_dst / asset.name)
-    (frontend_dir / "index.html").write_text(
-        _prepare_component_html(html_path, config),
-        encoding="utf-8",
-    )
+
+
+def _sync_component_index(html_path: Path, frontend_dir: Path) -> None:
+    frontend_dir.mkdir(parents=True, exist_ok=True)
+    stamp_file = frontend_dir / ".source_stamp"
+    stamp = hashlib.sha256(html_path.read_bytes() + _STREAMLIT_BOOT.encode("utf-8")).hexdigest()
+    if not stamp_file.exists() or stamp_file.read_text(encoding="utf-8") != stamp:
+        (frontend_dir / "index.html").write_text(
+            _build_static_component_html(html_path),
+            encoding="utf-8",
+        )
+        stamp_file.write_text(stamp, encoding="utf-8")
+    _sync_component_assets(frontend_dir)
 
 
 def _build_streamlit_config(
@@ -226,7 +286,7 @@ def _build_streamlit_config(
     lipsync_feedback = st.session_state.pop("lipsync_feedback", None)
     if lipsync_feedback:
         config["lastLipsyncResult"] = lipsync_feedback
-    tts_feedback = st.session_state.pop("tts_feedback", None)
+    tts_feedback = st.session_state.get("tts_feedback")
     if tts_feedback:
         config["lastTtsResult"] = tts_feedback
     did_key = _get_did_api_key()
@@ -342,7 +402,8 @@ def _process_hosted_tts(incoming: dict) -> bool:
     if st.session_state.get("last_tts_key") == tts_key:
         return False
     try:
-        audio = synthesize_speech(text, gender=gender)
+        with st.spinner("Synthèse voix française…"):
+            audio = synthesize_speech(text, gender=gender)
         st.session_state.tts_feedback = {
             "ok": True,
             "request_id": request_id,
@@ -359,9 +420,21 @@ def _process_hosted_tts(incoming: dict) -> bool:
     return True
 
 
+def _process_tts_ack(incoming: dict) -> bool:
+    request_id = str(incoming.get("request_id") or "")
+    if not request_id:
+        return False
+    current = st.session_state.get("tts_feedback") or {}
+    if current.get("request_id") == request_id:
+        st.session_state.pop("tts_feedback", None)
+    return False
+
+
 def _handle_incoming(incoming: dict | object) -> bool:
     if not incoming:
         return False
+    if isinstance(incoming, dict) and incoming.get("action") == "tts_ack":
+        return _process_tts_ack(incoming)
     if isinstance(incoming, dict) and incoming.get("action") == "update_eval":
         return _process_eval_update(incoming)
     if isinstance(incoming, dict) and incoming.get("action") == "lipsync":
@@ -469,7 +542,7 @@ def run_simulator(
     if extra_config and extra_config.get("v1TrainingEvolution"):
         config["recentTrainingSessions"] = _recent_v1_training_sessions(mysql_ok)
     target_frontend = frontend_dir or (COMPONENT_FRONTEND / "v1")
-    _sync_component_index(html_path, config, target_frontend)
+    _sync_component_index(html_path, target_frontend)
 
     st.markdown(
         """
@@ -484,6 +557,10 @@ def run_simulator(
 
     _render_save_feedback(config)
 
-    incoming = component(height=iframe_height, key=html_path.stem)
+    incoming = component(
+        height=iframe_height,
+        simulator_config=json.dumps(config, ensure_ascii=False),
+        key=html_path.stem,
+    )
     if incoming and _handle_incoming(incoming):
         st.rerun()
