@@ -376,18 +376,52 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 .trim();
         }
 
+        function prospectUserTurns() {
+            return chatTurns.filter(t => t.role === "user").map(t => t.content);
+        }
+
+        function prospectMentionedSupplier() {
+            const all = prospectUserTurns().join(" ").toLowerCase();
+            return /\b(edf|engie|totalenergies|total energies|vattenfall|ekwateur|mint)\b/i.test(all)
+                || /\b(chez |avec |je suis)\b/i.test(all) && /\b(edf|engie|fournisseur)\b/i.test(all);
+        }
+
+        function prospectMentionedBill() {
+            return prospectUserTurns().some(t => /\d+\s*€|euro/i.test(t));
+        }
+
+        function agentAskedBill() {
+            return chatTurns.some(t => t.role === "assistant" && /\b(facture|montant|combien payez|€|euro)\b/i.test(t.content));
+        }
+
+        function getDiscoveryStageHint() {
+            if (prospectMentionedBill()) {
+                return "Le prospect a donné un fournisseur et un montant : propose le comparatif gratuit et sans engagement.";
+            }
+            if (prospectMentionedSupplier()) {
+                return "Le prospect a indiqué son fournisseur : remercie et demande depuis combien de temps + montant mensuel de la facture électricité.";
+            }
+            if (agentAskedBill() || chatTurns.filter(t => t.role === "assistant").length >= 2) {
+                return "Passe à la découverte : demande le fournisseur actuel ou le montant de la facture électricité.";
+            }
+            return "Gère l'objection puis pose UNE question de découverte (fournisseur ou facture).";
+        }
+
         function isAgentEcho(reply, prospectText) {
             const a = normalizeReply(reply);
             const p = normalizeReply(prospectText);
             if (!a || !p || a.length < 6) return false;
             if (a === p) return true;
-            if (a.includes(p) || p.includes(a)) return true;
-            const aWords = a.split(" ").filter(w => w.length > 2);
-            const pWords = new Set(p.split(" ").filter(w => w.length > 2));
-            if (aWords.length >= 3 && aWords.filter(w => pWords.has(w)).length >= aWords.length - 1) {
-                return true;
+            if ((reply || "").length > (prospectText || "").length * 1.35
+                && /\?|depuis|combien|facture|comprends|parfait|merci|d'accord|très bien/i.test(reply || "")) {
+                return false;
             }
-            return false;
+            if (p.length >= 12 && a.includes(p)) return true;
+            const aWords = a.split(" ").filter(w => w.length > 3);
+            const pWords = p.split(" ").filter(w => w.length > 3);
+            if (aWords.length < 4 || pWords.length < 3) return false;
+            const shared = aWords.filter(w => pWords.includes(w)).length;
+            return shared >= Math.ceil(aWords.length * 0.85);
         }
 
         function isAgentMetaLeak(reply) {
@@ -441,19 +475,32 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         function getAgentFallbackReply(prospectText) {
             const t = (prospectText || "").toLowerCase();
+
+            if (prospectMentionedBill()) {
+                return "Merci pour ces informations. Je peux lancer une vérification gratuite et sans engagement pour voir si vous pouviez payer moins — ça vous intéresse ?";
+            }
+            if (prospectMentionedSupplier() || /\b(edf|engie|total|vattenfall|ekwateur)\b/i.test(t)) {
+                return "Parfait, merci. Depuis combien de temps êtes-vous chez eux, et à peu près combien payez-vous par mois sur votre facture d'électricité ?";
+            }
             if (/qui (êtes|etes)|vous êtes qui|d'?où.*nom|comment.*nom|comment.*numéro|comment.*données|rgpd|données|protég/i.test(t)) {
                 return "Je comprends tout à fait. Je suis Émilie, conseillère Génie Énergie, partenaire Home Serve. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures d'électricité, sans engagement. Puis-je vous expliquer en deux minutes ?";
             }
-            if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement/i.test(t)) {
-                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. C'est gratuit et sans engagement. Vous avez une minute ?";
+            if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
+                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas pour vous vendre quelque chose de force, c'est gratuit et sans engagement. Vous avez une minute ?";
             }
-            if (/intéressé|intéresse pas|pas intéress|ca m'interesse pas|ça m'intéresse pas|pas le temps|occupé|laissez|tranquille/i.test(t)) {
-                return "Je comprends tout à fait. Ce n'est pas une vente forcée, juste une vérification rapide de votre facture d'électricité. Je serai très brève — une seule question, ça vous va ?";
+            if (/intéressé|intéresse pas|pas intéress|ça m'intéresse pas/i.test(t)) {
+                return "Je comprends tout à fait. Ce n'est pas une vente forcée, juste une vérification rapide de votre facture d'électricité. Une seule question : chez quel fournisseur êtes-vous actuellement ?";
+            }
+            if (/pas le temps|pas le temps|occupé|pressé|faites vite/i.test(t)) {
+                return "Je comprends, je serai très brève. Juste une question : chez quel fournisseur êtes-vous pour l'électricité ? Dix secondes suffisent.";
             }
             if (/fournisseur|changer|satisfait/i.test(t)) {
-                return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive. Si elle l'est déjà, je vous le dirai honnêtement.";
+                return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive. Chez quel fournisseur êtes-vous aujourd'hui ?";
             }
-            return "Je vous entends. Je suis Émilie de Génie Énergie, partenaire Home Serve — appel court pour une vérification tarifaire électricité, sans engagement. Puis-je continuer ?";
+            if (chatTurns.filter(x => x.role === "assistant").length >= 2) {
+                return "Pour avancer : chez quel fournisseur êtes-vous actuellement pour l'électricité, et à peu près combien payez-vous par mois ?";
+            }
+            return "Je comprends. Je suis Émilie de Génie Énergie — appel court pour vérifier si vous payez le bon tarif électricité, sans engagement. Puis-je vous poser une question rapide ?";
         }
 
         function finalizeAgentReply(raw, prospectText) {
@@ -509,7 +556,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const turnMessages = buildAgentTurnMessages();
             const prospectLine = lastProspectText();
             const turnHint = prospectLine
-                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 180) + " »\nRéponds UNIQUEMENT en tant qu'Émilie l'agent commercial (français oral). Ne répète pas le prospect."
+                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 180) + " »"
+                    + "\nÉTAPE SUIVANTE : " + getDiscoveryStageHint()
+                    + "\nRéponds UNIQUEMENT en tant qu'Émilie l'agent commercial (français oral). Ne répète pas le prospect. Fais avancer l'appel."
                 : "";
             const plans = [
                 { system: systemPromptText + getAgentAntiRepeatContext() + turnHint + (extra || ""), maxTokens: 280 },

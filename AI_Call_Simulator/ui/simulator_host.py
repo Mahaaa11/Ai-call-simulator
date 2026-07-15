@@ -11,7 +11,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from ui.simulation_component import simulation_app
+from ui.simulation_component import simulation_app_v1, simulation_app_v2
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ENV_PATH = PROJECT_ROOT / ".env"
@@ -116,9 +116,13 @@ def _prepare_component_html(html_path: Path, config: dict) -> str:
     return html.replace("</head>", _STREAMLIT_BOOT + "\n</head>", 1)
 
 
-def _sync_component_index(html_path: Path, config: dict) -> None:
-    COMPONENT_FRONTEND.mkdir(parents=True, exist_ok=True)
-    (COMPONENT_FRONTEND / "index.html").write_text(
+def _sync_component_index(html_path: Path, config: dict, frontend_dir: Path) -> None:
+    frontend_dir.mkdir(parents=True, exist_ok=True)
+    lib_src = COMPONENT_FRONTEND / "streamlit-component-lib.js"
+    lib_dst = frontend_dir / "streamlit-component-lib.js"
+    if lib_src.exists() and not lib_dst.exists():
+        lib_dst.write_bytes(lib_src.read_bytes())
+    (frontend_dir / "index.html").write_text(
         _prepare_component_html(html_path, config),
         encoding="utf-8",
     )
@@ -253,6 +257,8 @@ def run_simulator(
     page_icon: str = "📞",
     iframe_height: int = 1180,
     extra_config: dict | None = None,
+    component=simulation_app_v1,
+    frontend_dir: Path | None = None,
 ) -> None:
     st.set_page_config(
         page_title=page_title,
@@ -283,7 +289,8 @@ def run_simulator(
         mysql_detail = str(st.session_state.mysql_detail or "")
 
     config = _build_streamlit_config(api_key, mysql_enabled, mysql_ok, extra_config)
-    _sync_component_index(html_path, config)
+    target_frontend = frontend_dir or (COMPONENT_FRONTEND / "v1")
+    _sync_component_index(html_path, config, target_frontend)
 
     st.markdown(
         """
@@ -299,6 +306,6 @@ def run_simulator(
     _render_status_bar(api_key, mysql_enabled, mysql_ok, mysql_detail)
     _render_save_feedback(config)
 
-    incoming = simulation_app(height=iframe_height, key="simulation_app")
+    incoming = component(height=iframe_height, key=html_path.stem)
     if incoming and _handle_incoming(incoming):
         st.rerun()
