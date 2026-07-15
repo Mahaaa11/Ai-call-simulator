@@ -884,6 +884,7 @@ ${transcript.slice(0, 2500)}`;
         }
 
         startBtn.addEventListener("click", async () => {
+            try {
             const apiKey = getApiKey();
             if (!apiKey) return alert("Clé OpenRouter requise.");
             callScenario = createCallScenario();
@@ -905,6 +906,13 @@ ${transcript.slice(0, 2500)}`;
                 + "L'agent IA ne connaît pas votre nom.", "prospect-msg");
             setStatus("L'agent IA vous appelle — répondez comme le prospect", "status-listening");
             await speakAgent(opening);
+            } catch (e) {
+                console.error("Start v2 error:", e);
+                alert("Erreur au démarrage : " + (e.message || e));
+                callActive = false;
+                startBtn.disabled = false;
+                setStatus("Erreur — réessayez", "status-idle");
+            }
         });
 
         talkBtn.addEventListener("click", async () => {

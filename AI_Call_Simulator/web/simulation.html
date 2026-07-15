@@ -522,9 +522,13 @@
             saveTrainingState(state);
         }
 
+        function getSimulatorConfig() {
+            return window.__SIMULATOR_CONFIG__ || {};
+        }
+
         function getTrainingEvolutionBlock() {
             const state = loadTrainingState();
-            const team = (getCfg().recentTrainingSessions || []);
+            const team = (getSimulatorConfig().recentTrainingSessions || []);
             let block = "\n\nÉVOLUTION ENTRAÎNEMENT — session n°" + ((state.sessionCount || 0) + 1) + " :";
             block += "\n- Varie tes formulations à chaque appel ; ne répète pas les mêmes phrases qu'avant.";
             const avg = (state.recentScores || []).length
@@ -3384,6 +3388,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         startBtn.addEventListener('click', async () => {
+            try {
             unlockAudioPlayback();
             const apiKey = getApiKey();
             if (!apiKey) return alert("Veuillez saisir votre clé API OpenRouter.");
@@ -3442,6 +3447,13 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 + ", ~" + persona.billAmount + " €/mois (élec seule). Scénario différent à chaque entraînement.", "prospect-msg");
             setStatus("Appel en cours", "status-listening");
             await speakProspect(profile.start);
+            } catch (e) {
+                console.error("Start call error:", e);
+                alert("Erreur au démarrage : " + (e.message || e));
+                callActive = false;
+                startBtn.disabled = false;
+                setStatus("Erreur — réessayez", "status-idle");
+            }
         });
 
         talkBtn.addEventListener('click', async () => {
