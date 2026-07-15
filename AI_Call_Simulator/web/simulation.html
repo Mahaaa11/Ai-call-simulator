@@ -1692,10 +1692,18 @@ ${scenarioBlock ? scenarioBlock + "\n" : ""}- Identité : ${persona.firstName} $
 
         function getAntiRepeatContext() {
             const said = chatTurns.filter(t => t.role === "assistant").map(t => t.content).slice(-8);
-            if (!said.length) return "";
-            return "\n\nDÉJÀ DIT PAR TOI DANS CET APPEL (INTERDIT de répéter — reformule ou passe à l'étape suivante) :\n"
-                + said.map(s => "- " + s.slice(0, 140)).join("\n")
-                + "\n- Avance la conversation : ne redis pas la même objection ni la même question.";
+            const lastAgent = lastAgentText();
+            if (!said.length && !lastAgent) return "";
+            let block = "";
+            if (said.length) {
+                block += "\n\nDÉJÀ DIT PAR TOI DANS CET APPEL (INTERDIT de répéter — reformule ou passe à l'étape suivante) :\n"
+                    + said.map(s => "- " + s.slice(0, 140)).join("\n")
+                    + "\n- Avance la conversation : ne redis pas la même objection ni la même question.";
+            }
+            if (lastAgent) {
+                block += "\n\nDERNIÈRE PHRASE DE L'AGENT (INTERDIT de la répéter ou la recopier) :\n- " + lastAgent.slice(0, 200);
+            }
+            return block;
         }
 
         function recentProspectReplies(limit = 6) {
@@ -3604,7 +3612,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return el ? el.value : "nvidia/nemotron-3-super-120b-a12b:free";
         }
 
-        function extractOpenRouterText(data) {
+        function extractOpenRouterText(data, allowReasoning) {
             const msg = data.choices?.[0]?.message;
             if (!msg) return "";
             const content = msg.content;
@@ -3613,6 +3621,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const joined = content.map(p => (typeof p === "string" ? p : p.text || "")).join("").trim();
                 if (joined) return joined;
             }
+            if (!allowReasoning) return "";
             const reasoning = msg.reasoning || msg.reasoning_content;
             if (typeof reasoning === "string" && reasoning.trim()) return reasoning.trim();
             if (Array.isArray(msg.reasoning_details)) {
@@ -3671,7 +3680,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return `Erreur HTTP ${status}`;
         }
 
-        async function callOpenRouter(messages, apiKey, model, maxTokens, temperature) {
+        async function callOpenRouter(messages, apiKey, model, maxTokens, temperature, isEval) {
             const resolvedModel = model || getNvidiaModel();
             let tokenLimit = maxTokens || getProspectMaxTokens(resolvedModel);
             const basePayload = {
@@ -3707,7 +3716,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         const msg = formatOpenRouterError(data, res.status);
                         const affordable = parseAffordableMaxTokens(typeof data?.error === "string" ? data.error : data?.error?.message);
                         if (res.status === 402 && affordable && payload.max_tokens > affordable) {
-                            return callOpenRouter(messages, apiKey, resolvedModel, affordable, temperature);
+                            return callOpenRouter(messages, apiKey, resolvedModel, affordable, temperature, isEval);
                         }
                         if (payload.reasoning && (res.status === 400 || res.status === 422)) {
                             lastError = new Error(msg);
@@ -3715,7 +3724,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         }
                         throw new Error(msg);
                     }
-                    const text = extractOpenRouterText(data);
+                    const text = extractOpenRouterText(data, !!isEval);
                     if (!text) {
                         console.warn("OpenRouter réponse sans texte:", data);
                         throw new Error("Réponse vide du modèle — essayez un autre modèle NVIDIA");
@@ -3737,6 +3746,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (extraSystem) system += "\n\n" + extraSystem;
             if (!opts.compact && !extraSystem) {
                 system += getAntiRepeatContext();
+            }
+            if (!extraSystem) {
+                system += "\n\nLANGUE ET STYLE (OBLIGATOIRE) :\n"
+                    + "- Réponds UNIQUEMENT en français oral (jamais d'anglais).\n"
+                    + "- Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.\n"
+                    + "- Réponds comme un vrai client au téléphone, pas comme une IA.";
             }
             let turns = chatTurns;
             if (opts.maxTurns && turns.length > opts.maxTurns) {
@@ -3775,7 +3790,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 for (const plan of retryPlans) {
                     const messages = buildOpenRouterMessages(extraSystem, plan.includeHint, plan);
                     try {
-                        return await callOpenRouter(messages, apiKey, model, modelTokens, temp);
+                        return await callOpenRouter(messages, apiKey, model, modelTokens, temp, isEval);
                     } catch (e) {
                         lastError = e;
                         const retryable = isPromptTokenLimitError(e.message) || /can only afford/i.test(e.message);
@@ -4468,7 +4483,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 "prospect agressif", "prospect pressé", "ton agacé", "regardant ailleurs",
                 "je reste dans le personnage", "profil : prospect", "profil :", "niveau débutant",
                 "slightly impatient", "pause court", "débutant)", "intermédiaire)", "avancé)",
-                "stop speaking", "speak me", "call me", "what do you want"
+                "stop speaking", "speak me", "call me", "what do you want",
+                "i understand", "let me think", "as an ai", "as a language model",
+                "sure,", "of course", "i see", "got it", "thank you for"
             ];
             if (leaks.some(k => t.includes(k))) return true;
             if (/^\*\*[^*]+\*\*\s*:?\s*$/.test(text.trim())) return true;
@@ -4477,7 +4494,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function isBadProspectReply(text) {
-            if (!text || isMetaLeak(text)) return true;
+            if (!text || isMetaLeak(text) || isProspectEnglishReply(text) || isProspectEcho(text)) return true;
             const trimmed = text.trim();
             if (/^réplique\s/i.test(trimmed)) return true;
             if (/^\*\*/.test(trimmed)) return true;
@@ -4532,15 +4549,45 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return false;
         }
 
+        function isProspectEnglishReply(text) {
+            const t = (text || "").trim();
+            if (!t || t.length < 6) return false;
+            const englishHits = (t.match(/\b(the|you|your|what|why|how|yes|no|okay|please|sorry|i am|i'm|don't|can't|want|speaking|listen|understand|hello|thank|would|could|should|have|this|that|with|about)\b/gi) || []).length;
+            const frenchHits = (t.match(/\b(je|j'|vous|oui|non|c'est|pas|pour|avec|chez|monsieur|madame|bonjour|d'accord|écoute|entendu|facture|fournisseur)\b/gi) || []).length;
+            if (englishHits >= 2 && frenchHits === 0) return true;
+            if (englishHits > frenchHits && frenchHits < 2 && t.length > 15) return true;
+            if (t.length > 12 && !/[àâäéèêëïîôùûüç]/i.test(t) && englishHits >= 1 && frenchHits === 0) return true;
+            return false;
+        }
+
         function isProspectEcho(reply) {
             const agent = normalizeReply(lastAgentText());
             const prospect = normalizeReply(reply);
-            if (!agent || !prospect || prospect.length < 8) return false;
-            if (agent.includes(prospect) || prospect.includes(agent.slice(0, Math.max(20, agent.length - 5)))) return true;
-            const pWords = prospect.split(" ").filter(w => w.length > 3);
-            const aWords = new Set(agent.split(" ").filter(w => w.length > 3));
-            if (pWords.length >= 2 && pWords.filter(w => aWords.has(w)).length >= pWords.length - 1) return true;
+            if (!agent || !prospect || prospect.length < 6) return false;
+            if (agent === prospect) return true;
+            if (agent.includes(prospect) || prospect.includes(agent)) return true;
+            if (prospect.length >= 12 && agent.includes(prospect.slice(0, Math.min(40, prospect.length)))) return true;
+            const pWords = prospect.split(" ").filter(w => w.length > 2);
+            const aWords = new Set(agent.split(" ").filter(w => w.length > 2));
+            if (pWords.length >= 2) {
+                const overlap = pWords.filter(w => aWords.has(w)).length;
+                if (overlap >= Math.max(2, pWords.length - 1)) return true;
+                if (overlap / pWords.length >= 0.65) return true;
+            }
+            const agentStart = agent.split(" ").slice(0, 5).join(" ");
+            const prospectStart = prospect.split(" ").slice(0, 5).join(" ");
+            if (agentStart.length > 10 && prospectStart === agentStart) return true;
             return false;
+        }
+
+        function applyProspectReplyGuards(reply) {
+            if (!reply) return getRealisticProspectFallback();
+            if (isProspectEnglishReply(reply) || isProspectEcho(reply) || isProspectHallucination(reply)
+                || isProspectNonsenseReply(reply) || isMetaLeak(reply) || isProspectRoleViolation(reply)
+                || isProspectStaleReply(reply)) {
+                return getRealisticProspectFallback();
+            }
+            return reply;
         }
 
         function getRealisticProspectFallback() {
@@ -4609,11 +4656,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function applyMinimalRealismGuards(reply) {
-            if (isProspectEcho(reply) || isProspectHallucination(reply) || isProspectNonsenseReply(reply) ||
-                isMetaLeak(reply) || isProspectRoleViolation(reply) || isProspectStaleReply(reply)) {
-                return getRealisticProspectFallback();
-            }
-            return reply;
+            return applyProspectReplyGuards(reply);
         }
 
         function cleanProspectReply(raw) {
@@ -4638,6 +4681,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             text = text
                 .replace(/^(Prospect\s*:\s*)/i, "")
                 .replace(/^\/no_think\s*/i, "")
+                .replace(/^(Okay|OK|Yes|No|Sure|Hello|Hi|Well|Listen|I understand|Thank you)[,.]?\s*/i, "")
                 .trim();
 
             const sentences = (text.match(/[^.!?]+[.!?]?/g) || [text])
@@ -4659,7 +4703,6 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 reply = !isProfileCalibrationEnabled() ? getRealisticProspectFallback() : fallbackProspectReply();
             }
             if (!isProfileCalibrationEnabled()) {
-                reply = applyMinimalRealismGuards(reply);
                 if (agentAskedIdentity() && isProspectRoleViolation(reply)) {
                     reply = getIdentityReply();
                 }
@@ -4680,6 +4723,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
             reply = enforceConversationStage(reply);
             syncPersonaFromReply(reply);
+            reply = applyProspectReplyGuards(reply);
             return ensureReplyVariety(reply);
         }
 
@@ -5164,7 +5208,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         }
                     ];
                     try {
-                        const raw = await callOpenRouter(messages, apiKey, model, getEvalMaxTokens(model), 0.25);
+                        const raw = await callOpenRouter(messages, apiKey, model, getEvalMaxTokens(model), 0.25, true);
                         const parsed = parseEvalResponse(raw);
                         if (parsed && parsed.sections && parsed.sections.length) {
                             if (!parsed.score_total) {
@@ -5277,13 +5321,15 @@ ${CALL_STRUCTURE}
 ${getTrainingEvolutionBlock()}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
+- LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
 - Réponds UNIQUEMENT avec tes paroles à l'oral, comme au téléphone.
+- Ne répète JAMAIS ce que l'agent vient de dire (pas d'écho, pas de paraphrase mot pour mot).
 - PAS de markdown (** * #), PAS de titres, PAS de listes.
 - PAS de didascalies (*ton agacé*, (pause), (regardant ailleurs), etc.).
 - NE DIS JAMAIS "prospect", "agressif", "débutant", "ma réponse en tant que", "je reste dans le personnage", "Profil :".
 - 1 à 3 phrases maximum, en français naturel.`;
             compactSystemPromptText = "Prospect " + profileKey + " (" + level + "). "
-                + "FR oral, 1-3 phrases. " + persona.supplier + " élec"
+                + "FRANÇAIS UNIQUEMENT, 1-3 phrases. Ne répète jamais l'agent. " + persona.supplier + " élec"
                 + (persona.scenarioType === "standard" ? " ~" + persona.billAmount + "€" : "")
                 + ". scénario:" + (persona.scenarioType || "standard") + ". PDL " + persona.pdl + ". "
                 + persona.firstName + " " + persona.lastName + ". Pas d'anglais. "
