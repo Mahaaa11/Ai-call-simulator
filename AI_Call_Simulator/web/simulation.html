@@ -291,7 +291,8 @@
                 0 24px 48px rgba(0, 0, 0, 0.45);
         }
 
-        .prospect-frame img {
+        .prospect-frame img,
+        .prospect-video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -300,17 +301,52 @@
             transition: filter 0.4s, transform 0.35s;
         }
 
+        .prospect-media {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .prospect-video {
+            position: absolute;
+            inset: 0;
+            opacity: 1;
+        }
+
+        .prospect-video.speaking-layer {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 1;
+        }
+
+        .prospect-frame.speaking .prospect-video.speaking-layer {
+            opacity: 1;
+        }
+
+        .prospect-fallback {
+            display: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .prospect-frame.video-fallback .prospect-video { display: none; }
+        .prospect-frame.video-fallback .prospect-fallback { display: block; }
+
         .prospect-frame.gender-female img { object-position: center 15%; }
         .prospect-frame.gender-male img { object-position: center 22%; }
 
-        .prospect-frame.speaking img {
+        .prospect-frame.speaking img,
+        .prospect-frame.speaking .prospect-fallback {
             filter: brightness(1.06) saturate(1.08);
-            animation: imgSpeak 0.75s ease-in-out infinite alternate;
         }
 
-        @keyframes imgSpeak {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.03); }
+        .prospect-frame.video-ready.speaking {
+            animation: none;
+        }
+
+        .prospect-frame.video-ready.speaking img {
+            animation: none;
         }
 
         .video-vignette {
@@ -900,8 +936,15 @@
     <div class="call-experience">
         <div class="call-stage">
             <div class="video-shell">
-                <div class="prospect-frame" id="prospectFrame">
-                    <img src="assets/prospect-female-calm.png" id="prospectAvatarImg" alt="Prospect au téléphone">
+                <div class="prospect-frame video-ready" id="prospectFrame">
+                    <div class="prospect-media">
+                        <video class="prospect-video" id="prospectVideoIdle" muted loop playsinline autoplay preload="auto"
+                            poster="assets/prospect-female-calm.png"
+                            src="assets/prospect-female-idle.mp4"></video>
+                        <video class="prospect-video speaking-layer" id="prospectVideoSpeak" muted loop playsinline preload="auto"
+                            src="assets/prospect-female-speaking.mp4"></video>
+                    </div>
+                    <img src="assets/prospect-female-calm.png" id="prospectAvatarImg" class="prospect-fallback" alt="Prospect au téléphone">
                     <div class="video-vignette"></div>
                     <div class="live-caption" id="liveCaption" aria-live="polite"></div>
                     <div class="speak-waves" id="prospectWaves"><span></span><span></span><span></span></div>
@@ -1315,17 +1358,82 @@
             return "assets/prospect-" + (gender === "female" ? "female" : "male") + "-calm.png";
         }
 
-        function updateProspectAvatar() {
+        function resolveProspectVideoSrc(gender, mode) {
+            return "assets/prospect-" + (gender === "female" ? "female" : "male") + "-" + mode + ".mp4";
+        }
+
+        function playProspectVideo(el) {
+            if (!el) return;
+            const p = el.play();
+            if (p && typeof p.catch === "function") p.catch(() => {});
+        }
+
+        function setProspectVideoMode(mode) {
+            const frame = document.getElementById("prospectFrame");
+            const idleVid = document.getElementById("prospectVideoIdle");
+            const speakVid = document.getElementById("prospectVideoSpeak");
+            if (!idleVid || !speakVid || !frame || frame.classList.contains("video-fallback")) return;
+            if (mode === "speaking") {
+                speakVid.currentTime = 0;
+                playProspectVideo(speakVid);
+            } else {
+                speakVid.pause();
+                playProspectVideo(idleVid);
+            }
+        }
+
+        function bindProspectVideos(gender) {
+            const frame = document.getElementById("prospectFrame");
+            const idleVid = document.getElementById("prospectVideoIdle");
+            const speakVid = document.getElementById("prospectVideoSpeak");
             const img = document.getElementById("prospectAvatarImg");
-            if (!img || !prospectPersona) return;
+            if (!idleVid || !speakVid || !frame) return;
+
+            const idleSrc = resolveProspectVideoSrc(gender, "idle");
+            const speakSrc = resolveProspectVideoSrc(gender, "speaking");
+            const poster = resolveProspectAvatarSrc(gender);
+
+            const onVideoFail = () => {
+                frame.classList.add("video-fallback");
+                frame.classList.remove("video-ready");
+                if (img) img.src = poster;
+            };
+
+            idleVid.onerror = onVideoFail;
+            speakVid.onerror = onVideoFail;
+            idleVid.onloadeddata = () => {
+                frame.classList.add("video-ready");
+                frame.classList.remove("video-fallback");
+                playProspectVideo(idleVid);
+            };
+
+            if (idleVid.dataset.src !== idleSrc) {
+                idleVid.dataset.src = idleSrc;
+                idleVid.poster = poster;
+                idleVid.src = idleSrc;
+                idleVid.load();
+            }
+            if (speakVid.dataset.src !== speakSrc) {
+                speakVid.dataset.src = speakSrc;
+                speakVid.src = speakSrc;
+                speakVid.load();
+            }
+            if (img) {
+                img.src = poster;
+                img.alt = (gender === "female" ? "Prospecte" : "Prospect") + " au téléphone";
+            }
+        }
+
+        function updateProspectAvatar() {
+            if (!prospectPersona) return;
             const gender = prospectPersona.gender || "male";
             const profileKey = document.getElementById("profileSelect").value;
             const mood = getProspectMood(profileKey, getLevel());
-            img.src = resolveProspectAvatarSrc(gender);
-            img.alt = (gender === "female" ? "Prospecte" : "Prospect") + " au téléphone";
-            if (prospectFrame) {
-                prospectFrame.classList.remove("gender-male", "gender-female", "mood-calm", "mood-tense", "mood-angry");
-                prospectFrame.classList.add("gender-" + gender, "mood-" + mood);
+            const frame = document.getElementById("prospectFrame");
+            bindProspectVideos(gender);
+            if (frame) {
+                frame.classList.remove("gender-male", "gender-female", "mood-calm", "mood-tense", "mood-angry");
+                frame.classList.add("gender-" + gender, "mood-" + mood);
             }
             const nameEl = document.getElementById("prospectDisplayName");
             if (nameEl) {
@@ -1824,6 +1932,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 ping.volume = 0.01;
                 ping.play().catch(() => {});
                 audioUnlocked = true;
+                playProspectVideo(document.getElementById("prospectVideoIdle"));
             } catch (_) {}
         }
 
@@ -3508,6 +3617,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (!prospectFrame) return;
             prospectFrame.classList.toggle("speaking", active);
             prospectFrame.classList.toggle("thinking", false);
+            setProspectVideoMode(active ? "speaking" : "idle");
             if (prospectStatusLabel) {
                 prospectStatusLabel.textContent = active ? "Le prospect parle…" : (callActive ? "À vous de parler" : "En attente d'appel");
                 prospectStatusLabel.classList.toggle("active", active);
@@ -4922,6 +5032,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             ensureVoices();
             updateProfilePreview();
+            bindProspectVideos("female");
             syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
             document.getElementById("levelSelect").addEventListener("change", updateProfilePreview);
