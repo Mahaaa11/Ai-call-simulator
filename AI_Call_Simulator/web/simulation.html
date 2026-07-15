@@ -917,7 +917,7 @@
         </div>
 
         <label class="calibration-label">
-            <input type="checkbox" id="calibrationToggle"> Scripts d'objections prédéfinies
+            <input type="checkbox" id="calibrationToggle"> Mode strict (force plus d'objections scriptées)
         </label>
 
         <details class="advanced-options" id="advancedOptions">
@@ -3596,7 +3596,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function applyLevelCalibration(reply) {
             if (!reply) return reply;
             reply = applyLevelGuardsAlways(reply);
-            if (!isProfileCalibrationEnabled()) return reply;
+            if (!isProfileCalibrationEnabled()) return applySoftObjections(reply);
 
             if (getProfileKey() === "presse") return applyPresseCalibration(reply);
             if (getProfileKey() === "agressif") return applyAgressifCalibration(reply);
@@ -4511,16 +4511,42 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function fallbackProspectReply() {
             if (agentAskedIdentity()) return getIdentityReply();
-            if (!isProfileCalibrationEnabled()) {
-                return ensureReplyVariety("Je vous écoute, qu'est-ce que vous voulez ?");
-            }
             const profile = getProfileKey();
-            const contextual = getContextualObjection(profile, getLevel());
+            const level = getLevel();
+            const contextual = getContextualObjection(profile, level);
             if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
-            const factual = tryFactualAnswer(profile, getLevel());
+            const factual = tryFactualAnswer(profile, level);
             if (factual && !isRepeatOfRecentProspectReply(factual)) return factual;
-            const list = getProfileFallbacks();
+            const list = getProfileFallbacks(level);
             return pickNextUnusedLine(list) || ensureReplyVariety("Je vous écoute, mais je ne suis pas convaincu.");
+        }
+
+        function applySoftObjections(reply) {
+            const profile = getProfileKey();
+            const level = getLevel();
+
+            const factual = tryFactualAnswer(profile, level);
+            if (factual && !isRepeatOfRecentProspectReply(factual)) return factual;
+
+            if (agentIgnoredProspectQuestion()) {
+                const contextual = getContextualObjection(profile, level);
+                if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
+                const alt = pickNextUnusedLine(getProfileFallbacks(level));
+                if (alt) return alt;
+            }
+
+            if (!reply || isBadProspectReply(reply) || isProspectEcho(reply) || isProspectEnglishReply(reply)) {
+                return fallbackProspectReply();
+            }
+
+            if (countAgentTurns() <= 3 && agentIsCommercialPitch() && isCooperativeReply(reply) && !canCooperateNow(profile, level)) {
+                const contextual = getContextualObjection(profile, level);
+                if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
+                const alt = pickNextUnusedLine(getProfileFallbacks(level));
+                if (alt) return alt;
+            }
+
+            return reply;
         }
 
         function isProspectNonsenseReply(reply) {
@@ -4581,11 +4607,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function applyProspectReplyGuards(reply) {
-            if (!reply) return getRealisticProspectFallback();
+            if (!reply) return fallbackProspectReply();
             if (isProspectEnglishReply(reply) || isProspectEcho(reply) || isProspectHallucination(reply)
                 || isProspectNonsenseReply(reply) || isMetaLeak(reply) || isProspectRoleViolation(reply)
                 || isProspectStaleReply(reply)) {
-                return getRealisticProspectFallback();
+                return fallbackProspectReply();
             }
             return reply;
         }
@@ -4652,7 +4678,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const pitch = getScenarioContextReply("pitch");
                 if (pitch) return pitch;
             }
-            return sec ? "Bon, c'est pour quoi exactement ?" : "D'accord, c'est pour quoi ?";
+            return fallbackProspectReply();
         }
 
         function applyMinimalRealismGuards(reply) {
@@ -4700,26 +4726,26 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (agentAskedIdentity() && (!reply || isBadProspectReply(reply) || identityGarbage || isProspectRoleViolation(reply) || isProspectWrongName(reply))) {
                 reply = getIdentityReply();
             } else if (isBadProspectReply(reply)) {
-                reply = !isProfileCalibrationEnabled() ? getRealisticProspectFallback() : fallbackProspectReply();
+                reply = fallbackProspectReply();
             }
-            if (!isProfileCalibrationEnabled()) {
-                if (agentAskedIdentity() && isProspectRoleViolation(reply)) {
-                    reply = getIdentityReply();
-                }
+            if (agentAskedIdentity() && isProspectRoleViolation(reply)) {
+                reply = getIdentityReply();
             }
             reply = applyLevelCalibration(reply);
+            reply = sanitizeRepeatedFactuals(reply);
+            reply = stripPrematureIban(reply);
             if (isProfileCalibrationEnabled()) {
-                reply = sanitizeRepeatedFactuals(reply);
-                reply = stripPrematureIban(reply);
                 if (getLevel() === "debutant" && isTooAggressiveForDebutant(reply)) {
                     const coop = applyDebutantCooperation(getProfileKey(), reply);
                     reply = coop || "D'accord, je vous écoute. Faites vite.";
                 }
+            } else if (getLevel() === "debutant" && isTooAggressiveForDebutant(reply)) {
+                reply = "D'accord, je vous écoute. Faites vite.";
             }
             if (isProspectRoleViolation(reply)) {
-                reply = agentAskedIdentity() ? getIdentityReply() : getRealisticProspectFallback();
+                reply = agentAskedIdentity() ? getIdentityReply() : fallbackProspectReply();
             } else if (isProspectStaleReply(reply)) {
-                reply = getRealisticProspectFallback();
+                reply = fallbackProspectReply();
             }
             reply = enforceConversationStage(reply);
             syncPersonaFromReply(reply);
