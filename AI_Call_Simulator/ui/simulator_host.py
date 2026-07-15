@@ -211,9 +211,14 @@ def _build_streamlit_config(
     lipsync_feedback = st.session_state.pop("lipsync_feedback", None)
     if lipsync_feedback:
         config["lastLipsyncResult"] = lipsync_feedback
+    tts_feedback = st.session_state.pop("tts_feedback", None)
+    if tts_feedback:
+        config["lastTtsResult"] = tts_feedback
     did_key = _get_did_api_key()
     if did_key:
         config["didLipsyncEnabled"] = True
+    if _get_secret_or_env("OPENROUTER_API_KEY"):
+        config["hostedTtsEnabled"] = True
     return config
 
 
@@ -307,6 +312,38 @@ def _process_lipsync(incoming: dict) -> bool:
     return True
 
 
+def _process_hosted_tts(incoming: dict) -> bool:
+    import base64
+
+    from ui.streamlit_tts import synthesize_speech
+
+    request_id = str(incoming.get("request_id") or "")
+    text = str(incoming.get("text") or "")
+    gender = str(incoming.get("gender") or "female")
+    if not request_id or not text.strip():
+        return False
+    key = _payload_key(incoming)
+    tts_key = f"tts:{key}"
+    if st.session_state.get("last_tts_key") == tts_key:
+        return False
+    try:
+        audio = synthesize_speech(text, gender=gender)
+        st.session_state.tts_feedback = {
+            "ok": True,
+            "request_id": request_id,
+            "audio_b64": base64.b64encode(audio).decode("ascii"),
+            "mime": "audio/mpeg",
+        }
+    except Exception as exc:
+        st.session_state.tts_feedback = {
+            "ok": False,
+            "request_id": request_id,
+            "error": str(exc),
+        }
+    st.session_state.last_tts_key = tts_key
+    return True
+
+
 def _handle_incoming(incoming: dict | object) -> bool:
     if not incoming:
         return False
@@ -314,6 +351,8 @@ def _handle_incoming(incoming: dict | object) -> bool:
         return _process_eval_update(incoming)
     if isinstance(incoming, dict) and incoming.get("action") == "lipsync":
         return _process_lipsync(incoming)
+    if isinstance(incoming, dict) and incoming.get("action") == "hosted_tts":
+        return _process_hosted_tts(incoming)
     if isinstance(incoming, dict) and incoming.get("action") == "save":
         return _process_bridge_payload(incoming.get("payload") or {})
     if isinstance(incoming, dict):

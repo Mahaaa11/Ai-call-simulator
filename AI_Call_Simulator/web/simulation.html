@@ -944,7 +944,7 @@
                 <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
             </select>
             <label class="calibration-label" id="didLipsyncLabel" style="display:none;margin-top:10px;">
-                <input type="checkbox" id="didLipsyncToggle" checked> Lip-sync D-ID (bouche synchronisée, ~20 s/réplique)
+                <input type="checkbox" id="didLipsyncToggle"> Lip-sync D-ID (bouche synchronisée, ~20 s/réplique — nécessite clé D-ID)
             </label>
         </details>
 
@@ -1768,6 +1768,16 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
         const synth = window.speechSynthesis;
 
+        function getSpeechSynth() {
+            try {
+                if (window.parent && window.parent.speechSynthesis) return window.parent.speechSynthesis;
+            } catch (_) {}
+            try {
+                if (window.top && window.top.speechSynthesis) return window.top.speechSynthesis;
+            } catch (_) {}
+            return synth;
+        }
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let speechRecAvailable = false;
@@ -1940,6 +1950,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         const PENDING_EVAL_KEY = "simulator_pending_eval_v1";
         const CALL_STASH_KEY = "simulator_call_stash_v1";
         const PENDING_LIPSYNC_KEY = "simulator_pending_lipsync_v1";
+        const PENDING_TTS_KEY = "simulator_pending_tts_v1";
         const DID_LIPSYNC_PREF_KEY = "simulator_did_lipsync_pref_v1";
 
         function unlockAudioPlayback() {
@@ -3718,7 +3729,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function pickFrenchVoiceForGender(gender) {
-            const voices = synth ? synth.getVoices() : [];
+            const synthRef = getSpeechSynth();
+            const voices = synthRef ? synthRef.getVoices() : [];
             if (gender === "female") {
                 return voices.find(v => v.lang === "fr-FR" && /female|denise|amélie|amelie|audrey|marie|hortense|julie|virginie/i.test(v.name))
                     || voices.find(v => v.lang && v.lang.startsWith("fr") && /female|femme/i.test(v.name))
@@ -3731,8 +3743,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function ensureVoices() {
             return new Promise((resolve) => {
+                const synthRef = getSpeechSynth();
                 const pick = () => {
-                    const voices = synth ? synth.getVoices() : [];
+                    const voices = synthRef ? synthRef.getVoices() : [];
                     const gender = prospectPersona && prospectPersona.gender;
                     frenchVoice = (gender && pickFrenchVoiceForGender(gender))
                         || voices.find(v => v.lang === "fr-FR")
@@ -3742,8 +3755,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     resolve(voices);
                 };
                 pick();
-                if (synth && synth.getVoices().length === 0 && synth.onvoiceschanged !== undefined) {
-                    synth.onvoiceschanged = pick;
+                if (synthRef && synthRef.getVoices().length === 0 && synthRef.onvoiceschanged !== undefined) {
+                    synthRef.onvoiceschanged = pick;
                     setTimeout(pick, 1000);
                 }
             });
@@ -3905,17 +3918,31 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         async function checkTtsServer() {
             const el = document.getElementById("ttsStatus");
+            const server = getTtsServer();
+            if (!server) {
+                if (shouldUseHostedTts()) {
+                    el.innerHTML = "✅ Voix française hébergée (edge-tts via Streamlit)";
+                    el.style.color = "#16a34a";
+                } else if (isHostedMode()) {
+                    el.innerHTML = "ℹ️ Mode hébergé : voix du navigateur";
+                    el.style.color = "#2563eb";
+                } else {
+                    el.innerHTML = "⚠️ Lancez le serveur voix :<br><code>python3 AI_Call_Simulator/web/tts_server.py</code>";
+                    el.style.color = "#dc2626";
+                }
+                return;
+            }
             try {
                 const ctrl = new AbortController();
                 setTimeout(() => ctrl.abort(), 8000);
-                const r = await fetch(getTtsServer() + "/health", { signal: ctrl.signal });
+                const r = await fetch(server + "/health", { signal: ctrl.signal });
                 if (!r.ok) throw new Error("health " + r.status);
                 ttsServerOk = (await r.text()).trim() === "ok";
             } catch (_) {
                 try {
                     const ctrl2 = new AbortController();
                     setTimeout(() => ctrl2.abort(), 10000);
-                    const r2 = await fetch(getTtsServer() + "/tts?text=ok", { signal: ctrl2.signal });
+                    const r2 = await fetch(server + "/tts?text=ok", { signal: ctrl2.signal });
                     if (!r2.ok) throw new Error("tts " + r2.status);
                     const blob = await r2.blob();
                     ttsServerOk = blob.size > 500;
@@ -3928,12 +3955,22 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 el.innerHTML = "✅ Serveur voix actif (français Denise)";
                 el.style.color = "#16a34a";
             } else if (isHostedMode()) {
-                el.innerHTML = "ℹ️ Mode hébergé : voix du navigateur (français) utilisée automatiquement";
-                el.style.color = "#2563eb";
+                const cfg = getSimulatorConfig();
+                if (cfg.hostedTtsEnabled) {
+                    el.innerHTML = "✅ Voix française hébergée (edge-tts via Streamlit)";
+                } else {
+                    el.innerHTML = "ℹ️ Mode hébergé : voix du navigateur utilisée";
+                }
+                el.style.color = "#16a34a";
             } else {
                 el.innerHTML = "⚠️ Lancez le serveur voix :<br><code>python3 AI_Call_Simulator/web/tts_server.py</code>";
                 el.style.color = "#dc2626";
             }
+        }
+
+        function shouldUseHostedTts() {
+            const cfg = getSimulatorConfig();
+            return !!(cfg.hostedTtsEnabled || cfg.hostedOnStreamlit || useStreamlitSave() || isStreamlitCloud());
         }
 
         function useDidLipsync() {
@@ -3970,12 +4007,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             };
         }
 
-        function stashCallStateForLipsync(requestId, text) {
-            sessionStorage.setItem(PENDING_LIPSYNC_KEY, JSON.stringify({
-                request_id: requestId,
-                text: text,
-                at: Date.now()
-            }));
+        function stashCallStateForAsync(pendingKey, payload) {
+            sessionStorage.setItem(pendingKey, JSON.stringify(payload));
             sessionStorage.setItem(CALL_STASH_KEY, JSON.stringify({
                 chatTurns: chatTurns,
                 callActive: callActive,
@@ -3987,6 +4020,97 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 agentPersona: agentPersona,
                 callElapsedSec: callElapsedSec
             }));
+        }
+
+        function stashCallStateForLipsync(requestId, text) {
+            stashCallStateForAsync(PENDING_LIPSYNC_KEY, {
+                request_id: requestId,
+                text: text,
+                at: Date.now()
+            });
+        }
+
+        function requestStreamlitHostedTts(text) {
+            const requestId = "tts_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+            stashCallStateForAsync(PENDING_TTS_KEY, {
+                request_id: requestId,
+                text: text,
+                at: Date.now()
+            });
+            setProspectThinking(true);
+            setStatus("Synthèse voix française…", "status-thinking");
+            pushToStreamlit({
+                action: "hosted_tts",
+                request_id: requestId,
+                text: text.slice(0, 500),
+                gender: (prospectPersona && prospectPersona.gender) || "female"
+            });
+            return true;
+        }
+
+        async function playAudioBase64(b64, mime, captionText) {
+            if (!b64) return false;
+            if (lastProspectAudio) {
+                lastProspectAudio.pause();
+                if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
+                lastProspectAudio = null;
+            }
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: mime || "audio/mpeg" });
+            const blobUrl = URL.createObjectURL(blob);
+            const audio = new Audio(blobUrl);
+            audio._blobUrl = blobUrl;
+            audio.volume = 1;
+            lastProspectAudio = audio;
+            if (captionText) updateLiveCaption("Prospect", captionText, "prospect");
+            setStatus("Le prospect parle…", "status-thinking");
+            startProspectMouthAnim();
+            await new Promise((resolve, reject) => {
+                audio.onended = () => {
+                    stopProspectMouthAnim();
+                    URL.revokeObjectURL(blobUrl);
+                    resolve();
+                };
+                audio.onerror = () => {
+                    stopProspectMouthAnim();
+                    reject(new Error("Lecture audio échouée"));
+                };
+                const p = audio.play();
+                if (p && p.catch) p.catch(reject);
+            });
+            audioUnlocked = true;
+            return true;
+        }
+
+        async function resumePendingTts() {
+            const pendingRaw = sessionStorage.getItem(PENDING_TTS_KEY);
+            if (!pendingRaw) return false;
+            const cfg = getSimulatorConfig();
+            const result = cfg.lastTtsResult;
+            if (!result || !result.request_id) return false;
+            let pending;
+            try { pending = JSON.parse(pendingRaw); } catch (_) { return false; }
+            if (pending.request_id !== result.request_id) return false;
+            sessionStorage.removeItem(PENDING_TTS_KEY);
+            setProspectThinking(false);
+            if (!result.ok || !result.audio_b64) {
+                const el = document.getElementById("ttsStatus");
+                if (el) {
+                    el.innerHTML = "⚠️ Voix hébergée : " + (result.error || "erreur");
+                    el.style.color = "#dc2626";
+                }
+                return await speakBrowser(pending.text || "");
+            }
+            try {
+                await playAudioBase64(result.audio_b64, result.mime, pending.text || "");
+                if (callActive) setStatus("À vous de parler", "status-listening");
+                return true;
+            } catch (e) {
+                console.warn("Hosted TTS playback:", e);
+                return await speakBrowser(pending.text || "");
+            }
         }
 
         function restoreCallStateFromStash() {
@@ -4036,6 +4160,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             setProspectThinking(false);
             setStatus("Le prospect parle (lip-sync)…", "status-thinking");
             frame.classList.add("did-playing");
+            didVid.muted = false;
+            didVid.volume = 1;
             didVid.src = videoUrl;
             didVid.currentTime = 0;
             try {
@@ -4104,33 +4230,41 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (pending.request_id !== result.request_id) return false;
             sessionStorage.removeItem(PENDING_LIPSYNC_KEY);
             if (!result.ok || !result.video_url) {
-                const el = document.getElementById("dbStatus");
+                const el = document.getElementById("ttsStatus");
                 if (el) {
-                    el.innerHTML = "⚠️ Lip-sync D-ID : " + (result.error || "erreur");
-                    el.style.color = "#dc2626";
+                    el.innerHTML = "⚠️ Lip-sync D-ID : " + (result.error || "erreur") + " — voix classique";
+                    el.style.color = "#d97706";
                 }
-                if (callActive) setStatus("À vous de parler", "status-listening");
-                return false;
+                if (shouldUseHostedTts()) {
+                    requestStreamlitHostedTts(pending.text || "");
+                    return true;
+                }
+                return await speakBrowser(pending.text || "");
             }
             try {
                 await playDidVideo(result.video_url, pending.text || "");
                 return true;
             } catch (e) {
                 console.warn("Lip-sync playback:", e);
-                if (callActive) setStatus("À vous de parler", "status-listening");
-                return false;
+                if (shouldUseHostedTts()) {
+                    requestStreamlitHostedTts(pending.text || "");
+                    return true;
+                }
+                return await speakBrowser(pending.text || "");
             }
         }
 
         async function speakLocalTTS(text) {
             if (!text) return false;
+            const server = getTtsServer();
+            if (!server) return false;
             try {
                 if (lastProspectAudio) {
                     lastProspectAudio.pause();
                     if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
                     lastProspectAudio = null;
                 }
-                const url = getTtsServer() + "/tts?text=" + encodeURIComponent(text.slice(0, 500))
+                const url = server + "/tts?text=" + encodeURIComponent(text.slice(0, 500))
                     + "&voice=" + encodeURIComponent((prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER.female);
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("TTS HTTP " + res.status);
@@ -4180,14 +4314,17 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function speakBrowser(text) {
-            return new Promise((resolve) => {
-                if (!synth || !text) return resolve(false);
-                synth.cancel();
-                synth.resume();
+            return new Promise(async (resolve) => {
+                if (!text) return resolve(false);
+                const synthRef = getSpeechSynth();
+                if (!synthRef) return resolve(false);
+                await ensureVoices();
+                synthRef.cancel();
+                try { synthRef.resume(); } catch (_) {}
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = "fr-FR";
                 u.volume = 1;
-                u.rate = 0.9;
+                u.rate = 0.92;
                 const genderVoice = prospectPersona && pickFrenchVoiceForGender(prospectPersona.gender);
                 if (genderVoice) u.voice = genderVoice;
                 else if (frenchVoice) u.voice = frenchVoice;
@@ -4196,6 +4333,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     if (done) return;
                     done = true;
                     clearInterval(keepAlive);
+                    clearTimeout(fallbackTimer);
                     stopProspectMouthAnim();
                     resolve(ok);
                 };
@@ -4206,10 +4344,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 u.onend = () => finish(true);
                 u.onerror = () => finish(false);
                 const keepAlive = setInterval(() => {
-                    if (synth.speaking) { synth.pause(); synth.resume(); }
-                }, 4000);
-                synth.speak(u);
-                setTimeout(() => { if (!done && !synth.speaking) finish(false); }, 10000);
+                    try {
+                        if (synthRef.speaking) { synthRef.pause(); synthRef.resume(); }
+                    } catch (_) {}
+                }, 3000);
+                const fallbackTimer = setTimeout(() => {
+                    if (!done && !synthRef.speaking) finish(false);
+                }, 25000);
+                try {
+                    synthRef.speak(u);
+                } catch (_) {
+                    finish(false);
+                }
             });
         }
 
@@ -4234,12 +4380,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     }
                 } catch (e) {
                     console.warn("D-ID lip-sync:", e);
-                    const el = document.getElementById("ttsStatus");
-                    if (el) {
-                        el.innerHTML = "⚠️ Lip-sync indisponible — voix classique : " + (e.message || e);
-                        el.style.color = "#d97706";
-                    }
                 }
+            }
+
+            if (shouldUseHostedTts()) {
+                requestStreamlitHostedTts(text);
+                return true;
             }
 
             let ok = await speakLocalTTS(text);
@@ -5260,6 +5406,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             if (ready) {
                 onStreamlitConfigApplied();
                 await resumePendingLipsync();
+                await resumePendingTts();
                 await resumePendingEvaluation();
             }
             ensureVoices();
