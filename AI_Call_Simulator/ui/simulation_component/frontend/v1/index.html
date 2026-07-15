@@ -1524,7 +1524,9 @@
             }
             if (prospectStatusLabel && callActive) {
                 const moodLabel = mood === "angry" ? " — profil difficile" : mood === "tense" ? " — pressé/méfiant" : "";
-                prospectStatusLabel.textContent = (gender === "female" ? "Prospecte" : "Prospect") + " en ligne" + moodLabel;
+                const scenarioLabel = getScenarioLabel(prospectPersona.scenarioType || "standard");
+                prospectStatusLabel.textContent = (gender === "female" ? "Prospecte" : "Prospect")
+                    + " en ligne — " + scenarioLabel + moodLabel;
             }
         }
         const PERSONA_LAST_NAMES = ["Dupont", "Martin", "Bernard", "Leroy", "Moreau", "Petit", "Garcia", "Roux", "Faure", "Girard"];
@@ -1540,6 +1542,42 @@
         ];
         const PERSONA_YEARS = ["2 ans", "3 ans", "plus de 4 ans", "5 ans", "depuis 6 ans", "plusieurs années"];
         const PERSONA_SCENARIO_TYPES = ["standard", "demenagement", "mise_en_service"];
+        const SCENARIO_WEIGHTS = { standard: 0.58, demenagement: 0.24, mise_en_service: 0.18 };
+        const SCENARIO_LABELS = {
+            standard: "Comparatif classique",
+            demenagement: "Déménagement",
+            mise_en_service: "Mise en service"
+        };
+
+        function getScenarioLabel(type) {
+            return SCENARIO_LABELS[type] || SCENARIO_LABELS.standard;
+        }
+
+        function pickScenarioType(state) {
+            const recent = (state.recentPersonas || []).slice(0, 5).map(p => p.scenarioType || "standard");
+            const counts = { standard: 0, demenagement: 0, mise_en_service: 0 };
+            recent.forEach(t => { if (counts[t] !== undefined) counts[t]++; });
+            const sessionNum = state.sessionCount || 0;
+            const rotatePref = PERSONA_SCENARIO_TYPES[sessionNum % PERSONA_SCENARIO_TYPES.length];
+
+            const candidates = PERSONA_SCENARIO_TYPES.map(type => {
+                let weight = SCENARIO_WEIGHTS[type] || 0.33;
+                if (recent[0] === type) weight *= 0.22;
+                if (recent[1] === type) weight *= 0.5;
+                if (counts[type] >= 2) weight *= 0.35;
+                if (sessionNum > 0 && type === rotatePref && recent[0] !== type) weight *= 1.4;
+                return { type, weight };
+            });
+
+            const total = candidates.reduce((s, c) => s + c.weight, 0);
+            let r = Math.random() * total;
+            for (const c of candidates) {
+                r -= c.weight;
+                if (r <= 0) return c.type;
+            }
+            return "standard";
+        }
+
         const MOVE_WHEN_OPTIONS = [
             "dans deux semaines", "dans trois semaines", "la semaine prochaine",
             "le mois prochain", "dans un mois", "fin du mois"
@@ -1550,12 +1588,6 @@
             "rendez-vous technicien à planifier",
             "j'attends la date d'activation"
         ];
-
-        function pickScenarioType(state) {
-            const recent = new Set((state.recentPersonas || []).slice(0, 2).map(p => p.scenarioType || "standard"));
-            const pool = PERSONA_SCENARIO_TYPES.filter(t => !recent.has(t));
-            return pickRandom(pool.length ? pool : PERSONA_SCENARIO_TYPES);
-        }
 
         function pickDifferentAddress(exclude) {
             const others = PERSONA_ADDRESSES.filter(a => a !== exclude);
@@ -1648,7 +1680,8 @@
 - À l'ancien logement tu payais environ ${persona.billAmount} €/mois — au nouveau tu ne connais pas encore la facture.
 - PDL ancien logement : ${persona.pdl} ; au nouveau logement : ${persona.newPdlKnown ? persona.newPdl : "pas encore (pas sur la facture / pas reçu)"}.
 - Tu peux parler de résiliation, transfert de contrat, mise en service au nouveau logement, délais Enedis.
-- Si l'agent ne pose pas la question, tu peux mentionner le déménagement quand il parle de facture, adresse ou fournisseur.`;
+- Si l'agent ne pose pas la question, tu peux mentionner le déménagement quand il parle de facture, adresse ou fournisseur.
+- Ne force pas le sujet déménagement dès la première réplique — laisse l'agent mener.`;
             }
             if (persona.scenarioType === "mise_en_service") {
                 return `SCÉNARIO — MISE EN SERVICE (à intégrer naturellement dans l'appel) :
@@ -1660,7 +1693,8 @@
 - Pas de facture ni historique de conso au nouveau logement.
 - PDL : ${persona.newPdlKnown ? persona.newPdl : "tu ne l'as pas encore / Enedis doit le fournir"}.
 - Tu poses des questions sur délais, premier contrat, compteur Linky, Enedis, sans engagement.
-- Si l'agent parle seulement d'économies sur l'ancienne facture, rappelle que c'est une mise en service / nouveau logement.`;
+- Si l'agent parle seulement d'économies sur l'ancienne facture, rappelle que c'est une mise en service / nouveau logement.
+- Ne parle de mise en service ou nouveau logement QUE si l'agent évoque emménagement, adresse, compteur, Enedis ou premier contrat.`;
             }
             return "";
         }
@@ -1977,6 +2011,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function createProspectPersona(profileKey) {
             const state = loadTrainingState();
+            const scenarioType = pickScenarioType(state);
             const recentKeys = new Set((state.recentPersonas || []).map(p =>
                 (p.scenarioType || "standard") + "|" + (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
             ));
@@ -1989,7 +2024,6 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille"])
                     : pickRandom(PERSONA_FIRST_NAMES);
                 const lastName = pickRandom(PERSONA_LAST_NAMES);
-                const scenarioType = pickScenarioType(state);
                 const oldAddress = pickRandom(PERSONA_ADDRESSES);
                 const newAddress = pickDifferentAddress(oldAddress);
                 const newPdl = randomPdl();
@@ -4601,7 +4635,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return sec ? "Pourquoi moi ? Pourquoi vous m'appelez ?" : "C'est pour quoi exactement votre appel ?";
             }
             if ((personaIsMoving() || personaScenarioType() === "mise_en_service")
-                && countAgentTurns() >= 2 && agentIsCommercialPitch() && !agentAskedMovingOrMes()
+                && countAgentTurns() >= 4 && agentIsCommercialPitch() && !agentAskedMovingOrMes()
                 && !prospectAlreadySaidPhrase(/déménag|demenag|mise en service|emménag|emmenag/i)) {
                 const pitch = getScenarioContextReply("pitch");
                 if (pitch) return pitch;
