@@ -250,6 +250,35 @@ def _render_save_feedback(config: dict) -> None:
         st.error(f"Sauvegarde MySQL échouée : {result.get('error', 'erreur inconnue')}")
 
 
+def _recent_v1_training_sessions(mysql_ok: bool, limit: int = 8) -> list[dict]:
+    if not mysql_ok:
+        return []
+    try:
+        rows = list_conversations(limit=40)
+        sessions = []
+        for row in rows:
+            mode = (row.get("training_mode") or "train_agent").strip()
+            if mode not in ("train_agent", ""):
+                continue
+            sessions.append({
+                "profile": row.get("profile_key"),
+                "level": row.get("level_key"),
+                "score": row.get("score_total"),
+                "name": " ".join(
+                    part for part in (
+                        row.get("prospect_first_name"),
+                        row.get("prospect_last_name"),
+                    )
+                    if part
+                ).strip(),
+            })
+            if len(sessions) >= limit:
+                break
+        return sessions
+    except Exception:
+        return []
+
+
 def run_simulator(
     html_path: Path,
     *,
@@ -289,6 +318,8 @@ def run_simulator(
         mysql_detail = str(st.session_state.mysql_detail or "")
 
     config = _build_streamlit_config(api_key, mysql_enabled, mysql_ok, extra_config)
+    if extra_config and extra_config.get("v1TrainingEvolution"):
+        config["recentTrainingSessions"] = _recent_v1_training_sessions(mysql_ok)
     target_frontend = frontend_dir or (COMPONENT_FRONTEND / "v1")
     _sync_component_index(html_path, config, target_frontend)
 

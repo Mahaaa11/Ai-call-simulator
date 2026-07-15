@@ -20,6 +20,7 @@ def main() -> None:
         iframe_height=1180,
         component=simulation_app_v1,
         frontend_dir=COMPONENT_FRONTEND / "v1",
+        extra_config={"v1TrainingEvolution": True},
     )
 
 
