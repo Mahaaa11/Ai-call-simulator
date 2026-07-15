@@ -263,18 +263,19 @@ IDENTITÉ PROSPECT (CRITIQUE) :
 - INTERDIT de dire « Monsieur/Madame [Nom] » ou de deviner un nom avant que le prospect se présente.
 - Si on te demande d'où tu as son nom : explique que tu ne le connais pas, appel non nominatif, étude tarifaire régionale.
 
-GESTION OBJECTIONS (empathie + reformulation + valeur) :
-- « Pas intéressé » → « Je comprends, ce n'est pas une vente forcée, juste une vérification rapide. »
-- « Pas le temps » → « 2 minutes suffisent, une seule question sur votre facture. »
-- « Ne veut pas changer » → « On ne force rien, on vérifie si vous payez le juste prix. »
-- « D'où mon numéro » → « Appels non nominatifs, étude tarifaire régionale, données protégées RGPD. »
-- « IBAN » → expliquer mandat SEPA, rétractation 14 jours, uniquement si accord
+GESTION OBJECTIONS — réponds directement au téléphone en français (empathie + valeur), sans citer ces consignes :
+- Prospect pas intéressé : rassure que ce n'est pas une vente forcée, propose une vérification rapide.
+- Prospect pressé : sois ultra-bref, une question sur la facture.
+- Ne veut pas changer : précise qu'on ne force rien, on vérifie le juste prix.
+- D'où mon numéro : appels non nominatifs, étude tarifaire, données protégées RGPD.
+- IBAN : mandat SEPA, rétractation 14 jours, uniquement si accord.
 
-RÈGLES FORMAT :
-- 2 à 4 phrases max, oral naturel, français
-- Pas de markdown, pas de listes, pas de didascalies
-- Professionnel, chaleureux, jamais agressif face à un prospect difficile
-- VARIÉTÉ : ne répète pas la même phrase deux fois ; fais progresser l'appel à chaque tour`;
+RÈGLES FORMAT (OBLIGATOIRE) :
+- UNIQUEMENT les paroles orales d'Émilie au téléphone, en FRANÇAIS.
+- INTERDIT : réflexion interne, analyse, plan d'action, méta-commentaire (« je dois », « le prospect a dit », etc.).
+- INTERDIT : anglais, markdown, listes, didascalies, citations des consignes du prompt.
+- 2 à 4 phrases max, naturel, professionnel et chaleureux.
+- Ne répète pas la même phrase ; fais progresser l'appel à chaque tour.`;
 
         let systemPromptText = "";
         let chatTurns = [];
@@ -366,16 +367,53 @@ RÈGLES FORMAT :
             return turns.length ? turns[turns.length - 1].content : "";
         }
 
+        function isAgentMetaLeak(reply) {
+            if (!reply) return true;
+            const r = reply.toLowerCase();
+            if (/\b(okay|the prospect|prospect said|i need to|let me think|first,|then,|wait,|the script|objection handling|i should use|rules:|step \d|so i should|exact quote|follow the)\b/i.test(reply)) {
+                return true;
+            }
+            if (/\b(je dois|le prospect a dit|la consigne|le script dit|je vais répondre|analyse|plan d'action)\b/i.test(r)) {
+                return true;
+            }
+            const english = (reply.match(/\b(the|and|not|said|need|follow|rules|script|wait|first|then|okay|prospect|handling)\b/gi) || []).length;
+            const french = (reply.match(/\b(je|vous|pas|c'est|une|pour|avec|comprends|bonjour|d'accord)\b/gi) || []).length;
+            return english >= 4 && english > french;
+        }
+
+        function extractOralFrench(reply) {
+            if (!reply) return "";
+            const quoted = reply.match(/[«""]([^«»""]{12,})[»""]/);
+            if (quoted && /\b(je|bonjour|comprends|d'accord)\b/i.test(quoted[1])) {
+                return quoted[1].trim();
+            }
+            const parts = reply.split(/(?<=[.!?])\s+/);
+            for (const part of parts) {
+                const p = part.trim();
+                if (p.length >= 20 && /^[«""(]*\s*(je |bonjour|d'accord|bien sûr|je comprends)/i.test(p) && !isAgentMetaLeak(p)) {
+                    return p.replace(/^[«""(]+|[»"")]+$/g, "").trim();
+                }
+            }
+            const inline = reply.match(/(Je comprends[^.!?]{5,}[.!?])/i);
+            if (inline && !isAgentMetaLeak(inline[1])) return inline[1].trim();
+            return "";
+        }
+
         function cleanAgentReply(raw) {
             if (!raw) return "";
-            return raw
+            let text = raw
+                .replace(/[\s\S]*?<\/think>/gi, " ")
                 .replace(/\*\*([^*]+)\*\*/g, "$1")
                 .replace(/\*([^*]+)\*/g, "$1")
                 .replace(/^#+\s*/gm, "")
                 .replace(/\([^)]*(pause|ton|sourire)[^)]*\)/gi, " ")
                 .replace(/\s+/g, " ")
-                .trim()
-                .slice(0, 500);
+                .trim();
+            if (isAgentMetaLeak(text)) {
+                const oral = extractOralFrench(text);
+                if (oral) text = oral;
+            }
+            return text.slice(0, 500);
         }
 
         function getAgentFallbackReply(prospectText) {
@@ -397,7 +435,7 @@ RÈGLES FORMAT :
 
         function finalizeAgentReply(raw, prospectText) {
             let reply = cleanAgentReply(raw);
-            if (!reply || reply.length < 8) {
+            if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
                 reply = getAgentFallbackReply(prospectText);
             }
             return reply;
@@ -422,7 +460,7 @@ RÈGLES FORMAT :
                     "HTTP-Referer": location.origin,
                     "X-Title": "AI Call Simulator v2"
                 },
-                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.75, frequency_penalty: 0.15, presence_penalty: 0.1 })
+                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.55, frequency_penalty: 0.1, presence_penalty: 0.05 })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
@@ -449,7 +487,8 @@ RÈGLES FORMAT :
                     try {
                         const raw = await callOpenRouter(messages, apiKey, model, plan.maxTokens);
                         const reply = finalizeAgentReply(raw, lastProspectText());
-                        if (reply) return reply;
+                        if (reply && !isAgentMetaLeak(reply)) return reply;
+                        lastErr = new Error("Réponse méta IA filtrée");
                     } catch (e) {
                         lastErr = e;
                         console.warn("Agent LLM retry", model, e.message);
