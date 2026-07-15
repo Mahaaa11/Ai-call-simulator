@@ -96,17 +96,59 @@ def _is_local_api_url(url: str) -> bool:
     return any(token in lower for token in ("127.0.0.1", "localhost", "0.0.0.0"))
 
 
+def _strip_api_key_ui(html: str) -> str:
+    """Remove API key inputs from hosted HTML so they never render in Streamlit."""
+    html = re.sub(
+        r'\s*<div id="apiKeySection">[\s\S]*?</div>\s*',
+        "\n        <!-- apiKeySection: masqué (hébergement Streamlit) -->\n",
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'\s*<p class="hint" id="apiKeyStatus"[^>]*>[\s\S]*?</p>\s*',
+        "",
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r'\s*<p class="hint" id="apiHint"[^>]*>[\s\S]*?</p>\s*',
+        "",
+        html,
+        count=1,
+    )
+    return html
+
+
 def _inject_config(html: str, config: dict) -> str:
     injection = (
         "<script>window.__SIMULATOR_CONFIG__ = "
         + json.dumps(config, ensure_ascii=False)
         + ";</script>"
     )
+    if config.get("hostedOnStreamlit"):
+        injection += (
+            '<script>document.documentElement.dataset.hosted="1";</script>'
+            '<style>#apiKeySection,#apiKeyStatus,#apiHint,#advancedOptions'
+            "{display:none!important}</style>"
+        )
     cleaned = re.sub(
         r"<script>window\.__SIMULATOR_CONFIG__\s*=\s*[\s\S]*?;</script>\s*",
         "",
         html,
     )
+    cleaned = re.sub(
+        r'<script>document\.documentElement\.dataset\.hosted="1";</script>\s*',
+        "",
+        cleaned,
+    )
+    cleaned = re.sub(
+        r"<style>#apiKeySection,#apiKeyStatus,#apiHint,#advancedOptions"
+        r"\{display:none!important\}</style>\s*",
+        "",
+        cleaned,
+    )
+    if config.get("hostedOnStreamlit"):
+        cleaned = _strip_api_key_ui(cleaned)
     if "</head>" in cleaned:
         return cleaned.replace("</head>", injection + "\n</head>", 1)
     return injection + cleaned

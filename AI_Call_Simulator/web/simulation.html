@@ -524,6 +524,13 @@
         #voiceToggle { width: auto; margin: 10px 0 0; accent-color: var(--primary); }
 
         #apiKeyStatus { color: var(--success) !important; }
+
+        html[data-hosted="1"] #apiKeySection,
+        html[data-hosted="1"] #apiKeyStatus,
+        html[data-hosted="1"] #apiHint,
+        html[data-hosted="1"] #advancedOptions {
+            display: none !important;
+        }
         #ttsStatus, #dbStatus { font-size: 12px; margin: 6px 0; line-height: 1.4; text-align: center; }
 
         #retryEvalBtn {
@@ -1537,8 +1544,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function isStreamlitCloud() {
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             if (cfg.hostedOnStreamlit || cfg.streamlitSave) return true;
+            if (window.Streamlit) return true;
+            if (document.documentElement.dataset.hosted === "1") return true;
             const host = (location.hostname || "").toLowerCase();
-            return host.endsWith(".streamlit.app") || host === "streamlit.app";
+            if (host.endsWith(".streamlit.app") || host === "streamlit.app") return true;
+            try {
+                const parentHost = (window.parent.location.hostname || "").toLowerCase();
+                if (parentHost.endsWith(".streamlit.app") || parentHost === "streamlit.app") return true;
+            } catch (_) {}
+            return false;
         }
 
         function getServiceUrl(localPort, prodPath) {
@@ -4804,8 +4818,11 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
         });
 
+        applyHostedConfig();
+
         (async function initSimulator() {
             await loadDeployConfig();
+            applyHostedConfig();
             const cfg = window.__SIMULATOR_CONFIG__ || {};
             const ready = !!(cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud());
             if (ready) {
