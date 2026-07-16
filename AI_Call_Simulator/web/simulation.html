@@ -1161,10 +1161,10 @@
         <div class="exam-formateur-access" id="examFormateurAccess" style="display:none;">
             <label for="examFormateurCode">Accès formateur — prévisualiser l'examen</label>
             <div class="exam-formateur-row">
-                <input type="password" id="examFormateurCode" placeholder="Code formateur" autocomplete="off">
-                <button type="button" id="examFormateurBtn">Débloquer</button>
+                <input type="text" id="examFormateurCode" placeholder="formateur" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+                <button type="button" id="examFormateurBtn" onclick="window.tryUnlockExamFormateur && window.tryUnlockExamFormateur()">Débloquer</button>
             </div>
-            <p class="exam-formateur-msg" id="examFormateurMsg"></p>
+            <p class="exam-formateur-msg" id="examFormateurMsg">Code formateur requis pour prévisualiser avant le jour J.</p>
         </div>
 
         <div class="exam-panel" id="examPanel" style="display:none;">
@@ -2018,13 +2018,35 @@
 
         const EXAM_FORMATEUR_CODE = "formateur";
         const EXAM_FORMATEUR_SESSION_KEY = "simulator_exam_formateur_v1";
+        let examFormateurUnlockedMemory = false;
 
         let examCallContext = null;
         let pendingExamStepIndex = null;
 
+        function normalizeFormateurCode(raw) {
+            return String(raw || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[\u200B-\u200D\uFEFF]/g, "");
+        }
+
+        function isValidFormateurCode(raw) {
+            return normalizeFormateurCode(raw) === EXAM_FORMATEUR_CODE;
+        }
+
+        function setExamFormateurUnlocked() {
+            examFormateurUnlockedMemory = true;
+            try { sessionStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+            try { localStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+        }
+
         function isExamFormateurUnlocked() {
+            if (examFormateurUnlockedMemory) return true;
             try {
-                return sessionStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1";
+                if (sessionStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1") return true;
+                if (localStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1") return true;
             } catch (_) {}
             return false;
         }
@@ -2045,13 +2067,14 @@
         }
 
         function tryUnlockExamFormateur() {
-            const input = document.getElementById("examFormateurCode");
+            const block = document.getElementById("examFormateurAccess");
+            const input = block ? block.querySelector("#examFormateurCode") : document.getElementById("examFormateurCode");
             const msg = document.getElementById("examFormateurMsg");
-            const code = (input && input.value || "").trim().toLowerCase();
-            if (code === EXAM_FORMATEUR_CODE) {
-                try { sessionStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+            const code = input ? input.value : "";
+            if (isValidFormateurCode(code)) {
+                setExamFormateurUnlocked();
                 if (msg) {
-                    msg.textContent = "Accès formateur activé pour cette session.";
+                    msg.textContent = "Accès formateur activé.";
                     msg.style.color = "var(--success)";
                 }
                 renderFormateurAccess();
@@ -2060,10 +2083,13 @@
                 return;
             }
             if (msg) {
-                msg.textContent = code ? "Code incorrect." : "Saisissez le code formateur.";
+                msg.textContent = normalizeFormateurCode(code)
+                    ? "Code incorrect."
+                    : "Saisissez le code formateur.";
                 msg.style.color = "var(--danger)";
             }
         }
+        window.tryUnlockExamFormateur = tryUnlockExamFormateur;
 
         function getUpcomingExamDate(fromKey) {
             const keys = Object.keys(EXAM_CAMPAIGNS).sort();

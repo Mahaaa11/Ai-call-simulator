@@ -590,6 +590,218 @@
         .eval-section ul { margin: 0; padding-left: 20px; color: var(--text-muted); }
         .eval-interpretation { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
 
+        .coaching-panel {
+            margin: 16px 0;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0, 45, 88, 0.06), rgba(0, 130, 127, 0.08));
+            border: 1px solid rgba(0, 130, 127, 0.22);
+        }
+        .coaching-panel h4 { margin: 0 0 8px 0; font-size: 15px; color: var(--lc-navy); }
+        .coaching-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .coaching-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .coaching-chip strong { color: var(--lc-navy); }
+        .coaching-focus { margin: 0 0 10px 0; padding-left: 18px; color: var(--text); font-size: 13px; line-height: 1.5; }
+        .coaching-focus li { margin-bottom: 4px; }
+        .coaching-suggestion {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(217, 128, 46, 0.1);
+            border: 1px dashed rgba(217, 128, 46, 0.45);
+            font-size: 13px;
+            color: var(--text);
+        }
+        .coaching-suggestion button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: var(--lc-orange);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .coaching-post {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.05);
+            border: 1px solid rgba(0, 45, 88, 0.15);
+        }
+        .coaching-post h4 { margin: 0 0 8px 0; color: var(--lc-navy); }
+        .coaching-trend-up { color: var(--success); }
+        .coaching-trend-down { color: var(--danger); }
+
+        .benchmark-models-btn {
+            margin-top: 10px;
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .benchmark-models-btn:disabled { opacity: 0.6; cursor: wait; }
+        .benchmark-models-result {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fafbfc;
+            border: 1px solid var(--border);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .benchmark-models-result table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .benchmark-models-result th, .benchmark-models-result td {
+            border-bottom: 1px solid var(--border);
+            padding: 6px 4px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .benchmark-models-result .best-row { background: rgba(0, 130, 127, 0.08); font-weight: 600; }
+
+        .exam-panel {
+            margin: 16px 0;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(0, 45, 88, 0.08), rgba(217, 128, 46, 0.1));
+            border: 2px solid rgba(0, 45, 88, 0.2);
+            box-shadow: 0 4px 18px rgba(0, 45, 88, 0.06);
+        }
+        .exam-panel h4 { margin: 0 0 6px 0; font-size: 16px; color: var(--lc-navy); }
+        .exam-panel .exam-sub { margin: 0 0 14px 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+        .exam-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: var(--lc-navy);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .exam-badge.preview { background: var(--lc-orange); }
+        .exam-formateur-access {
+            margin: 16px 0;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(0, 45, 88, 0.04);
+            border: 1px dashed rgba(0, 45, 88, 0.22);
+        }
+        .exam-formateur-access label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--lc-navy);
+            margin-bottom: 8px;
+        }
+        .exam-formateur-row {
+            display: flex;
+            gap: 8px;
+        }
+        .exam-formateur-row input {
+            flex: 1;
+            min-width: 0;
+        }
+        .exam-formateur-row button {
+            flex-shrink: 0;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: var(--lc-navy);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .exam-formateur-msg {
+            margin: 8px 0 0 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .exam-steps { list-style: none; margin: 0; padding: 0; }
+        .exam-step {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            gap: 10px 12px;
+            align-items: start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 45, 88, 0.1);
+        }
+        .exam-step:last-child { border-bottom: none; }
+        .exam-step-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 45, 88, 0.12);
+            color: var(--lc-navy);
+            font-weight: 800;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .exam-step.done .exam-step-num { background: var(--success); color: #fff; }
+        .exam-step.active .exam-step-num { background: var(--lc-orange); color: #fff; }
+        .exam-step-title { font-weight: 700; font-size: 14px; color: var(--lc-navy); margin: 0 0 4px 0; }
+        .exam-step-meta { font-size: 12px; color: var(--text-muted); margin: 0 0 6px 0; }
+        .exam-objections { font-size: 11px; color: var(--text); margin: 0; padding-left: 16px; line-height: 1.45; }
+        .exam-objections li { margin-bottom: 2px; }
+        .exam-step-score { font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .exam-step-score.pass { color: var(--success); }
+        .exam-step-score.fail { color: var(--danger); }
+        .exam-launch-btn {
+            margin-top: 6px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--lc-navy);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .exam-launch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .exam-summary {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .exam-cert { color: var(--success); font-weight: 700; }
+        .exam-scenario-card {
+            margin: 12px 0;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 45, 88, 0.15);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .exam-scenario-card h5 { margin: 0 0 8px 0; font-size: 14px; color: var(--lc-navy); }
+        .exam-scenario-card ul { margin: 8px 0 0 0; padding-left: 18px; }
+        .exam-scenario-card li { margin-bottom: 4px; }
+        .exam-eval-banner {
+            margin-bottom: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.06);
+            border-left: 4px solid var(--lc-navy);
+        }
+
         .status-badge {
             display: inline-block;
             padding: 8px 16px;
@@ -952,18 +1164,57 @@
         </div>
 
         <label class="calibration-label">
-            <input type="checkbox" id="calibrationToggle"> Scripts d'objections prédéfinies
+            <input type="checkbox" id="calibrationToggle"> Mode strict (force plus d'objections scriptées)
         </label>
 
         <details class="advanced-options" id="advancedOptions">
             <summary>Options avancées (modèle IA)</summary>
-            <label for="nvidiaModelSelect">Modèle NVIDIA OpenRouter</label>
+            <label for="nvidiaModelSelect">Modèle OpenRouter (prospect)</label>
             <select id="nvidiaModelSelect">
-                <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit)</option>
-                <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
-                <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
+                <optgroup label="Gratuits — recommandés">
+                    <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit) — actuel</option>
+                    <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (gratuit)</option>
+                    <option value="google/gemma-4-31b-it:free">Gemma 4 31B (gratuit)</option>
+                    <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen3 Next 80B (gratuit)</option>
+                    <option value="openai/gpt-oss-120b:free">GPT-OSS 120B (gratuit)</option>
+                    <option value="openai/gpt-oss-20b:free">GPT-OSS 20B (gratuit, rapide)</option>
+                    <option value="nousresearch/hermes-3-llama-3.1-405b:free">Hermes 3 Llama 405B (gratuit)</option>
+                    <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra 550B (gratuit)</option>
+                    <option value="nvidia/nemotron-3-nano-30b-a3b:free">Nemotron 3 Nano 30B (gratuit)</option>
+                    <option value="openrouter/free">OpenRouter Free Router (aléatoire)</option>
+                </optgroup>
+                <optgroup label="Payants NVIDIA">
+                    <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
+                    <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
+                </optgroup>
             </select>
+            <p class="hint">Quota gratuit OpenRouter : ~50 req/jour sans crédits, 1000/jour avec 5$ de crédits.</p>
+            <button type="button" id="benchmarkModelsBtn" class="benchmark-models-btn">⚡ Comparer 4 modèles gratuits (test rapide)</button>
+            <div id="benchmarkModelsResult" class="benchmark-models-result" style="display:none;"></div>
         </details>
+
+        <div class="exam-formateur-access" id="examFormateurAccess" style="display:none;">
+            <label for="examFormateurCode">Accès formateur — prévisualiser l'examen</label>
+            <div class="exam-formateur-row">
+                <input type="text" id="examFormateurCode" placeholder="formateur" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+                <button type="button" id="examFormateurBtn" onclick="window.tryUnlockExamFormateur && window.tryUnlockExamFormateur()">Débloquer</button>
+            </div>
+            <p class="exam-formateur-msg" id="examFormateurMsg">Code formateur requis pour prévisualiser avant le jour J.</p>
+        </div>
+
+        <div class="exam-panel" id="examPanel" style="display:none;">
+            <span class="exam-badge" id="examBadge">Examen</span>
+            <h4 id="examTitle">Examen certification</h4>
+            <p class="exam-sub" id="examSub"></p>
+            <div id="examScenarioCard" class="exam-scenario-card"></div>
+            <button type="button" id="examLaunchBtn" class="exam-launch-btn" style="width:100%;margin-top:12px;padding:10px;">🎯 Préparer l'examen — même scénario pour tous</button>
+            <div class="exam-summary" id="examSummary"></div>
+        </div>
+
+        <div class="coaching-panel" id="coachingPanel">
+            <h4>🎯 Coaching personnalisé</h4>
+            <div id="coachingContent"><p class="hint">Lancez une première simulation pour activer votre suivi.</p></div>
+        </div>
 
         <button type="button" id="startBtn">📞 Décrocher — lancer la simulation</button>
     </div>
@@ -1247,6 +1498,7 @@
                 el.classList.remove("mood-calm", "mood-tense", "mood-angry");
                 el.classList.add("mood-" + mood);
             }
+            renderCoachingPanel();
         }
 
         function getCallJourneyStep() {
@@ -1416,8 +1668,158 @@
 5. CLOSING — seulement si proposition bien menée`;
 
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
-        const PERSONA_FIRST_NAMES = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc"];
-        const FEMALE_FIRST_NAMES = new Set(["Marie", "Sophie", "Claire", "Isabelle", "Nathalie", "Camille", "Julie", "Émilie", "Emilie", "Anne", "Céline", "Celine", "Virginie", "Sandrine"]);
+        const V1_EXAM_PROGRESS_KEY = "simulator_v1_exam_progress";
+        const EXAM_CAMPAIGNS = {
+            "2026-07-17": {
+                id: "certif_vente_20260717",
+                title: "Examen certification — Vente énergie",
+                dateLabel: "17 juillet 2026",
+                instructions: "Un seul appel · Même scénario pour tous · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes",
+                passScore: 70,
+                steps: [
+                    {
+                        id: "examen_unique",
+                        label: "Examen certification — Changement fournisseur méfiant",
+                        profile: "mefiant_fournisseur",
+                        level: "avance",
+                        scenarioType: "standard",
+                        firstName: "Philippe",
+                        lastName: "Bernard",
+                        supplier: "EDF",
+                        billAmount: 89,
+                        offerTarget: 74,
+                        yearsAtSupplier: "plus de 4 ans",
+                        address: "18 rue Victor Hugo, 69003 Lyon",
+                        opening: "Oui ? C'est pour quoi… j'ai pas beaucoup de temps.",
+                        brief: "Philippe Bernard, 52 ans, chez EDF à Lyon (~89 €/mois élec seule), même logement depuis 4 ans. Méfiant : ne veut pas « changer pour changer », a déjà eu une mauvaise expérience de changement. Évaluation : traiter les objections, reformuler, réponses convaincantes.",
+                        goal: "Conduire un comparatif classique (changement de fournisseur), traiter chaque objection avec reformulation et des réponses convaincantes (arguments concrets, pas de phrases génériques), rassurer sur EDF/résiliation sans insister lourdement.",
+                        minObjections: 6,
+                        objections: [
+                            "Je ne veux pas changer de fournisseur, j'ai déjà EDF.",
+                            "La dernière fois que j'ai changé, c'était la galère.",
+                            "Comment avez-vous eu mon numéro ?",
+                            "EDF c'est fiable — pourquoi je prendrais le risque ?",
+                            "Votre offre cache sûrement des frais de résiliation.",
+                            "Mon voisin a changé et il regrette amèrement.",
+                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                            "C'est toujours la même promesse au téléphone, je ne vous crois pas.",
+                            "Allez droit au but, j'ai pas le temps pour un discours commercial.",
+                            "Concrètement, qu'est-ce que j'y gagne à changer maintenant ?",
+                            "Envoyez-moi tout par mail, je n'ai pas le temps là.",
+                            "Je vais réfléchir, rappelez-moi plus tard."
+                        ]
+                    }
+                ]
+            }
+        };
+        const PERSONA_FIRST_NAMES = [
+            "Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc",
+            "Camille", "Julie", "Nicolas", "Émilie", "Emilie", "Anne", "Céline", "Celine", "Virginie", "Sandrine",
+            "Laurent", "Stéphane", "Stephane", "Valérie", "Valerie", "Christophe", "Patricia", "François", "Francois", "Hélène", "Helene"
+        ];
+        const FEMALE_FIRST_NAMES = new Set([
+            "Marie", "Sophie", "Claire", "Isabelle", "Nathalie", "Camille", "Julie", "Émilie", "Emilie",
+            "Anne", "Céline", "Celine", "Virginie", "Sandrine", "Valérie", "Valerie", "Patricia", "Hélène", "Helene"
+        ]);
+        const PROFILE_KEYS = ["agressif", "presse", "mefiant_fournisseur", "mefiant_rgpd", "curieux"];
+        const OPENING_LINES = {
+            agressif: [
+                "Oui ?", "Allô ?", "Oui bonjour ?", "Oui, c'est pour quoi ?", "Oui, vous êtes qui ?",
+                "Oui… qu'est-ce que vous voulez ?", "Oui, j'écoute, mais faites vite."
+            ],
+            presse: [
+                "Oui, j'ai une minute.", "Oui bonjour, allez-y vite.", "Oui ? Je suis pressé.",
+                "Oui, c'est pour quoi ? J'ai pas beaucoup de temps.", "Oui, deux minutes max."
+            ],
+            mefiant_fournisseur: [
+                "Oui bonjour ?", "Oui ?", "Oui, c'est qui ?", "Oui, vous appelez de où ?",
+                "Oui… je ne change pas de fournisseur en général."
+            ],
+            mefiant_rgpd: [
+                "Oui bonjour ?", "Oui, qui êtes-vous ?", "Oui ? Comment vous avez mon numéro ?",
+                "Oui… c'est pour quoi exactement ?", "Oui, vous êtes de quelle société ?"
+            ],
+            curieux: [
+                "Oui bonjour ?", "Oui, je vous écoute.", "Oui ? C'est pour les énergies ?",
+                "Oui bonjour, qu'est-ce que vous proposez ?", "Oui, dites-moi."
+            ]
+        };
+        const CALL_CONTEXTS = [
+            "Tu viens d'interrompre une tâche (cuisine, rangement, télétravail) — ton ton est légèrement distrait au début.",
+            "Tu es en télétravail avec une réunion dans 10 minutes — tu rappelles que tu manques de temps si l'agent traîne.",
+            "Tu regardes la télé en fond — tu réponds un peu distrait puis tu te concentres si l'agent est clair.",
+            "Tu es sorti d'une longue journée — tu es fatigué, pas forcément hostile mais peu patient.",
+            "Tu as déjà reçu un appel commercial aujourd'hui — tu es sur tes gardes dès le début.",
+            "Tu es dans les transports ou en voiture — tu parles brièvement, parfois des bruits de fond.",
+            "Tu es chez toi un samedi matin — tu es plus détendu mais tu ne veux pas perdre ton temps.",
+            "Tu as un doute sur la légitimité des appels — tu poses vite la question « c'est pour quoi ? »."
+        ];
+        const COACHING_TIPS = {
+            accroche: {
+                label: "Accroche",
+                tips: [
+                    "Nom + société + raison d'appel en moins de 15 secondes, sans monologue.",
+                    "Validez l'interruption : « Je serai bref » avant de poser une question.",
+                    "Évitez « comparateur gratuit » dès la première phrase — expliquez le bénéfice client."
+                ]
+            },
+            refus: {
+                label: "Gestion des refus",
+                tips: [
+                    "Reformulez le refus avant de relancer : « Je comprends que vous ne souhaitiez pas changer tout de suite ».",
+                    "Si adresse ou PDL refusés : proposez un comparatif par email avant de redemander.",
+                    "Ne répétez pas la même demande plus de deux fois — changez d'angle."
+                ]
+            },
+            professionnel: {
+                label: "Posture professionnelle",
+                tips: [
+                    "Ne concluez jamais par la frustration (« si vous ne voulez pas d'économies… »).",
+                    "Gardez un ton calme face à l'agressivité — ralentissez et posez une question ouverte.",
+                    "Restez aligné sur un seul discours (pas comparateur puis sondage)."
+                ]
+            },
+            decouverte: {
+                label: "Découverte",
+                tips: [
+                    "Posez une question fermée puis une ouverte : fournisseur actuel → facture mensuelle.",
+                    "Rebondissez sur la réponse du client avant la question suivante.",
+                    "Adaptez vos questions au scénario (déménagement, mise en service)."
+                ]
+            },
+            offre: {
+                label: "Proposition",
+                tips: [
+                    "Annoncez le gain chiffré seulement après avoir compris la situation du client.",
+                    "Électricité seule = pas de tarif gaz ; adaptez l'offre au profil.",
+                    "Structurez : situation → comparatif → bénéfice → prochaine étape."
+                ]
+            },
+            closing: {
+                label: "Closing",
+                tips: [
+                    "Demandez un accord progressif : « Si l'offre vous convient, on peut avancer sur le PDL ».",
+                    "Rassurez sur le prélèvement et la résiliation avant de demander l'IBAN.",
+                    "Proposez une micro-étape (email récap) si le client hésite."
+                ]
+            },
+            rythme: {
+                label: "Rythme & écoute",
+                tips: [
+                    "Avec un profil pressé : phrases courtes, une idée par réplique.",
+                    "Laissez le client finir — ne coupez pas après chaque objection.",
+                    "Comptez les objections traitées avant de relancer la proposition."
+                ]
+            },
+            rgpd: {
+                label: "Réassurance",
+                tips: [
+                    "Répondez clairement sur l'origine du contact et le cadre légal si demandé.",
+                    "Ne fuyez pas la question RGPD — une phrase factuelle suffit souvent.",
+                    "Proposez un envoi écrit si le client veut vérifier votre identité."
+                ]
+            }
+        };
         const VOICE_BY_GENDER = {
             female: "fr-FR-DeniseNeural",
             male: "fr-FR-HenriNeural"
@@ -1538,7 +1940,14 @@
             "45 rue Nationale, 59000 Lille",
             "3 impasse du Moulin, 31000 Toulouse",
             "17 boulevard Gambetta, 06000 Nice",
-            "22 rue Victor Hugo, 44000 Nantes"
+            "22 rue Victor Hugo, 44000 Nantes",
+            "14 rue de la République, 67000 Strasbourg",
+            "9 place Bellecour, 69002 Lyon",
+            "31 cours Mirabeau, 13100 Aix-en-Provence",
+            "6 rue des Lilas, 35000 Rennes",
+            "18 avenue Jean Jaurès, 21000 Dijon",
+            "42 rue du Commerce, 37000 Tours",
+            "5 allée des Roses, 34000 Montpellier"
         ];
         const PERSONA_YEARS = ["2 ans", "3 ans", "plus de 4 ans", "5 ans", "depuis 6 ans", "plusieurs années"];
         const PERSONA_SCENARIO_TYPES = ["standard", "demenagement", "mise_en_service"];
@@ -1558,14 +1967,16 @@
             const counts = { standard: 0, demenagement: 0, mise_en_service: 0 };
             recent.forEach(t => { if (counts[t] !== undefined) counts[t]++; });
             const sessionNum = state.sessionCount || 0;
-            const rotatePref = PERSONA_SCENARIO_TYPES[sessionNum % PERSONA_SCENARIO_TYPES.length];
+            const dayRotate = PERSONA_SCENARIO_TYPES[new Date().getDate() % PERSONA_SCENARIO_TYPES.length];
+            const rotatePref = PERSONA_SCENARIO_TYPES[(sessionNum + new Date().getDate()) % PERSONA_SCENARIO_TYPES.length];
 
             const candidates = PERSONA_SCENARIO_TYPES.map(type => {
                 let weight = SCENARIO_WEIGHTS[type] || 0.33;
-                if (recent[0] === type) weight *= 0.22;
-                if (recent[1] === type) weight *= 0.5;
-                if (counts[type] >= 2) weight *= 0.35;
-                if (sessionNum > 0 && type === rotatePref && recent[0] !== type) weight *= 1.4;
+                if (recent[0] === type) weight *= 0.18;
+                if (recent[1] === type) weight *= 0.45;
+                if (counts[type] >= 2) weight *= 0.3;
+                if (sessionNum > 0 && type === rotatePref && recent[0] !== type) weight *= 1.5;
+                if (type === dayRotate && recent[0] !== type) weight *= 1.25;
                 return { type, weight };
             });
 
@@ -1605,23 +2016,520 @@
         }
 
         function randomBillAmount() {
-            return pickRandom([55, 62, 68, 72, 78, 82, 88, 91, 95]);
+            return pickRandom([52, 55, 58, 62, 65, 68, 72, 75, 78, 82, 85, 88, 91, 95, 102, 108]);
         }
 
         function loadTrainingState() {
             try {
                 const raw = localStorage.getItem(V1_TRAINING_KEY);
-                if (raw) return JSON.parse(raw);
+                if (raw) return Object.assign({
+                    sessionCount: 0, recentPersonas: [], recentScores: [], lastAxes: [],
+                    axesHistory: [], recentProfiles: [], recentOpenings: [], weakSections: {},
+                    lastRecommendations: []
+                }, JSON.parse(raw));
             } catch (_) {}
-            return { sessionCount: 0, recentPersonas: [], recentScores: [], lastAxes: [] };
+            return {
+                sessionCount: 0, recentPersonas: [], recentScores: [], lastAxes: [],
+                axesHistory: [], recentProfiles: [], recentOpenings: [], weakSections: {},
+                lastRecommendations: []
+            };
         }
 
         function saveTrainingState(state) {
             try { localStorage.setItem(V1_TRAINING_KEY, JSON.stringify(state)); } catch (_) {}
+            renderCoachingPanel();
+        }
+
+        function getDayVarietyKey() {
+            const d = new Date();
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+
+        function getTomorrowKey() {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate() + 0).padStart(2, "0");
+        }
+
+        const EXAM_FORMATEUR_CODE = "formateur";
+        const EXAM_FORMATEUR_SESSION_KEY = "simulator_exam_formateur_v1";
+        let examFormateurUnlockedMemory = false;
+
+        let examCallContext = null;
+        let pendingExamStepIndex = null;
+
+        function normalizeFormateurCode(raw) {
+            return String(raw || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[\u200B-\u200D\uFEFF]/g, "");
+        }
+
+        function isValidFormateurCode(raw) {
+            return normalizeFormateurCode(raw) === EXAM_FORMATEUR_CODE;
+        }
+
+        function setExamFormateurUnlocked() {
+            examFormateurUnlockedMemory = true;
+            try { sessionStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+            try { localStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+        }
+
+        function isExamFormateurUnlocked() {
+            if (examFormateurUnlockedMemory) return true;
+            try {
+                if (sessionStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1") return true;
+                if (localStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1") return true;
+            } catch (_) {}
+            return false;
+        }
+
+        function isExamPreviewUnlocked() {
+            return isExamFormateurUnlocked();
+        }
+
+        function renderFormateurAccess() {
+            const block = document.getElementById("examFormateurAccess");
+            if (!block) return;
+            const today = getDayVarietyKey();
+            if (EXAM_CAMPAIGNS[today] || isExamFormateurUnlocked()) {
+                block.style.display = "none";
+                return;
+            }
+            block.style.display = "block";
+        }
+
+        function tryUnlockExamFormateur() {
+            const block = document.getElementById("examFormateurAccess");
+            const input = block ? block.querySelector("#examFormateurCode") : document.getElementById("examFormateurCode");
+            const msg = document.getElementById("examFormateurMsg");
+            const code = input ? input.value : "";
+            if (isValidFormateurCode(code)) {
+                setExamFormateurUnlocked();
+                if (msg) {
+                    msg.textContent = "Accès formateur activé.";
+                    msg.style.color = "var(--success)";
+                }
+                renderFormateurAccess();
+                renderExamPanel();
+                document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                return;
+            }
+            if (msg) {
+                msg.textContent = normalizeFormateurCode(code)
+                    ? "Code incorrect."
+                    : "Saisissez le code formateur.";
+                msg.style.color = "var(--danger)";
+            }
+        }
+        window.tryUnlockExamFormateur = tryUnlockExamFormateur;
+
+        function getUpcomingExamDate(fromKey) {
+            const keys = Object.keys(EXAM_CAMPAIGNS).sort();
+            return keys.find(k => k >= fromKey) || keys[keys.length - 1] || null;
+        }
+
+        function getActiveExamCampaign() {
+            const today = getDayVarietyKey();
+            let examDate = today;
+            let campaign = EXAM_CAMPAIGNS[today];
+            let isPreview = false;
+            if (!campaign && isExamPreviewUnlocked()) {
+                examDate = getUpcomingExamDate(today);
+                campaign = examDate ? EXAM_CAMPAIGNS[examDate] : null;
+                isPreview = !!(campaign && examDate !== today);
+            }
+            if (!campaign) return null;
+            return Object.assign({}, campaign, { examDate, isPreview });
+        }
+
+        function loadExamProgress(examId) {
+            try {
+                const raw = localStorage.getItem(V1_EXAM_PROGRESS_KEY);
+                const all = raw ? JSON.parse(raw) : {};
+                return all[examId] || { currentStep: 0, results: [] };
+            } catch (_) {
+                return { currentStep: 0, results: [] };
+            }
+        }
+
+        function saveExamProgress(examId, progress) {
+            try {
+                const raw = localStorage.getItem(V1_EXAM_PROGRESS_KEY);
+                const all = raw ? JSON.parse(raw) : {};
+                all[examId] = progress;
+                localStorage.setItem(V1_EXAM_PROGRESS_KEY, JSON.stringify(all));
+            } catch (_) {}
+            renderExamPanel();
+        }
+
+        function getPendingExamStep() {
+            const campaign = getActiveExamCampaign();
+            if (!campaign || pendingExamStepIndex == null) return null;
+            const step = campaign.steps[pendingExamStepIndex];
+            if (!step) return null;
+            return { campaign, stepIdx: pendingExamStepIndex, step };
+        }
+
+        function buildExamPromptBlock(ctx) {
+            if (!ctx) return "";
+            const step = ctx.step;
+            const n = ctx.stepIdx + 1;
+            const total = ctx.campaign.steps.length;
+            const objList = (step.objections || []).map(o => "- " + o).join("\n");
+            return `
+
+MODE EXAMEN — ${step.label.toUpperCase()} (${n}/${total})
+Objectif formateur : ${step.goal}
+- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+- Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
+- Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
+${objList}
+- Niveau AVANCÉ : reste exigeant même si l'agent est poli.
+- Si l'agent répète la même phrase, ignore ton objection ou reste vague → relance ou durcis ton ton.
+- Ne facilite pas la vente tant que les réponses ne te convainquent pas vraiment.`;
+        }
+
+        function applyExamStepToForm(stepIdx) {
+            const campaign = getActiveExamCampaign();
+            if (!campaign) return;
+            const step = campaign.steps[stepIdx];
+            if (!step) return;
+            pendingExamStepIndex = stepIdx;
+            const profileSel = document.getElementById("profileSelect");
+            const levelSel = document.getElementById("levelSelect");
+            const calib = document.getElementById("calibrationToggle");
+            if (profileSel) profileSel.value = step.profile;
+            if (levelSel) levelSel.value = step.level || "avance";
+            if (calib) calib.checked = true;
+            updateProfilePreview();
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) {
+                startBtn.textContent = "📞 Décrocher — Examen certification";
+            }
+            renderExamPanel();
+            document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function renderExamPanel() {
+            const panel = document.getElementById("examPanel");
+            if (!panel) return;
+            const campaign = getActiveExamCampaign();
+            if (!campaign) {
+                panel.style.display = "none";
+                return;
+            }
+            panel.style.display = "block";
+            const step = campaign.steps[0];
+            const progress = loadExamProgress(campaign.id);
+            const result = progress.results && progress.results[0];
+            const badge = document.getElementById("examBadge");
+            const title = document.getElementById("examTitle");
+            const sub = document.getElementById("examSub");
+            const card = document.getElementById("examScenarioCard");
+            const summary = document.getElementById("examSummary");
+            const launchBtn = document.getElementById("examLaunchBtn");
+            if (badge) {
+                badge.textContent = campaign.isPreview ? "Mode test formateur" : "Examen du jour";
+                badge.classList.toggle("preview", !!campaign.isPreview);
+            }
+            if (title) title.textContent = campaign.title + " — " + campaign.dateLabel;
+            if (sub) {
+                sub.textContent = campaign.isPreview
+                    ? "Aperçu réservé au formateur — invisible pour les agents jusqu'au " + campaign.dateLabel + ". " + campaign.instructions
+                    : campaign.instructions;
+            }
+            if (card && step) {
+                const objPreview = (step.objections || []).slice(0, 5).map(o => "<li>" + o + "</li>").join("");
+                card.innerHTML = `<h5>${step.label}</h5>
+                    <p style="margin:0 0 8px 0;"><strong>Situation (identique pour tous) :</strong> ${step.brief || ""}</p>
+                    <p style="margin:0;font-size:12px;color:var(--text-muted);">
+                        ${getProfileLabel(step.profile)} · ${getScenarioLabel(step.scenarioType)} · Avancé · Mode strict ·
+                        Client : ${step.firstName || ""} ${step.lastName || ""} · ${step.supplier || ""} · ~${step.billAmount || "?"} €/mois
+                    </p>
+                    <p style="margin:10px 0 4px 0;font-size:12px;"><strong>Objections possibles (le prospect varie) :</strong></p>
+                    <ul>${objPreview}<li><em>+ ${Math.max(0, (step.objections || []).length - 5)} autres variantes en appel…</em></li></ul>`;
+            }
+            if (launchBtn) {
+                launchBtn.disabled = !!(result && result.passed);
+                launchBtn.textContent = result && result.passed
+                    ? "✓ Examen validé — " + result.score + "/100"
+                    : (pendingExamStepIndex === 0 ? "✓ Scénario chargé — cliquez Décrocher" : "🎯 Préparer l'examen — même scénario pour tous");
+            }
+            if (summary) {
+                let html = `<strong>Seuil de validation :</strong> ${campaign.passScore}/100 minimum`;
+                if (result) {
+                    html += `<br>Dernier score : <strong>${result.score}/100</strong> — `
+                        + (result.passed
+                            ? `<span class="exam-cert">✓ Examen réussi</span>`
+                            : `<span style="color:var(--danger)">✗ Non validé — recommencez après analyse du rapport</span>`);
+                    if (result.passed) {
+                        html += `<br><span class="exam-cert">🏆 Certification obtenue — bravo !</span>`;
+                    }
+                } else if (pendingExamStepIndex === 0) {
+                    html += `<br><em>Scénario prêt — cliquez sur « Décrocher » pour passer l'examen.</em>`;
+                } else {
+                    html += `<br><em>Cliquez sur « Préparer l'examen » puis « Décrocher ».</em>`;
+                }
+                summary.innerHTML = html;
+            }
+        }
+
+        function recordExamStepResult(evaluation) {
+            if (!examCallContext) return null;
+            const { campaignId, stepIdx } = examCallContext;
+            const campaign = getActiveExamCampaign();
+            if (!campaign || campaign.id !== campaignId) return null;
+            const score = Number(evaluation && evaluation.score_total);
+            if (!Number.isFinite(score)) return null;
+            const progress = loadExamProgress(campaignId);
+            const passed = score >= campaign.passScore;
+            progress.results[stepIdx] = { score, passed, at: Date.now() };
+            if (passed) {
+                progress.currentStep = Math.max(progress.currentStep || 0, stepIdx + 1);
+            }
+            saveExamProgress(campaignId, progress);
+            examCallContext = null;
+            pendingExamStepIndex = passed ? null : 0;
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) startBtn.textContent = "📞 Décrocher — lancer la simulation";
+            return { passed, score, step: campaign.steps[stepIdx], campaign };
+        }
+
+        function renderExamEvalBanner(examResult) {
+            if (!examResult) return "";
+            const step = examResult.step;
+            const status = examResult.passed
+                ? `<strong style="color:var(--success)">Examen validé</strong> — ${examResult.score}/100 (seuil ${examResult.campaign.passScore}/100)`
+                : `<strong style="color:var(--danger)">Examen non validé</strong> — ${examResult.score}/100 (minimum ${examResult.campaign.passScore}/100 requis)`;
+            return `<div class="exam-eval-banner"><h4 style="margin:0 0 8px 0;">📋 ${step.label}</h4><p style="margin:0;">${status}. ${examResult.passed ? "Certification obtenue — félicitations !" : "Analysez le rapport et repassez l'examen."}</p></div>`;
+        }
+
+        function normalizeCoachingTheme(text) {
+            const t = (text || "").toLowerCase();
+            if (/accroche|introduction|début|debut|première|premiere/.test(t)) return "accroche";
+            if (/adresse|pdl|iban|refus|reformul/.test(t)) return "refus";
+            if (/professionnel|frustr|économies|economies|plainte|agress/.test(t)) return "professionnel";
+            if (/découverte|decouverte|question|écoute|ecoute/.test(t)) return "decouverte";
+            if (/offre|proposition|comparatif|prix|gaz|électricité|electricite/.test(t)) return "offre";
+            if (/closing|conclu|engagement|signature/.test(t)) return "closing";
+            if (/pressé|presse|rythme|court|monologue|long/.test(t)) return "rythme";
+            if (/rgpd|bloctel|données|donnees|numéro|numero|légal|legal/.test(t)) return "rgpd";
+            return "refus";
+        }
+
+        function recordAxisInHistory(state, axes) {
+            state.axesHistory = state.axesHistory || [];
+            (axes || []).forEach(axis => {
+                const text = (axis || "").trim();
+                if (!text) return;
+                const theme = normalizeCoachingTheme(text);
+                const existing = state.axesHistory.find(a => a.theme === theme && a.text === text);
+                if (existing) {
+                    existing.count = (existing.count || 0) + 1;
+                    existing.lastAt = Date.now();
+                } else {
+                    state.axesHistory.push({ theme, text, count: 1, lastAt: Date.now() });
+                }
+            });
+            state.axesHistory.sort((a, b) => (b.count || 0) - (a.count || 0));
+            state.axesHistory = state.axesHistory.slice(0, 24);
+        }
+
+        function recordSectionWeaknesses(state, evaluation) {
+            if (!evaluation || !Array.isArray(evaluation.sections)) return;
+            state.weakSections = state.weakSections || {};
+            evaluation.sections.forEach(sec => {
+                const max = sec.max || 1;
+                const ratio = (sec.score || 0) / max;
+                if (ratio < 0.55) {
+                    const key = (sec.name || "section").slice(0, 80);
+                    state.weakSections[key] = (state.weakSections[key] || 0) + 1;
+                }
+            });
+        }
+
+        function getScoreTrend(scores) {
+            if (!scores || scores.length < 2) return null;
+            const recent = scores.slice(0, 3);
+            const older = scores.slice(3, 6);
+            if (!older.length) return null;
+            const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
+            const avgOlder = older.reduce((a, b) => a + b, 0) / older.length;
+            return Math.round(avgRecent - avgOlder);
+        }
+
+        function getTopCoachingThemes(state, limit) {
+            const themes = {};
+            (state.axesHistory || []).forEach(item => {
+                const key = item.theme || normalizeCoachingTheme(item.text);
+                if (!themes[key]) themes[key] = { theme: key, count: 0, sample: item.text };
+                themes[key].count += item.count || 1;
+            });
+            return Object.values(themes).sort((a, b) => b.count - a.count).slice(0, limit || 3);
+        }
+
+        function buildCoachingTipsForThemes(themes, extraAxes) {
+            const tips = [];
+            const used = new Set();
+            themes.forEach(t => {
+                const pack = COACHING_TIPS[t.theme];
+                if (!pack) return;
+                const tip = pack.tips.find(x => !used.has(x)) || pack.tips[0];
+                if (tip && !used.has(tip)) {
+                    tips.push({ label: pack.label, tip, count: t.count });
+                    used.add(tip);
+                }
+            });
+            (extraAxes || []).slice(0, 2).forEach(axis => {
+                const theme = normalizeCoachingTheme(axis);
+                const pack = COACHING_TIPS[theme];
+                if (!pack) return;
+                const tip = pack.tips.find(x => !used.has(x));
+                if (tip) {
+                    tips.push({ label: pack.label, tip, count: 0 });
+                    used.add(tip);
+                }
+            });
+            return tips.slice(0, 4);
+        }
+
+        function suggestProfileRotation(state) {
+            const recent = (state.recentProfiles || []).slice(0, 4);
+            const counts = {};
+            PROFILE_KEYS.forEach(k => { counts[k] = 0; });
+            recent.forEach(k => { if (counts[k] !== undefined) counts[k]++; });
+            const dayIdx = PROFILE_KEYS.indexOf(PROFILE_KEYS[new Date().getDate() % PROFILE_KEYS.length]);
+            const candidates = PROFILE_KEYS.map((key, i) => {
+                let score = 10 - (counts[key] || 0) * 3;
+                if (recent[0] === key) score -= 5;
+                if (i === dayIdx) score += 2;
+                return { key, score };
+            }).sort((a, b) => b.score - a.score);
+            return candidates[0] ? candidates[0].key : PROFILE_KEYS[0];
+        }
+
+        function getProfileLabel(key) {
+            const labels = {
+                agressif: "Agressif",
+                presse: "Pressé",
+                mefiant_fournisseur: "Méfiant fournisseur",
+                mefiant_rgpd: "RGPD",
+                curieux: "Curieux"
+            };
+            return labels[key] || key;
+        }
+
+        function pickVariedOpening(profileKey, state) {
+            const lines = OPENING_LINES[profileKey] || OPENING_LINES.agressif;
+            const recent = new Set((state.recentOpenings || []).slice(0, 8));
+            const fresh = lines.filter(l => !recent.has(l));
+            const pool = fresh.length ? fresh : lines;
+            const dayPick = pool[new Date().getDate() % pool.length];
+            if (!recent.has(dayPick)) return dayPick;
+            return pickRandom(pool);
+        }
+
+        function pickCallContext(state) {
+            const day = new Date().getDate();
+            const idx = (day + (state.sessionCount || 0)) % CALL_CONTEXTS.length;
+            return CALL_CONTEXTS[idx];
+        }
+
+        function renderCoachingPanel() {
+            const el = document.getElementById("coachingContent");
+            if (!el) return;
+            const state = loadTrainingState();
+            const sessionNum = (state.sessionCount || 0) + 1;
+            const scores = state.recentScores || [];
+            const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+            const trend = getScoreTrend(scores);
+            const themes = getTopCoachingThemes(state, 3);
+            const tips = buildCoachingTipsForThemes(themes, state.lastAxes);
+            const suggestedProfile = suggestProfileRotation(state);
+            const currentProfile = document.getElementById("profileSelect")?.value;
+
+            let trendHtml = "";
+            if (trend != null) {
+                const cls = trend >= 0 ? "coaching-trend-up" : "coaching-trend-down";
+                const sign = trend >= 0 ? "+" : "";
+                trendHtml = `<span class="coaching-chip ${cls}">Tendance <strong>${sign}${trend} pts</strong></span>`;
+            }
+
+            let focusHtml = "";
+            if (themes.length) {
+                focusHtml = "<ul class='coaching-focus'>" + themes.map(t => {
+                    const pack = COACHING_TIPS[t.theme];
+                    return "<li><strong>" + (pack ? pack.label : t.theme) + "</strong> — point récurrent (" + t.count + "×)</li>";
+                }).join("") + "</ul>";
+            } else if (sessionNum <= 2) {
+                focusHtml = "<p class='hint'>Premières sessions : travaillez l'accroche (nom, société, raison d'appel en 15 s).</p>";
+            } else {
+                focusHtml = "<p class='hint'>Continuez à varier vos approches — chaque profil teste une compétence différente.</p>";
+            }
+
+            let tipsHtml = "";
+            if (tips.length) {
+                tipsHtml = "<ul class='coaching-focus'>" + tips.map(t =>
+                    "<li><strong>" + t.label + " :</strong> " + t.tip + "</li>"
+                ).join("") + "</ul>";
+            }
+
+            let suggestionHtml = "";
+            if (suggestedProfile && suggestedProfile !== currentProfile) {
+                suggestionHtml = `<div class="coaching-suggestion">
+                    💡 <strong>Suggestion du jour :</strong> profil « ${getProfileLabel(suggestedProfile)} » pour éviter la routine.
+                    <button type="button" id="applyProfileSuggestion" data-profile="${suggestedProfile}">Essayer ce profil</button>
+                </div>`;
+            }
+
+            el.innerHTML = `
+                <div class="coaching-meta">
+                    <span class="coaching-chip">Session <strong>#${sessionNum}</strong></span>
+                    ${avg != null ? `<span class="coaching-chip">Moyenne <strong>${avg}/100</strong></span>` : ""}
+                    ${trendHtml}
+                    <span class="coaching-chip">Variété <strong>${getDayVarietyKey()}</strong></span>
+                </div>
+                <p style="margin:0 0 8px 0;font-size:13px;color:var(--text);"><strong>Vos priorités :</strong></p>
+                ${focusHtml}
+                ${tips.length ? "<p style='margin:12px 0 6px 0;font-size:13px;'><strong>Conseils avant l'appel :</strong></p>" + tipsHtml : ""}
+                ${suggestionHtml}
+            `;
+
+            const btn = document.getElementById("applyProfileSuggestion");
+            if (btn) {
+                btn.onclick = () => {
+                    const sel = document.getElementById("profileSelect");
+                    if (sel) {
+                        sel.value = btn.dataset.profile;
+                        sel.dispatchEvent(new Event("change"));
+                        renderCoachingPanel();
+                    }
+                };
+            }
+        }
+
+        function renderPostCallCoachingBlock(evaluation) {
+            const state = loadTrainingState();
+            const themes = getTopCoachingThemes(state, 2);
+            const tips = buildCoachingTipsForThemes(themes, evaluation.axes_amelioration);
+            const nextProfile = suggestProfileRotation(state);
+            const plan = (evaluation.recommandations || []).slice(0, 2);
+            if (!tips.length && !plan.length) return "";
+
+            let html = `<div class="coaching-post"><h4>📋 Plan pour votre prochain appel</h4><ul class="coaching-focus">`;
+            tips.forEach(t => { html += "<li><strong>" + t.label + " :</strong> " + t.tip + "</li>"; });
+            plan.forEach(r => { if (r) html += "<li>" + r + "</li>"; });
+            html += "<li>Variez le profil : essayez « " + getProfileLabel(nextProfile) + " » pour sortir de la routine.</li>";
+            html += "</ul></div>";
+            return html;
         }
 
         function recordTrainingSession(evaluation) {
             const state = loadTrainingState();
+            const profileKey = document.getElementById("profileSelect").value;
             state.sessionCount = (state.sessionCount || 0) + 1;
             state.recentPersonas = [{
                 supplier: prospectPersona.supplier,
@@ -1629,15 +2537,26 @@
                 lastName: prospectPersona.lastName,
                 billAmount: prospectPersona.billAmount,
                 scenarioType: prospectPersona.scenarioType || "standard",
-                profile: document.getElementById("profileSelect").value,
+                profile: profileKey,
+                opening: prospectPersona.openingLine || null,
                 at: Date.now()
-            }].concat(state.recentPersonas || []).slice(0, 12);
+            }].concat(state.recentPersonas || []).slice(0, 16);
+            state.recentProfiles = [profileKey].concat(state.recentProfiles || []).filter((v, i, a) => a.indexOf(v) === i).slice(0, 8);
+            if (prospectPersona.openingLine) {
+                state.recentOpenings = [prospectPersona.openingLine]
+                    .concat(state.recentOpenings || []).slice(0, 12);
+            }
             const score = Number(evaluation && evaluation.score_total);
             if (Number.isFinite(score)) {
-                state.recentScores = [score].concat(state.recentScores || []).slice(0, 10);
+                state.recentScores = [score].concat(state.recentScores || []).slice(0, 12);
             }
             const axes = (evaluation && evaluation.axes_amelioration) || [];
             if (axes.length) state.lastAxes = axes.slice(0, 4);
+            recordAxisInHistory(state, axes);
+            recordSectionWeaknesses(state, evaluation);
+            if (evaluation && evaluation.recommandations) {
+                state.lastRecommendations = evaluation.recommandations.slice(0, 4);
+            }
             saveTrainingState(state);
         }
 
@@ -1645,11 +2564,15 @@
             return window.__SIMULATOR_CONFIG__ || {};
         }
 
-        function getTrainingEvolutionBlock() {
+        function getTrainingEvolutionBlock(persona) {
             const state = loadTrainingState();
             const team = (getSimulatorConfig().recentTrainingSessions || []);
             let block = "\n\nÉVOLUTION ENTRAÎNEMENT — session n°" + ((state.sessionCount || 0) + 1) + " :";
-            block += "\n- Varie tes formulations à chaque appel ; ne répète pas les mêmes phrases qu'avant.";
+            block += "\n- Chaque appel est UNIQUE : reformule, change le ton, ne recycle pas les mêmes phrases.";
+            block += "\n- Contexte du jour : " + pickCallContext(state);
+            if (persona && persona.openingLine) {
+                block += "\n- Tu as décroché avec : « " + persona.openingLine + " » — reste cohérent avec cette entrée.";
+            }
             const avg = (state.recentScores || []).length
                 ? (state.recentScores.reduce((a, b) => a + b, 0) / state.recentScores.length) : null;
             if (avg != null && avg >= 78) {
@@ -1657,16 +2580,23 @@
             } else if (avg != null && avg < 55 && (state.sessionCount || 0) >= 3) {
                 block += "\n- L'agent débute : reste dans le niveau choisi, ouvre-toi si l'agent est poli et clair.";
             }
+            const themes = getTopCoachingThemes(state, 2);
+            if (themes.length) {
+                block += "\n- L'agent travaille encore : " + themes.map(t => COACHING_TIPS[t.theme]?.label || t.theme).join(", ")
+                    + " — varie tes objections sur ces points.";
+            }
             if ((state.recentPersonas || []).length) {
-                const used = state.recentPersonas.slice(0, 5).map(p =>
+                const used = state.recentPersonas.slice(0, 6).map(p =>
                     (p.firstName || "") + " " + (p.supplier || "") + " ~" + (p.billAmount || "?") + "€"
                     + (p.scenarioType && p.scenarioType !== "standard" ? " [" + p.scenarioType + "]" : "")
+                    + (p.opening ? " («" + p.opening.slice(0, 24) + "»)" : "")
                 ).join(" | ");
-                block += "\n- Scénarios récents déjà joués sur cet appareil (adapter, ne pas copier) : " + used;
+                block += "\n- Scénarios récents sur cet appareil (NE PAS reproduire mot pour mot) : " + used;
             }
             if (team.length) {
-                block += "\n- L'équipe a déjà fait " + team.length + " simulations : reste naturel et imprévisible.";
+                block += "\n- L'équipe a déjà fait " + team.length + " simulations : reste naturel, surprenant, imprévisible.";
             }
+            block += "\n- Jour " + getDayVarietyKey() + " : évite les formulations génériques type « Oui bonjour ? » si déjà utilisées récemment.";
             return block;
         }
 
@@ -1722,7 +2652,9 @@ ${scenarioBlock ? scenarioBlock + "\n" : ""}- Identité : ${persona.firstName} $
 - Si l'agent propose ${offer} €${persona.scenarioType === "standard" ? " au lieu de " + persona.billAmount + " €" : " pour le nouveau logement"} → réagis au prix en français (« ${offer} euros ? D'accord, expliquez-moi »).
 - UNIQUEMENT en français naturel. JAMAIS d'anglais (« stop speaking », etc.).
 - Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.
-- VARIÉTÉ OBLIGATOIRE : reformule à chaque réplique ; ne recycle pas une phrase d'une session précédente.`;
+- VARIÉTÉ OBLIGATOIRE : reformule à chaque réplique ; ne recycle pas une phrase d'une session précédente.
+- TONALITÉ : si tu es agacé ou en colère, montre-le dans tes mots (ton sec, exclamations, impatience). Si tu cries ou rages, utilise des phrases courtes et énergiques.
+- INCOMPRÉHENSION : si l'agent parle en anglais, de façon confuse, ou avec des phrases sans sens en français → dis « Je ne comprends pas » ou « Pardon, vous pouvez répéter ? » (varie la formulation).`;
         }
 
         function getAntiRepeatContext() {
@@ -1873,9 +2805,19 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
         const OPENROUTER_FALLBACK_MODELS = [
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "google/gemma-4-31b-it:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free",
+            "openai/gpt-oss-120b:free",
             "nvidia/nemotron-3-super-120b-a12b:free",
-            "nvidia/nemotron-3-nano-30b-a3b",
+            "nvidia/nemotron-3-nano-30b-a3b:free",
             "nvidia/nemotron-3-super-120b-a12b"
+        ];
+        const BENCHMARK_FREE_MODELS = [
+            "nvidia/nemotron-3-super-120b-a12b:free",
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "google/gemma-4-31b-it:free",
+            "qwen/qwen3-next-80b-a3b-instruct:free"
         ];
         function isStreamlitCloud() {
             const cfg = window.__SIMULATOR_CONFIG__ || {};
@@ -2019,28 +2961,36 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function createProspectPersona(profileKey) {
             const state = loadTrainingState();
-            const scenarioType = pickScenarioType(state);
+            const examCtx = getPendingExamStep();
+            const examStep = examCtx && examCtx.step.profile === profileKey ? examCtx.step : null;
+            const scenarioType = examStep?.scenarioType || pickScenarioType(state);
             const recentKeys = new Set((state.recentPersonas || []).map(p =>
                 (p.scenarioType || "standard") + "|" + (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
             ));
+            const recentNames = new Set((state.recentPersonas || []).slice(0, 8).map(p => p.firstName || ""));
             let persona = null;
-            for (let i = 0; i < 30; i++) {
-                const billAmount = randomBillAmount();
-                const offerTarget = Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15]));
-                const supplier = pickRandom(PERSONA_SUPPLIERS);
-                const firstName = profileKey === "curieux"
-                    ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille"])
-                    : pickRandom(PERSONA_FIRST_NAMES);
-                const lastName = pickRandom(PERSONA_LAST_NAMES);
-                const oldAddress = pickRandom(PERSONA_ADDRESSES);
-                const newAddress = pickDifferentAddress(oldAddress);
+            for (let i = 0; i < 36; i++) {
+                const billAmount = examStep?.billAmount || randomBillAmount();
+                const offerTarget = examStep?.offerTarget != null
+                    ? examStep.offerTarget
+                    : (examStep?.billAmount
+                        ? Math.max(45, billAmount - 12)
+                        : Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15, 18])));
+                const supplier = examStep?.supplier || pickRandom(PERSONA_SUPPLIERS);
+                const firstName = examStep?.firstName || (profileKey === "curieux"
+                    ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille", "Émilie", "Emilie", "Antoine"])
+                    : pickRandom(PERSONA_FIRST_NAMES));
+                const lastName = examStep?.lastName || pickRandom(PERSONA_LAST_NAMES);
+                const oldAddress = examStep?.oldAddress || pickRandom(PERSONA_ADDRESSES);
+                const newAddress = examStep?.newAddress || pickDifferentAddress(oldAddress);
                 const newPdl = randomPdl();
                 const key = scenarioType + "|" + supplier + "|" + firstName + "|" + billAmount;
-                if (!recentKeys.has(key) || i > 20) {
+                const nameRepeat = recentNames.has(firstName) && i < 28;
+                if (examStep || (!recentKeys.has(key) && !nameRepeat) || i > 28) {
                     const base = {
                         firstName, lastName,
                         supplier,
-                        yearsAtSupplier: pickRandom(PERSONA_YEARS),
+                        yearsAtSupplier: examStep?.yearsAtSupplier || pickRandom(PERSONA_YEARS),
                         billAmount, offerTarget,
                         scenarioType,
                         gaveFirst: false, gaveLast: false,
@@ -2048,33 +2998,38 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         gaveAddress: false
                     };
                     if (scenarioType === "demenagement") {
-                        const alreadyMoved = Math.random() > 0.55;
+                        const alreadyMoved = examStep?.alreadyMoved != null ? examStep.alreadyMoved : Math.random() > 0.55;
                         persona = Object.assign(base, {
                             oldAddress,
                             newAddress,
-                            moveWhen: pickRandom(MOVE_WHEN_OPTIONS),
+                            moveWhen: examStep?.moveWhen || pickRandom(MOVE_WHEN_OPTIONS),
                             alreadyMoved,
                             address: alreadyMoved ? newAddress : oldAddress,
                             newPdl,
-                            newPdlKnown: Math.random() > 0.45
+                            newPdlKnown: examStep?.newPdlKnown != null ? examStep.newPdlKnown : Math.random() > 0.45
                         });
                     } else if (scenarioType === "mise_en_service") {
                         persona = Object.assign(base, {
                             newAddress,
                             address: newAddress,
-                            mesStatus: pickRandom(MES_STATUS_OPTIONS),
-                            hasContractAtNew: Math.random() > 0.55,
+                            mesStatus: examStep?.mesStatus || pickRandom(MES_STATUS_OPTIONS),
+                            hasContractAtNew: examStep?.hasContractAtNew != null ? examStep.hasContractAtNew : Math.random() > 0.55,
                             newPdl,
-                            newPdlKnown: Math.random() > 0.5
+                            newPdlKnown: examStep?.newPdlKnown != null ? examStep.newPdlKnown : Math.random() > 0.5,
+                            billAmount: examStep?.billAmount || billAmount,
+                            offerTarget: examStep?.billAmount ? Math.max(45, 55) : offerTarget
                         });
                     } else {
                         persona = Object.assign(base, {
-                            address: pickRandom(PERSONA_ADDRESSES)
+                            address: examStep?.address || examStep?.oldAddress || pickRandom(PERSONA_ADDRESSES)
                         });
                     }
                     persona.gender = inferProspectGender(persona.firstName);
                     persona.voiceId = VOICE_BY_GENDER[persona.gender];
                     persona.mood = getProspectMood(profileKey, getLevel());
+                    persona.openingLine = examStep?.opening || pickVariedOpening(profileKey, state);
+                    persona.callContext = pickCallContext(state);
+                    if (examStep) persona.examStepId = examStep.id;
                     break;
                 }
             }
@@ -3631,7 +4586,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function applyLevelCalibration(reply) {
             if (!reply) return reply;
             reply = applyLevelGuardsAlways(reply);
-            if (!isProfileCalibrationEnabled()) return reply;
+            if (!isProfileCalibrationEnabled()) return applySoftObjections(reply);
 
             if (getProfileKey() === "presse") return applyPresseCalibration(reply);
             if (getProfileKey() === "agressif") return applyAgressifCalibration(reply);
@@ -3708,11 +4663,134 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (status === 402) {
                 return "Crédit OpenRouter insuffisant — même les modèles « gratuits » exigent un petit solde (~1$) sur openrouter.ai/settings/credits";
             }
-            if (status === 429) return "Trop de requêtes — réessayez dans quelques secondes";
+            if (status === 429) {
+                if (/free-models-per-day/i.test(String(raw))) {
+                    return "Quota gratuit journalier épuisé (50 req/jour). Ajoutez 5$ sur openrouter.ai/settings/credits pour 1000 req/jour, ou réessayez demain.";
+                }
+                return "Trop de requêtes — réessayez dans quelques secondes";
+            }
             if (typeof err === "object" && String(err?.message || err).includes("No endpoints found")) {
                 return "Modèle NVIDIA indisponible sur OpenRouter — choisissez Nemotron 3 Super (gratuit) dans la liste";
             }
             return `Erreur HTTP ${status}`;
+        }
+
+        function scoreBenchmarkReply(reply, agentText) {
+            const t = (reply || "").trim();
+            if (!t) return { score: 0, french: false, noEcho: false, inRole: false, detail: "vide" };
+            const french = !isProspectEnglishReply(t);
+            const normA = (agentText || "").toLowerCase().replace(/[^\w\sàâäéèêëïîôùûüç]/gi, " ");
+            const normR = t.toLowerCase().replace(/[^\w\sàâäéèêëïîôùûüç]/gi, " ");
+            const chunk = normA.split(/\s+/).filter(w => w.length > 4).slice(0, 6).join(" ");
+            const noEcho = !chunk || !normR.includes(chunk.slice(0, 30));
+            const inRole = !isMetaLeak(t) && !isProspectRoleViolation(t);
+            let score = 0;
+            if (french) score += 35;
+            if (noEcho) score += 30;
+            if (inRole) score += 20;
+            if (t.length >= 12 && t.length <= 280) score += 15;
+            return { score, french, noEcho, inRole, detail: t.slice(0, 120) };
+        }
+
+        async function runSingleModelBenchmark(apiKey, model, agentText) {
+            const started = performance.now();
+            const system = "Tu es un prospect AGRESSIF au téléphone en France. FRANÇAIS UNIQUEMENT. 1-3 phrases. Ne répète jamais l'agent. Pas de markdown.";
+            const messages = [
+                { role: "system", content: system },
+                { role: "assistant", content: "Oui bonjour ?" },
+                { role: "user", content: agentText }
+            ];
+            try {
+                const raw = await callOpenRouter(messages, apiKey, model, 120, 0.6, false);
+                const latency = Math.round(performance.now() - started);
+                const metrics = scoreBenchmarkReply(raw, agentText);
+                return { model, ok: true, latency, reply: raw, ...metrics };
+            } catch (e) {
+                return {
+                    model,
+                    ok: false,
+                    latency: Math.round(performance.now() - started),
+                    score: 0,
+                    error: e.message || String(e)
+                };
+            }
+        }
+
+        async function runFreeModelsBenchmark() {
+            const apiKey = getApiKey();
+            const keyErr = validateApiKey(apiKey);
+            if (keyErr) return alert(keyErr);
+            const btn = document.getElementById("benchmarkModelsBtn");
+            const out = document.getElementById("benchmarkModelsResult");
+            if (!btn || !out) return;
+            const agentText = "Bonjour, je suis Émilie de Génie Énergie. Je vous appelle pour comparer votre contrat d'électricité chez EDF.";
+            const models = BENCHMARK_FREE_MODELS.slice();
+            const current = getNvidiaModel();
+            if (current.endsWith(":free") && !models.includes(current)) models.unshift(current);
+
+            btn.disabled = true;
+            btn.textContent = "Comparaison en cours…";
+            out.style.display = "block";
+            out.innerHTML = "<p class='hint'>Test en cours sur " + models.length + " modèles (1 scénario agressif)…</p>";
+
+            const results = [];
+            for (let i = 0; i < models.length; i++) {
+                out.innerHTML = "<p class='hint'>Modèle " + (i + 1) + "/" + models.length + " : " + models[i] + "…</p>";
+                results.push(await runSingleModelBenchmark(apiKey, models[i], agentText));
+                if (i < models.length - 1) await new Promise(r => setTimeout(r, 1500));
+            }
+
+            results.sort((a, b) => (b.score || 0) - (a.score || 0) || (a.latency || 99999) - (b.latency || 99999));
+            const best = results[0];
+            let html = "<p><strong>Résultat</strong> — scénario : prospect agressif, accroche agent standard.</p>";
+            html += "<table><thead><tr><th>Modèle</th><th>Score</th><th>FR</th><th>Pas écho</th><th>Rôle</th><th>ms</th></tr></thead><tbody>";
+            results.forEach((r, idx) => {
+                const label = r.model.replace(/:free$/, "").split("/").pop();
+                html += "<tr class='" + (idx === 0 && r.ok ? "best-row" : "") + "'>";
+                html += "<td title='" + r.model + "'>" + label + "</td>";
+                if (!r.ok) {
+                    html += "<td colspan='5'>" + (r.error || "erreur") + "</td>";
+                } else {
+                    html += "<td>" + r.score + "/100</td>";
+                    html += "<td>" + (r.french ? "✓" : "✗") + "</td>";
+                    html += "<td>" + (r.noEcho ? "✓" : "✗") + "</td>";
+                    html += "<td>" + (r.inRole ? "✓" : "✗") + "</td>";
+                    html += "<td>" + r.latency + "</td>";
+                }
+                html += "</tr>";
+            });
+            html += "</tbody></table>";
+            if (best && best.ok) {
+                html += "<p style='margin-top:10px;'><strong>Meilleur :</strong> " + best.model
+                    + " — « " + (best.reply || "").slice(0, 100) + "… »</p>";
+                html += "<button type='button' id='applyBestModelBtn' data-model='" + best.model + "' "
+                    + "style='margin-top:6px;padding:6px 12px;border-radius:6px;border:none;background:var(--lc-teal);color:#fff;cursor:pointer;'>"
+                    + "Utiliser ce modèle</button>";
+            }
+            out.innerHTML = html;
+            const applyBtn = document.getElementById("applyBestModelBtn");
+            if (applyBtn) {
+                applyBtn.onclick = () => {
+                    const sel = document.getElementById("nvidiaModelSelect");
+                    if (sel) {
+                        const wanted = applyBtn.dataset.model;
+                        let found = false;
+                        for (const opt of sel.options) {
+                            if (opt.value === wanted) { sel.value = wanted; found = true; break; }
+                        }
+                        if (!found) {
+                            const opt = document.createElement("option");
+                            opt.value = wanted;
+                            opt.textContent = wanted + " (benchmark)";
+                            sel.appendChild(opt);
+                            sel.value = wanted;
+                        }
+                        alert("Modèle sélectionné : " + wanted);
+                    }
+                };
+            }
+            btn.disabled = false;
+            btn.textContent = "⚡ Comparer 4 modèles gratuits (test rapide)";
         }
 
         async function callOpenRouter(messages, apiKey, model, maxTokens, temperature, isEval) {
@@ -3933,6 +5011,118 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 .replace(/\*+/g, "")
                 .replace(/\s+/g, " ")
                 .trim();
+        }
+
+        const VOICE_TONE_SETTINGS = {
+            calm: { rate: 0.92, pitch: 1.0, volume: 1, playbackRate: 1.0 },
+            tense: { rate: 1.08, pitch: 1.03, volume: 1, playbackRate: 1.06 },
+            angry: { rate: 1.16, pitch: 1.1, volume: 1, playbackRate: 1.12 },
+            shouting: { rate: 1.3, pitch: 1.18, volume: 1, playbackRate: 1.2 }
+        };
+
+        const INCOMPREHENSION_REPLIES = {
+            agressif: {
+                debutant: ["Pardon ? Je n'ai pas compris.", "Excusez-moi, je n'ai pas suivi.", "Vous pouvez répéter ?"],
+                intermediaire: ["Je n'ai pas compris, parlez clairement.", "Pardon ? Reformulez.", "Là je n'ai pas suivi."],
+                avance: ["Je ne comprends pas, parlez français clairement !", "Qu'est-ce que vous dites ? Je n'ai rien compris.", "Pardon ? Vos phrases n'ont pas de sens."]
+            },
+            presse: {
+                debutant: ["Pardon ? Je n'ai pas compris, faites court.", "Excusez-moi, répétez vite.", "Je n'ai pas suivi."],
+                intermediaire: ["Je n'ai pas compris, allez droit au but.", "Pardon ? Reformulez rapidement.", "Là je n'ai pas suivi, faites court."],
+                avance: ["Je ne comprends pas — et je n'ai pas le temps, parlez clair.", "Pardon ? Dites ça autrement, vite.", "Quoi ? Je n'ai rien compris."]
+            },
+            mefiant_fournisseur: {
+                debutant: ["Pardon ? Je n'ai pas bien compris.", "Excusez-moi, vous pouvez répéter ?", "Je n'ai pas suivi votre phrase."],
+                intermediaire: ["Je ne comprends pas ce que vous dites.", "Pardon, reformulez s'il vous plaît.", "Là je n'ai pas compris."],
+                avance: ["Je ne comprends pas, parlez plus clairement.", "Pardon ? Vos mots ne sont pas clairs.", "Je n'ai pas saisi, répétez."]
+            },
+            mefiant_rgpd: {
+                debutant: ["Pardon ? Je n'ai pas compris.", "Excusez-moi, pouvez-vous répéter ?", "Je n'ai pas bien suivi."],
+                intermediaire: ["Je ne comprends pas votre phrase.", "Pardon, reformulez clairement.", "Là je n'ai pas compris."],
+                avance: ["Je ne comprends pas — et je veux des explications claires.", "Pardon ? Parlez distinctement.", "Qu'est-ce que vous dites exactement ?"]
+            },
+            curieux: {
+                debutant: ["Pardon ? Je n'ai pas compris.", "Excusez-moi, vous pouvez répéter ?", "Je n'ai pas bien suivi."],
+                intermediaire: ["Je ne comprends pas, vous pouvez reformuler ?", "Pardon ? Répétez s'il vous plaît.", "Là je n'ai pas saisi."],
+                avance: ["Je ne comprends pas ce que vous voulez dire.", "Pardon, vos phrases ne sont pas claires.", "Je n'ai pas compris, pouvez-vous expliquer autrement ?"]
+            }
+        };
+
+        function isAgentTextIncomprehensible(text) {
+            const t = (text || "").trim();
+            if (!t) return true;
+            if (/^(oui|non|allo|bonjour|salut|ok|d'accord)[\s.!?]*$/i.test(t)) return false;
+            if (t.length < 8 && /\b(bonjour|je suis|monsieur|madame|génie|genie)\b/i.test(t)) return false;
+            if (t.length < 4) return true;
+            if (/^(euh+|hm+|ah+|oh+)[\s.!?]*$/i.test(t)) return true;
+
+            const englishHits = (t.match(/\b(the|you|your|what|why|how|yes|no|okay|please|sorry|i am|i'm|don't|can't|want|speaking|listen|understand|hello|thank|would|could|should|have|this|that|with|about|call|energy|company|offer)\b/gi) || []).length;
+            const frenchHits = (t.match(/\b(je|j'|nous|vous|oui|non|c'est|pas|pour|avec|chez|bonjour|suis|sommes|êtes|avez|propose|appelle|comparateur|génie|genie|client|facture|fournisseur|énergie|energie|monsieur|madame|alors|donc|bien|très)\b/gi) || []).length;
+            if (englishHits >= 2 && frenchHits < 2) return true;
+            if (englishHits > frenchHits && frenchHits < 2 && t.length > 12) return true;
+
+            const words = t.split(/\s+/).filter(Boolean);
+            if (words.length >= 5) {
+                const hasFrenchStructure = /\b(je|nous|vous|c'est|bonjour|alors|donc|eh bien|monsieur|madame)\b/i.test(t)
+                    || /\b(suis|êtes|avez|fais|fait|peux|voulez|propose|appelle|compar|offre|écoute|comprends|vérifi|regard)\w*/i.test(t);
+                const energyContext = /\b(edf|engie|total|ekwateur|ohm|vattenfall|mint|génie|genie|enedis|linky|kwh|pdl|iban|home\s*énergie|home\s*energie)\b/i.test(t);
+                if (!hasFrenchStructure && !energyContext) return true;
+            }
+
+            const alpha = (t.match(/[a-zA-ZàâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ]/g) || []).length;
+            if (alpha / Math.max(t.length, 1) < 0.65) return true;
+
+            if (/\b(bla bla|nanana|test test|asdf|xxx+|truc machin)\b/i.test(t)) return true;
+            if (/(\b\w{2,5}\b)(?:\s+\1){2,}/i.test(t)) return true;
+            if (/[bcdfghjklmnpqrstvwxyz]{7,}/i.test(t.replace(/\s/g, ""))) return true;
+
+            const weirdTokens = words.filter(w => w.length > 3 && !/[aeiouyàâäéèêëïîôùûü]/i.test(w));
+            if (weirdTokens.length >= 2 && weirdTokens.length >= words.length * 0.4) return true;
+
+            return false;
+        }
+
+        function getIncomprehensionReply() {
+            const profile = getProfileKey();
+            const level = getLevel();
+            const pool = (INCOMPREHENSION_REPLIES[profile] || INCOMPREHENSION_REPLIES.agressif)[level]
+                || INCOMPREHENSION_REPLIES.agressif.debutant;
+            return pickNextUnusedLine(pool) || "Pardon ? Je ne comprends pas, vous pouvez répéter ?";
+        }
+
+        function inferProspectToneFromReply(text) {
+            const t = (text || "").trim();
+            const profile = getProfileKey();
+            const level = getLevel();
+            const base = getProspectMood(profile, level);
+            const shoutMarkers = /\b(arrêtez|arretez|raccroch|laissez-moi|arnaqueur|plainte|insupportable|hors de question|j'en ai marre|taisez-vous|fermez-la|dégagez|degagez)\b/i;
+            const angryMarkers = /\b(ça ne m'intéresse pas|occupé|pourquoi vous m'appelez|je ne veux pas|pas envie|méfiant|bloctel|arnaque|perdez votre temps)\b/i;
+            const tenseMarkers = /\b(pressé|presse|vite|deux minutes|pas le temps|faites court|j'ai pas le temps)\b/i;
+            const capsRatio = (t.match(/[A-ZÀÂÄÉÈÊËÏÎÔÙÛÜÇ]/g) || []).length / Math.max(t.length, 1);
+            const exclamations = (t.match(/!/g) || []).length;
+
+            if (shoutMarkers.test(t) && (exclamations >= 1 || capsRatio > 0.25 || /!{2,}/.test(t))) return "shouting";
+            if (exclamations >= 2 && (base === "angry" || profile === "agressif")) return "shouting";
+            if (isHardObjection(t) && (base === "angry" || profile === "agressif" || level === "avance")) return "angry";
+            if (angryMarkers.test(t) && base !== "calm") return "angry";
+            if (tenseMarkers.test(t) || base === "tense") return "tense";
+            if (base === "angry") return "angry";
+            return "calm";
+        }
+
+        function getProspectVoiceSettings(text) {
+            const tone = inferProspectToneFromReply(text);
+            return Object.assign({ tone }, VOICE_TONE_SETTINGS[tone] || VOICE_TONE_SETTINGS.calm);
+        }
+
+        function applyProspectLiveMood(tone) {
+            const frame = document.getElementById("prospectFrame");
+            if (!frame) return;
+            const mood = tone === "shouting" || tone === "angry" ? "angry"
+                : tone === "tense" ? "tense" : (prospectPersona && prospectPersona.mood) || "calm";
+            frame.classList.remove("mood-calm", "mood-tense", "mood-angry");
+            frame.classList.add("mood-" + mood);
+            if (prospectPersona) prospectPersona.liveTone = tone;
         }
 
         function pickFrenchVoiceForGender(gender) {
@@ -4195,11 +5385,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }));
         }
 
-        function requestStreamlitHostedTts(text) {
+        function requestStreamlitHostedTts(text, voiceSettings) {
             const requestId = "tts_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+            const settings = voiceSettings || getProspectVoiceSettings(text);
             sessionStorage.setItem(PENDING_TTS_KEY, JSON.stringify({
                 request_id: requestId,
                 text: text,
+                tone: settings.tone || "calm",
                 at: Date.now()
             }));
             setProspectThinking(true);
@@ -4208,13 +5400,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 action: "hosted_tts",
                 request_id: requestId,
                 text: text.slice(0, 500),
-                gender: (prospectPersona && prospectPersona.gender) || "female"
+                gender: (prospectPersona && prospectPersona.gender) || "female",
+                tone: settings.tone || "calm"
             });
             return true;
         }
 
-        async function playAudioBase64(b64, mime, captionText) {
+        async function playAudioBase64(b64, mime, captionText, voiceSettings) {
             if (!b64) return false;
+            const settings = voiceSettings || VOICE_TONE_SETTINGS.calm;
             if (lastProspectAudio) {
                 lastProspectAudio.pause();
                 if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
@@ -4227,7 +5421,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const blobUrl = URL.createObjectURL(blob);
             const audio = new Audio(blobUrl);
             audio._blobUrl = blobUrl;
-            audio.volume = 1;
+            audio.volume = settings.volume || 1;
+            audio.playbackRate = settings.playbackRate || 1;
             lastProspectAudio = audio;
             if (captionText) updateLiveCaption("Prospect", captionText, "prospect");
             setStatus("Le prospect parle…", "status-thinking");
@@ -4270,14 +5465,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     el.innerHTML = "⚠️ Voix hébergée : " + (result.error || "erreur") + " — voix navigateur";
                     el.style.color = "#dc2626";
                 }
-                return await speakBrowser(pending.text || "");
+                return await speakBrowser(pending.text || "", { tone: pending.tone || "calm" });
             }
 
             const b64 = result.audio_b64 || audioB64FromInjectedTts();
             if (!b64) return false;
 
             try {
-                await playAudioBase64(b64, result.mime || "audio/mpeg", pending.text || "");
+                const pendingTone = pending.tone || "calm";
+                await playAudioBase64(b64, result.mime || "audio/mpeg", pending.text || "", getProspectVoiceSettings(pending.text || "") || VOICE_TONE_SETTINGS[pendingTone]);
                 lastPlayedTtsRequestId = result.request_id;
                 sessionStorage.removeItem(PENDING_TTS_KEY);
                 pushToStreamlit({ action: "tts_ack", request_id: result.request_id });
@@ -4362,8 +5558,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
-        async function speakLocalTTS(text) {
+        async function speakLocalTTS(text, voiceSettings) {
             if (!text) return false;
+            const settings = voiceSettings || getProspectVoiceSettings(text);
             const server = getTtsServer();
             if (!server) return false;
             try {
@@ -4373,7 +5570,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     lastProspectAudio = null;
                 }
                 const url = server + "/tts?text=" + encodeURIComponent(text.slice(0, 500))
-                    + "&voice=" + encodeURIComponent((prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER.female);
+                    + "&voice=" + encodeURIComponent((prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER.female)
+                    + "&tone=" + encodeURIComponent(settings.tone || "calm");
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("TTS HTTP " + res.status);
                 const buf = await res.arrayBuffer();
@@ -4383,7 +5581,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const blobUrl = URL.createObjectURL(blob);
                 const audio = new Audio(blobUrl);
                 audio._blobUrl = blobUrl;
-                audio.volume = 1;
+                audio.volume = settings.volume || 1;
+                audio.playbackRate = settings.playbackRate || 1;
                 audio.preload = "auto";
                 lastProspectAudio = audio;
                 setStatus("Le prospect parle...", "status-thinking");
@@ -4421,9 +5620,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
-        function speakBrowser(text) {
+        function speakBrowser(text, voiceSettings) {
             return new Promise(async (resolve) => {
                 if (!text) return resolve(false);
+                const settings = voiceSettings || getProspectVoiceSettings(text);
+                applyProspectLiveMood(settings.tone);
                 const synthRef = getSpeechSynth();
                 if (!synthRef) return resolve(false);
                 await ensureVoices();
@@ -4431,8 +5632,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 try { synthRef.resume(); } catch (_) {}
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = "fr-FR";
-                u.volume = 1;
-                u.rate = 0.92;
+                u.volume = settings.volume || 1;
+                u.rate = settings.rate || 0.92;
+                u.pitch = settings.pitch || 1;
                 const genderVoice = prospectPersona && pickFrenchVoiceForGender(prospectPersona.gender);
                 if (genderVoice) u.voice = genderVoice;
                 else if (frenchVoice) u.voice = frenchVoice;
@@ -4471,6 +5673,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         async function speakProspect(rawText) {
             const text = cleanForSpeech(rawText);
             if (!text) return false;
+            const voiceSettings = getProspectVoiceSettings(text);
+            applyProspectLiveMood(voiceSettings.tone);
             const voiceOn = document.getElementById("voiceToggle").checked;
 
             if (!voiceOn) {
@@ -4484,18 +5688,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const onHosted = shouldUseHostedTts() || isStreamlitCloud() || getSimulatorConfig().hostedOnStreamlit;
 
             if (onHosted) {
-                let ok = await speakBrowser(text);
+                let ok = await speakBrowser(text, voiceSettings);
                 if (ok) {
                     if (callActive) setStatus("À vous de parler", "status-listening");
                     return true;
                 }
-                requestStreamlitHostedTts(text);
+                requestStreamlitHostedTts(text, voiceSettings);
                 return true;
             }
 
-            let ok = await speakLocalTTS(text);
+            let ok = await speakLocalTTS(text, voiceSettings);
             if (!ok) {
-                ok = await speakBrowser(text);
+                ok = await speakBrowser(text, voiceSettings);
             }
 
             if (callActive) {
@@ -4546,16 +5750,42 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function fallbackProspectReply() {
             if (agentAskedIdentity()) return getIdentityReply();
-            if (!isProfileCalibrationEnabled()) {
-                return ensureReplyVariety("Je vous écoute, qu'est-ce que vous voulez ?");
-            }
             const profile = getProfileKey();
-            const contextual = getContextualObjection(profile, getLevel());
+            const level = getLevel();
+            const contextual = getContextualObjection(profile, level);
             if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
-            const factual = tryFactualAnswer(profile, getLevel());
+            const factual = tryFactualAnswer(profile, level);
             if (factual && !isRepeatOfRecentProspectReply(factual)) return factual;
-            const list = getProfileFallbacks();
+            const list = getProfileFallbacks(level);
             return pickNextUnusedLine(list) || ensureReplyVariety("Je vous écoute, mais je ne suis pas convaincu.");
+        }
+
+        function applySoftObjections(reply) {
+            const profile = getProfileKey();
+            const level = getLevel();
+
+            const factual = tryFactualAnswer(profile, level);
+            if (factual && !isRepeatOfRecentProspectReply(factual)) return factual;
+
+            if (agentIgnoredProspectQuestion()) {
+                const contextual = getContextualObjection(profile, level);
+                if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
+                const alt = pickNextUnusedLine(getProfileFallbacks(level));
+                if (alt) return alt;
+            }
+
+            if (!reply || isBadProspectReply(reply) || isProspectEcho(reply) || isProspectEnglishReply(reply)) {
+                return fallbackProspectReply();
+            }
+
+            if (countAgentTurns() <= 3 && agentIsCommercialPitch() && isCooperativeReply(reply) && !canCooperateNow(profile, level)) {
+                const contextual = getContextualObjection(profile, level);
+                if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
+                const alt = pickNextUnusedLine(getProfileFallbacks(level));
+                if (alt) return alt;
+            }
+
+            return reply;
         }
 
         function isProspectNonsenseReply(reply) {
@@ -4616,11 +5846,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function applyProspectReplyGuards(reply) {
-            if (!reply) return getRealisticProspectFallback();
+            if (!reply) return fallbackProspectReply();
             if (isProspectEnglishReply(reply) || isProspectEcho(reply) || isProspectHallucination(reply)
                 || isProspectNonsenseReply(reply) || isMetaLeak(reply) || isProspectRoleViolation(reply)
                 || isProspectStaleReply(reply)) {
-                return getRealisticProspectFallback();
+                return fallbackProspectReply();
             }
             return reply;
         }
@@ -4687,7 +5917,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const pitch = getScenarioContextReply("pitch");
                 if (pitch) return pitch;
             }
-            return sec ? "Bon, c'est pour quoi exactement ?" : "D'accord, c'est pour quoi ?";
+            return fallbackProspectReply();
         }
 
         function applyMinimalRealismGuards(reply) {
@@ -4735,26 +5965,26 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (agentAskedIdentity() && (!reply || isBadProspectReply(reply) || identityGarbage || isProspectRoleViolation(reply) || isProspectWrongName(reply))) {
                 reply = getIdentityReply();
             } else if (isBadProspectReply(reply)) {
-                reply = !isProfileCalibrationEnabled() ? getRealisticProspectFallback() : fallbackProspectReply();
+                reply = fallbackProspectReply();
             }
-            if (!isProfileCalibrationEnabled()) {
-                if (agentAskedIdentity() && isProspectRoleViolation(reply)) {
-                    reply = getIdentityReply();
-                }
+            if (agentAskedIdentity() && isProspectRoleViolation(reply)) {
+                reply = getIdentityReply();
             }
             reply = applyLevelCalibration(reply);
+            reply = sanitizeRepeatedFactuals(reply);
+            reply = stripPrematureIban(reply);
             if (isProfileCalibrationEnabled()) {
-                reply = sanitizeRepeatedFactuals(reply);
-                reply = stripPrematureIban(reply);
                 if (getLevel() === "debutant" && isTooAggressiveForDebutant(reply)) {
                     const coop = applyDebutantCooperation(getProfileKey(), reply);
                     reply = coop || "D'accord, je vous écoute. Faites vite.";
                 }
+            } else if (getLevel() === "debutant" && isTooAggressiveForDebutant(reply)) {
+                reply = "D'accord, je vous écoute. Faites vite.";
             }
             if (isProspectRoleViolation(reply)) {
-                reply = agentAskedIdentity() ? getIdentityReply() : getRealisticProspectFallback();
+                reply = agentAskedIdentity() ? getIdentityReply() : fallbackProspectReply();
             } else if (isProspectStaleReply(reply)) {
-                reply = getRealisticProspectFallback();
+                reply = fallbackProspectReply();
             }
             reply = enforceConversationStage(reply);
             syncPersonaFromReply(reply);
@@ -4772,6 +6002,17 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             chatTurns.push({ role: "user", content: userText });
             rememberAgentFromMessage(userText);
             updateLiveStats();
+
+            if (isAgentTextIncomprehensible(userText)) {
+                const reply = finalizeProspectReply(getIncomprehensionReply());
+                chatTurns.push({ role: "assistant", content: reply });
+                addLogMessage("Prospect", reply, "prospect-msg");
+                updateLiveStats();
+                setProspectThinking(false);
+                await speakProspect(reply);
+                setStatus("À vous de parler", "status-listening");
+                return;
+            }
 
             if (agentSaidGoodbye()) {
                 const reply = "Au revoir.";
@@ -5210,6 +6451,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 <div class="eval-section"><h4>3 points forts de l'agent</h4><ul>${list(data.points_forts)}</ul></div>
                 <div class="eval-section"><h4>3 axes d'amélioration</h4><ul>${list(data.axes_amelioration)}</ul></div>
                 <div class="eval-section"><h4>Recommandations</h4><ul>${list(data.recommandations)}</ul></div>
+                ${renderPostCallCoachingBlock(data)}
                 <p class="eval-interpretation">Interprétation : 85–100 Excellent · 70–84 Bon · 50–69 À améliorer · &lt;50 Coaching nécessaire</p>`;
         }
 
@@ -5301,7 +6543,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (retryBtn) retryBtn.style.display = "block";
             }
             revealEvaluationPanel();
+            const examResult = recordExamStepResult(evaluationData);
+            if (examResult) {
+                evalContent.innerHTML = renderExamEvalBanner(examResult) + evalContent.innerHTML;
+            }
             recordTrainingSession(evaluationData);
+            renderExamPanel();
             return evaluationData;
         }
 
@@ -5319,6 +6566,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             setProspectThinking(false);
             stopCallTimer();
             setStatus("Ligne inactive", "status-idle");
+            const startBtnEl = document.getElementById("startBtn");
+            if (startBtnEl && !getPendingExamStep()) {
+                startBtnEl.textContent = "📞 Décrocher — lancer la simulation";
+            }
         }
 
         startBtn.addEventListener('click', async () => {
@@ -5335,11 +6586,21 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const level = document.getElementById('levelSelect').value;
             callLevel = level;
 
+            const examCtx = getPendingExamStep();
+            if (examCtx && examCtx.step.profile === profileKey && examCtx.step.level === level) {
+                examCallContext = { campaignId: examCtx.campaign.id, stepIdx: examCtx.stepIdx };
+                const calib = document.getElementById("calibrationToggle");
+                if (calib) calib.checked = true;
+            } else {
+                examCallContext = null;
+            }
+
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
             const levelBlock = profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant;
 
             const persona = createProspectPersona(profileKey);
             prospectPersona = persona;
+            const openingLine = persona.openingLine || profile.start;
             updateProspectAvatar();
             await ensureVoices();
 
@@ -5352,8 +6613,10 @@ ${levelBlock}
 
 ${buildProspectFacts(persona)}
 
+CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingState())}
+
 ${CALL_STRUCTURE}
-${getTrainingEvolutionBlock()}
+${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : getTrainingEvolutionBlock(persona)}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
 - LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
@@ -5362,6 +6625,8 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 - PAS de markdown (** * #), PAS de titres, PAS de listes.
 - PAS de didascalies (*ton agacé*, (pause), (regardant ailleurs), etc.).
 - NE DIS JAMAIS "prospect", "agressif", "débutant", "ma réponse en tant que", "je reste dans le personnage", "Profil :".
+- Si l'agent est incompréhensible (anglais, charabia, phrase sans sens) → « Je ne comprends pas, répétez ».
+- TONALITÉ ORALE : colère = ton vif et sec ; agacement = exclamations ; pressé = phrases courtes et rapides.
 - 1 à 3 phrases maximum, en français naturel.`;
             compactSystemPromptText = "Prospect " + profileKey + " (" + level + "). "
                 + "FRANÇAIS UNIQUEMENT, 1-3 phrases. Ne répète jamais l'agent. " + persona.supplier + " élec"
@@ -5369,7 +6634,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 + ". scénario:" + (persona.scenarioType || "standard") + ". PDL " + persona.pdl + ". "
                 + persona.firstName + " " + persona.lastName + ". Pas d'anglais. "
                 + profile.prompt.slice(0, 90);
-            chatTurns = [{ role: "assistant", content: profile.start }];
+            chatTurns = [{ role: "assistant", content: openingLine }];
             callStartedAt = new Date().toISOString();
             agentPersona = { firstNames: [], lastNames: [], tokens: [] };
 
@@ -5384,7 +6649,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             textInput.disabled = false;
             stopBtn.disabled = false;
 
-            addLogMessage("Prospect", profile.start, "prospect-msg");
+            addLogMessage("Prospect", openingLine, "prospect-msg");
             document.getElementById("log").scrollIntoView({ behavior: "smooth", block: "nearest" });
             if (prospectStatusLabel) {
                 prospectStatusLabel.textContent = "En ligne";
@@ -5392,7 +6657,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             startCallTimer();
             setStatus("Appel en cours", "status-listening");
-            await speakProspect(profile.start);
+            await speakProspect(openingLine);
             } catch (e) {
                 console.error("Start call error:", e);
                 alert("Erreur au démarrage : " + (e.message || e));
@@ -5552,10 +6817,25 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             ensureVoices();
             updateProfilePreview();
+            renderCoachingPanel();
+            renderFormateurAccess();
+            renderExamPanel();
             bindProspectVideos("female");
             syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
             document.getElementById("levelSelect").addEventListener("change", updateProfilePreview);
+            const benchmarkBtn = document.getElementById("benchmarkModelsBtn");
+            if (benchmarkBtn) benchmarkBtn.addEventListener("click", () => { void runFreeModelsBenchmark(); });
+            const examLaunchBtn = document.getElementById("examLaunchBtn");
+            if (examLaunchBtn) examLaunchBtn.addEventListener("click", () => applyExamStepToForm(0));
+            const examFormateurBtn = document.getElementById("examFormateurBtn");
+            if (examFormateurBtn) examFormateurBtn.addEventListener("click", tryUnlockExamFormateur);
+            const examFormateurCode = document.getElementById("examFormateurCode");
+            if (examFormateurCode) {
+                examFormateurCode.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") tryUnlockExamFormateur();
+                });
+            }
             if (!ready) {
                 const el = document.getElementById("dbStatus");
                 if (el) {
