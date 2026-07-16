@@ -696,6 +696,43 @@
             margin-bottom: 10px;
         }
         .exam-badge.preview { background: var(--lc-orange); }
+        .exam-formateur-access {
+            margin: 16px 0;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(0, 45, 88, 0.04);
+            border: 1px dashed rgba(0, 45, 88, 0.22);
+        }
+        .exam-formateur-access label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--lc-navy);
+            margin-bottom: 8px;
+        }
+        .exam-formateur-row {
+            display: flex;
+            gap: 8px;
+        }
+        .exam-formateur-row input {
+            flex: 1;
+            min-width: 0;
+        }
+        .exam-formateur-row button {
+            flex-shrink: 0;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: var(--lc-navy);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .exam-formateur-msg {
+            margin: 8px 0 0 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
         .exam-steps { list-style: none; margin: 0; padding: 0; }
         .exam-step {
             display: grid;
@@ -1120,6 +1157,15 @@
             <button type="button" id="benchmarkModelsBtn" class="benchmark-models-btn">⚡ Comparer 4 modèles gratuits (test rapide)</button>
             <div id="benchmarkModelsResult" class="benchmark-models-result" style="display:none;"></div>
         </details>
+
+        <div class="exam-formateur-access" id="examFormateurAccess" style="display:none;">
+            <label for="examFormateurCode">Accès formateur — prévisualiser l'examen</label>
+            <div class="exam-formateur-row">
+                <input type="password" id="examFormateurCode" placeholder="Code formateur" autocomplete="off">
+                <button type="button" id="examFormateurBtn">Débloquer</button>
+            </div>
+            <p class="exam-formateur-msg" id="examFormateurMsg"></p>
+        </div>
 
         <div class="exam-panel" id="examPanel" style="display:none;">
             <span class="exam-badge" id="examBadge">Examen</span>
@@ -1970,22 +2016,53 @@
             return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate() + 0).padStart(2, "0");
         }
 
+        const EXAM_FORMATEUR_CODE = "formateur";
+        const EXAM_FORMATEUR_SESSION_KEY = "simulator_exam_formateur_v1";
+
         let examCallContext = null;
         let pendingExamStepIndex = null;
 
-        function isExamPreviewUnlocked() {
+        function isExamFormateurUnlocked() {
             try {
-                const cfg = window.__SIMULATOR_CONFIG__ || {};
-                if (cfg.examPreview === true || cfg.examPreview === "1") return true;
-            } catch (_) {}
-            try {
-                const p = new URLSearchParams(window.location.search);
-                if (p.get("examPreview") === "1" || p.get("exam") === "preview") return true;
-            } catch (_) {}
-            try {
-                return localStorage.getItem("simulator_exam_preview_v1") === "1";
+                return sessionStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1";
             } catch (_) {}
             return false;
+        }
+
+        function isExamPreviewUnlocked() {
+            return isExamFormateurUnlocked();
+        }
+
+        function renderFormateurAccess() {
+            const block = document.getElementById("examFormateurAccess");
+            if (!block) return;
+            const today = getDayVarietyKey();
+            if (EXAM_CAMPAIGNS[today] || isExamFormateurUnlocked()) {
+                block.style.display = "none";
+                return;
+            }
+            block.style.display = "block";
+        }
+
+        function tryUnlockExamFormateur() {
+            const input = document.getElementById("examFormateurCode");
+            const msg = document.getElementById("examFormateurMsg");
+            const code = (input && input.value || "").trim().toLowerCase();
+            if (code === EXAM_FORMATEUR_CODE) {
+                try { sessionStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+                if (msg) {
+                    msg.textContent = "Accès formateur activé pour cette session.";
+                    msg.style.color = "var(--success)";
+                }
+                renderFormateurAccess();
+                renderExamPanel();
+                document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                return;
+            }
+            if (msg) {
+                msg.textContent = code ? "Code incorrect." : "Saisissez le code formateur.";
+                msg.style.color = "var(--danger)";
+            }
         }
 
         function getUpcomingExamDate(fromKey) {
@@ -6680,6 +6757,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             ensureVoices();
             updateProfilePreview();
             renderCoachingPanel();
+            renderFormateurAccess();
             renderExamPanel();
             bindProspectVideos("female");
             syncStreamlitFrameHeight();
@@ -6689,6 +6767,14 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             if (benchmarkBtn) benchmarkBtn.addEventListener("click", () => { void runFreeModelsBenchmark(); });
             const examLaunchBtn = document.getElementById("examLaunchBtn");
             if (examLaunchBtn) examLaunchBtn.addEventListener("click", () => applyExamStepToForm(0));
+            const examFormateurBtn = document.getElementById("examFormateurBtn");
+            if (examFormateurBtn) examFormateurBtn.addEventListener("click", tryUnlockExamFormateur);
+            const examFormateurCode = document.getElementById("examFormateurCode");
+            if (examFormateurCode) {
+                examFormateurCode.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") tryUnlockExamFormateur();
+                });
+            }
             if (!ready) {
                 const el = document.getElementById("dbStatus");
                 if (el) {
