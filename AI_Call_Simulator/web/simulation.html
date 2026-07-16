@@ -590,6 +590,60 @@
         .eval-section ul { margin: 0; padding-left: 20px; color: var(--text-muted); }
         .eval-interpretation { margin-top: 16px; font-size: 13px; color: var(--text-muted); }
 
+        .coaching-panel {
+            margin: 16px 0;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0, 45, 88, 0.06), rgba(0, 130, 127, 0.08));
+            border: 1px solid rgba(0, 130, 127, 0.22);
+        }
+        .coaching-panel h4 { margin: 0 0 8px 0; font-size: 15px; color: var(--lc-navy); }
+        .coaching-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .coaching-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .coaching-chip strong { color: var(--lc-navy); }
+        .coaching-focus { margin: 0 0 10px 0; padding-left: 18px; color: var(--text); font-size: 13px; line-height: 1.5; }
+        .coaching-focus li { margin-bottom: 4px; }
+        .coaching-suggestion {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(217, 128, 46, 0.1);
+            border: 1px dashed rgba(217, 128, 46, 0.45);
+            font-size: 13px;
+            color: var(--text);
+        }
+        .coaching-suggestion button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: var(--lc-orange);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .coaching-post {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.05);
+            border: 1px solid rgba(0, 45, 88, 0.15);
+        }
+        .coaching-post h4 { margin: 0 0 8px 0; color: var(--lc-navy); }
+        .coaching-trend-up { color: var(--success); }
+        .coaching-trend-down { color: var(--danger); }
+
         .status-badge {
             display: inline-block;
             padding: 8px 16px;
@@ -930,6 +984,11 @@
             </select>
         </details>
 
+        <div class="coaching-panel" id="coachingPanel">
+            <h4>🎯 Coaching personnalisé</h4>
+            <div id="coachingContent"><p class="hint">Lancez une première simulation pour activer votre suivi.</p></div>
+        </div>
+
         <button type="button" id="startBtn">📞 Décrocher — lancer la simulation</button>
     </div>
 
@@ -1212,6 +1271,7 @@
                 el.classList.remove("mood-calm", "mood-tense", "mood-angry");
                 el.classList.add("mood-" + mood);
             }
+            renderCoachingPanel();
         }
 
         function getCallJourneyStep() {
@@ -1381,8 +1441,114 @@
 5. CLOSING — seulement si proposition bien menée`;
 
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
-        const PERSONA_FIRST_NAMES = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc"];
-        const FEMALE_FIRST_NAMES = new Set(["Marie", "Sophie", "Claire", "Isabelle", "Nathalie", "Camille", "Julie", "Émilie", "Emilie", "Anne", "Céline", "Celine", "Virginie", "Sandrine"]);
+        const PERSONA_FIRST_NAMES = [
+            "Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc",
+            "Camille", "Julie", "Nicolas", "Émilie", "Emilie", "Anne", "Céline", "Celine", "Virginie", "Sandrine",
+            "Laurent", "Stéphane", "Stephane", "Valérie", "Valerie", "Christophe", "Patricia", "François", "Francois", "Hélène", "Helene"
+        ];
+        const FEMALE_FIRST_NAMES = new Set([
+            "Marie", "Sophie", "Claire", "Isabelle", "Nathalie", "Camille", "Julie", "Émilie", "Emilie",
+            "Anne", "Céline", "Celine", "Virginie", "Sandrine", "Valérie", "Valerie", "Patricia", "Hélène", "Helene"
+        ]);
+        const PROFILE_KEYS = ["agressif", "presse", "mefiant_fournisseur", "mefiant_rgpd", "curieux"];
+        const OPENING_LINES = {
+            agressif: [
+                "Oui ?", "Allô ?", "Oui bonjour ?", "Oui, c'est pour quoi ?", "Oui, vous êtes qui ?",
+                "Oui… qu'est-ce que vous voulez ?", "Oui, j'écoute, mais faites vite."
+            ],
+            presse: [
+                "Oui, j'ai une minute.", "Oui bonjour, allez-y vite.", "Oui ? Je suis pressé.",
+                "Oui, c'est pour quoi ? J'ai pas beaucoup de temps.", "Oui, deux minutes max."
+            ],
+            mefiant_fournisseur: [
+                "Oui bonjour ?", "Oui ?", "Oui, c'est qui ?", "Oui, vous appelez de où ?",
+                "Oui… je ne change pas de fournisseur en général."
+            ],
+            mefiant_rgpd: [
+                "Oui bonjour ?", "Oui, qui êtes-vous ?", "Oui ? Comment vous avez mon numéro ?",
+                "Oui… c'est pour quoi exactement ?", "Oui, vous êtes de quelle société ?"
+            ],
+            curieux: [
+                "Oui bonjour ?", "Oui, je vous écoute.", "Oui ? C'est pour les énergies ?",
+                "Oui bonjour, qu'est-ce que vous proposez ?", "Oui, dites-moi."
+            ]
+        };
+        const CALL_CONTEXTS = [
+            "Tu viens d'interrompre une tâche (cuisine, rangement, télétravail) — ton ton est légèrement distrait au début.",
+            "Tu es en télétravail avec une réunion dans 10 minutes — tu rappelles que tu manques de temps si l'agent traîne.",
+            "Tu regardes la télé en fond — tu réponds un peu distrait puis tu te concentres si l'agent est clair.",
+            "Tu es sorti d'une longue journée — tu es fatigué, pas forcément hostile mais peu patient.",
+            "Tu as déjà reçu un appel commercial aujourd'hui — tu es sur tes gardes dès le début.",
+            "Tu es dans les transports ou en voiture — tu parles brièvement, parfois des bruits de fond.",
+            "Tu es chez toi un samedi matin — tu es plus détendu mais tu ne veux pas perdre ton temps.",
+            "Tu as un doute sur la légitimité des appels — tu poses vite la question « c'est pour quoi ? »."
+        ];
+        const COACHING_TIPS = {
+            accroche: {
+                label: "Accroche",
+                tips: [
+                    "Nom + société + raison d'appel en moins de 15 secondes, sans monologue.",
+                    "Validez l'interruption : « Je serai bref » avant de poser une question.",
+                    "Évitez « comparateur gratuit » dès la première phrase — expliquez le bénéfice client."
+                ]
+            },
+            refus: {
+                label: "Gestion des refus",
+                tips: [
+                    "Reformulez le refus avant de relancer : « Je comprends que vous ne souhaitiez pas changer tout de suite ».",
+                    "Si adresse ou PDL refusés : proposez un comparatif par email avant de redemander.",
+                    "Ne répétez pas la même demande plus de deux fois — changez d'angle."
+                ]
+            },
+            professionnel: {
+                label: "Posture professionnelle",
+                tips: [
+                    "Ne concluez jamais par la frustration (« si vous ne voulez pas d'économies… »).",
+                    "Gardez un ton calme face à l'agressivité — ralentissez et posez une question ouverte.",
+                    "Restez aligné sur un seul discours (pas comparateur puis sondage)."
+                ]
+            },
+            decouverte: {
+                label: "Découverte",
+                tips: [
+                    "Posez une question fermée puis une ouverte : fournisseur actuel → facture mensuelle.",
+                    "Rebondissez sur la réponse du client avant la question suivante.",
+                    "Adaptez vos questions au scénario (déménagement, mise en service)."
+                ]
+            },
+            offre: {
+                label: "Proposition",
+                tips: [
+                    "Annoncez le gain chiffré seulement après avoir compris la situation du client.",
+                    "Électricité seule = pas de tarif gaz ; adaptez l'offre au profil.",
+                    "Structurez : situation → comparatif → bénéfice → prochaine étape."
+                ]
+            },
+            closing: {
+                label: "Closing",
+                tips: [
+                    "Demandez un accord progressif : « Si l'offre vous convient, on peut avancer sur le PDL ».",
+                    "Rassurez sur le prélèvement et la résiliation avant de demander l'IBAN.",
+                    "Proposez une micro-étape (email récap) si le client hésite."
+                ]
+            },
+            rythme: {
+                label: "Rythme & écoute",
+                tips: [
+                    "Avec un profil pressé : phrases courtes, une idée par réplique.",
+                    "Laissez le client finir — ne coupez pas après chaque objection.",
+                    "Comptez les objections traitées avant de relancer la proposition."
+                ]
+            },
+            rgpd: {
+                label: "Réassurance",
+                tips: [
+                    "Répondez clairement sur l'origine du contact et le cadre légal si demandé.",
+                    "Ne fuyez pas la question RGPD — une phrase factuelle suffit souvent.",
+                    "Proposez un envoi écrit si le client veut vérifier votre identité."
+                ]
+            }
+        };
         const VOICE_BY_GENDER = {
             female: "fr-FR-DeniseNeural",
             male: "fr-FR-HenriNeural"
@@ -1503,7 +1669,14 @@
             "45 rue Nationale, 59000 Lille",
             "3 impasse du Moulin, 31000 Toulouse",
             "17 boulevard Gambetta, 06000 Nice",
-            "22 rue Victor Hugo, 44000 Nantes"
+            "22 rue Victor Hugo, 44000 Nantes",
+            "14 rue de la République, 67000 Strasbourg",
+            "9 place Bellecour, 69002 Lyon",
+            "31 cours Mirabeau, 13100 Aix-en-Provence",
+            "6 rue des Lilas, 35000 Rennes",
+            "18 avenue Jean Jaurès, 21000 Dijon",
+            "42 rue du Commerce, 37000 Tours",
+            "5 allée des Roses, 34000 Montpellier"
         ];
         const PERSONA_YEARS = ["2 ans", "3 ans", "plus de 4 ans", "5 ans", "depuis 6 ans", "plusieurs années"];
         const PERSONA_SCENARIO_TYPES = ["standard", "demenagement", "mise_en_service"];
@@ -1523,14 +1696,16 @@
             const counts = { standard: 0, demenagement: 0, mise_en_service: 0 };
             recent.forEach(t => { if (counts[t] !== undefined) counts[t]++; });
             const sessionNum = state.sessionCount || 0;
-            const rotatePref = PERSONA_SCENARIO_TYPES[sessionNum % PERSONA_SCENARIO_TYPES.length];
+            const dayRotate = PERSONA_SCENARIO_TYPES[new Date().getDate() % PERSONA_SCENARIO_TYPES.length];
+            const rotatePref = PERSONA_SCENARIO_TYPES[(sessionNum + new Date().getDate()) % PERSONA_SCENARIO_TYPES.length];
 
             const candidates = PERSONA_SCENARIO_TYPES.map(type => {
                 let weight = SCENARIO_WEIGHTS[type] || 0.33;
-                if (recent[0] === type) weight *= 0.22;
-                if (recent[1] === type) weight *= 0.5;
-                if (counts[type] >= 2) weight *= 0.35;
-                if (sessionNum > 0 && type === rotatePref && recent[0] !== type) weight *= 1.4;
+                if (recent[0] === type) weight *= 0.18;
+                if (recent[1] === type) weight *= 0.45;
+                if (counts[type] >= 2) weight *= 0.3;
+                if (sessionNum > 0 && type === rotatePref && recent[0] !== type) weight *= 1.5;
+                if (type === dayRotate && recent[0] !== type) weight *= 1.25;
                 return { type, weight };
             });
 
@@ -1570,23 +1745,258 @@
         }
 
         function randomBillAmount() {
-            return pickRandom([55, 62, 68, 72, 78, 82, 88, 91, 95]);
+            return pickRandom([52, 55, 58, 62, 65, 68, 72, 75, 78, 82, 85, 88, 91, 95, 102, 108]);
         }
 
         function loadTrainingState() {
             try {
                 const raw = localStorage.getItem(V1_TRAINING_KEY);
-                if (raw) return JSON.parse(raw);
+                if (raw) return Object.assign({
+                    sessionCount: 0, recentPersonas: [], recentScores: [], lastAxes: [],
+                    axesHistory: [], recentProfiles: [], recentOpenings: [], weakSections: {},
+                    lastRecommendations: []
+                }, JSON.parse(raw));
             } catch (_) {}
-            return { sessionCount: 0, recentPersonas: [], recentScores: [], lastAxes: [] };
+            return {
+                sessionCount: 0, recentPersonas: [], recentScores: [], lastAxes: [],
+                axesHistory: [], recentProfiles: [], recentOpenings: [], weakSections: {},
+                lastRecommendations: []
+            };
         }
 
         function saveTrainingState(state) {
             try { localStorage.setItem(V1_TRAINING_KEY, JSON.stringify(state)); } catch (_) {}
+            renderCoachingPanel();
+        }
+
+        function getDayVarietyKey() {
+            const d = new Date();
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+
+        function normalizeCoachingTheme(text) {
+            const t = (text || "").toLowerCase();
+            if (/accroche|introduction|début|debut|première|premiere/.test(t)) return "accroche";
+            if (/adresse|pdl|iban|refus|reformul/.test(t)) return "refus";
+            if (/professionnel|frustr|économies|economies|plainte|agress/.test(t)) return "professionnel";
+            if (/découverte|decouverte|question|écoute|ecoute/.test(t)) return "decouverte";
+            if (/offre|proposition|comparatif|prix|gaz|électricité|electricite/.test(t)) return "offre";
+            if (/closing|conclu|engagement|signature/.test(t)) return "closing";
+            if (/pressé|presse|rythme|court|monologue|long/.test(t)) return "rythme";
+            if (/rgpd|bloctel|données|donnees|numéro|numero|légal|legal/.test(t)) return "rgpd";
+            return "refus";
+        }
+
+        function recordAxisInHistory(state, axes) {
+            state.axesHistory = state.axesHistory || [];
+            (axes || []).forEach(axis => {
+                const text = (axis || "").trim();
+                if (!text) return;
+                const theme = normalizeCoachingTheme(text);
+                const existing = state.axesHistory.find(a => a.theme === theme && a.text === text);
+                if (existing) {
+                    existing.count = (existing.count || 0) + 1;
+                    existing.lastAt = Date.now();
+                } else {
+                    state.axesHistory.push({ theme, text, count: 1, lastAt: Date.now() });
+                }
+            });
+            state.axesHistory.sort((a, b) => (b.count || 0) - (a.count || 0));
+            state.axesHistory = state.axesHistory.slice(0, 24);
+        }
+
+        function recordSectionWeaknesses(state, evaluation) {
+            if (!evaluation || !Array.isArray(evaluation.sections)) return;
+            state.weakSections = state.weakSections || {};
+            evaluation.sections.forEach(sec => {
+                const max = sec.max || 1;
+                const ratio = (sec.score || 0) / max;
+                if (ratio < 0.55) {
+                    const key = (sec.name || "section").slice(0, 80);
+                    state.weakSections[key] = (state.weakSections[key] || 0) + 1;
+                }
+            });
+        }
+
+        function getScoreTrend(scores) {
+            if (!scores || scores.length < 2) return null;
+            const recent = scores.slice(0, 3);
+            const older = scores.slice(3, 6);
+            if (!older.length) return null;
+            const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
+            const avgOlder = older.reduce((a, b) => a + b, 0) / older.length;
+            return Math.round(avgRecent - avgOlder);
+        }
+
+        function getTopCoachingThemes(state, limit) {
+            const themes = {};
+            (state.axesHistory || []).forEach(item => {
+                const key = item.theme || normalizeCoachingTheme(item.text);
+                if (!themes[key]) themes[key] = { theme: key, count: 0, sample: item.text };
+                themes[key].count += item.count || 1;
+            });
+            return Object.values(themes).sort((a, b) => b.count - a.count).slice(0, limit || 3);
+        }
+
+        function buildCoachingTipsForThemes(themes, extraAxes) {
+            const tips = [];
+            const used = new Set();
+            themes.forEach(t => {
+                const pack = COACHING_TIPS[t.theme];
+                if (!pack) return;
+                const tip = pack.tips.find(x => !used.has(x)) || pack.tips[0];
+                if (tip && !used.has(tip)) {
+                    tips.push({ label: pack.label, tip, count: t.count });
+                    used.add(tip);
+                }
+            });
+            (extraAxes || []).slice(0, 2).forEach(axis => {
+                const theme = normalizeCoachingTheme(axis);
+                const pack = COACHING_TIPS[theme];
+                if (!pack) return;
+                const tip = pack.tips.find(x => !used.has(x));
+                if (tip) {
+                    tips.push({ label: pack.label, tip, count: 0 });
+                    used.add(tip);
+                }
+            });
+            return tips.slice(0, 4);
+        }
+
+        function suggestProfileRotation(state) {
+            const recent = (state.recentProfiles || []).slice(0, 4);
+            const counts = {};
+            PROFILE_KEYS.forEach(k => { counts[k] = 0; });
+            recent.forEach(k => { if (counts[k] !== undefined) counts[k]++; });
+            const dayIdx = PROFILE_KEYS.indexOf(PROFILE_KEYS[new Date().getDate() % PROFILE_KEYS.length]);
+            const candidates = PROFILE_KEYS.map((key, i) => {
+                let score = 10 - (counts[key] || 0) * 3;
+                if (recent[0] === key) score -= 5;
+                if (i === dayIdx) score += 2;
+                return { key, score };
+            }).sort((a, b) => b.score - a.score);
+            return candidates[0] ? candidates[0].key : PROFILE_KEYS[0];
+        }
+
+        function getProfileLabel(key) {
+            const labels = {
+                agressif: "Agressif",
+                presse: "Pressé",
+                mefiant_fournisseur: "Méfiant fournisseur",
+                mefiant_rgpd: "RGPD",
+                curieux: "Curieux"
+            };
+            return labels[key] || key;
+        }
+
+        function pickVariedOpening(profileKey, state) {
+            const lines = OPENING_LINES[profileKey] || OPENING_LINES.agressif;
+            const recent = new Set((state.recentOpenings || []).slice(0, 8));
+            const fresh = lines.filter(l => !recent.has(l));
+            const pool = fresh.length ? fresh : lines;
+            const dayPick = pool[new Date().getDate() % pool.length];
+            if (!recent.has(dayPick)) return dayPick;
+            return pickRandom(pool);
+        }
+
+        function pickCallContext(state) {
+            const day = new Date().getDate();
+            const idx = (day + (state.sessionCount || 0)) % CALL_CONTEXTS.length;
+            return CALL_CONTEXTS[idx];
+        }
+
+        function renderCoachingPanel() {
+            const el = document.getElementById("coachingContent");
+            if (!el) return;
+            const state = loadTrainingState();
+            const sessionNum = (state.sessionCount || 0) + 1;
+            const scores = state.recentScores || [];
+            const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+            const trend = getScoreTrend(scores);
+            const themes = getTopCoachingThemes(state, 3);
+            const tips = buildCoachingTipsForThemes(themes, state.lastAxes);
+            const suggestedProfile = suggestProfileRotation(state);
+            const currentProfile = document.getElementById("profileSelect")?.value;
+
+            let trendHtml = "";
+            if (trend != null) {
+                const cls = trend >= 0 ? "coaching-trend-up" : "coaching-trend-down";
+                const sign = trend >= 0 ? "+" : "";
+                trendHtml = `<span class="coaching-chip ${cls}">Tendance <strong>${sign}${trend} pts</strong></span>`;
+            }
+
+            let focusHtml = "";
+            if (themes.length) {
+                focusHtml = "<ul class='coaching-focus'>" + themes.map(t => {
+                    const pack = COACHING_TIPS[t.theme];
+                    return "<li><strong>" + (pack ? pack.label : t.theme) + "</strong> — point récurrent (" + t.count + "×)</li>";
+                }).join("") + "</ul>";
+            } else if (sessionNum <= 2) {
+                focusHtml = "<p class='hint'>Premières sessions : travaillez l'accroche (nom, société, raison d'appel en 15 s).</p>";
+            } else {
+                focusHtml = "<p class='hint'>Continuez à varier vos approches — chaque profil teste une compétence différente.</p>";
+            }
+
+            let tipsHtml = "";
+            if (tips.length) {
+                tipsHtml = "<ul class='coaching-focus'>" + tips.map(t =>
+                    "<li><strong>" + t.label + " :</strong> " + t.tip + "</li>"
+                ).join("") + "</ul>";
+            }
+
+            let suggestionHtml = "";
+            if (suggestedProfile && suggestedProfile !== currentProfile) {
+                suggestionHtml = `<div class="coaching-suggestion">
+                    💡 <strong>Suggestion du jour :</strong> profil « ${getProfileLabel(suggestedProfile)} » pour éviter la routine.
+                    <button type="button" id="applyProfileSuggestion" data-profile="${suggestedProfile}">Essayer ce profil</button>
+                </div>`;
+            }
+
+            el.innerHTML = `
+                <div class="coaching-meta">
+                    <span class="coaching-chip">Session <strong>#${sessionNum}</strong></span>
+                    ${avg != null ? `<span class="coaching-chip">Moyenne <strong>${avg}/100</strong></span>` : ""}
+                    ${trendHtml}
+                    <span class="coaching-chip">Variété <strong>${getDayVarietyKey()}</strong></span>
+                </div>
+                <p style="margin:0 0 8px 0;font-size:13px;color:var(--text);"><strong>Vos priorités :</strong></p>
+                ${focusHtml}
+                ${tips.length ? "<p style='margin:12px 0 6px 0;font-size:13px;'><strong>Conseils avant l'appel :</strong></p>" + tipsHtml : ""}
+                ${suggestionHtml}
+            `;
+
+            const btn = document.getElementById("applyProfileSuggestion");
+            if (btn) {
+                btn.onclick = () => {
+                    const sel = document.getElementById("profileSelect");
+                    if (sel) {
+                        sel.value = btn.dataset.profile;
+                        sel.dispatchEvent(new Event("change"));
+                        renderCoachingPanel();
+                    }
+                };
+            }
+        }
+
+        function renderPostCallCoachingBlock(evaluation) {
+            const state = loadTrainingState();
+            const themes = getTopCoachingThemes(state, 2);
+            const tips = buildCoachingTipsForThemes(themes, evaluation.axes_amelioration);
+            const nextProfile = suggestProfileRotation(state);
+            const plan = (evaluation.recommandations || []).slice(0, 2);
+            if (!tips.length && !plan.length) return "";
+
+            let html = `<div class="coaching-post"><h4>📋 Plan pour votre prochain appel</h4><ul class="coaching-focus">`;
+            tips.forEach(t => { html += "<li><strong>" + t.label + " :</strong> " + t.tip + "</li>"; });
+            plan.forEach(r => { if (r) html += "<li>" + r + "</li>"; });
+            html += "<li>Variez le profil : essayez « " + getProfileLabel(nextProfile) + " » pour sortir de la routine.</li>";
+            html += "</ul></div>";
+            return html;
         }
 
         function recordTrainingSession(evaluation) {
             const state = loadTrainingState();
+            const profileKey = document.getElementById("profileSelect").value;
             state.sessionCount = (state.sessionCount || 0) + 1;
             state.recentPersonas = [{
                 supplier: prospectPersona.supplier,
@@ -1594,15 +2004,26 @@
                 lastName: prospectPersona.lastName,
                 billAmount: prospectPersona.billAmount,
                 scenarioType: prospectPersona.scenarioType || "standard",
-                profile: document.getElementById("profileSelect").value,
+                profile: profileKey,
+                opening: prospectPersona.openingLine || null,
                 at: Date.now()
-            }].concat(state.recentPersonas || []).slice(0, 12);
+            }].concat(state.recentPersonas || []).slice(0, 16);
+            state.recentProfiles = [profileKey].concat(state.recentProfiles || []).filter((v, i, a) => a.indexOf(v) === i).slice(0, 8);
+            if (prospectPersona.openingLine) {
+                state.recentOpenings = [prospectPersona.openingLine]
+                    .concat(state.recentOpenings || []).slice(0, 12);
+            }
             const score = Number(evaluation && evaluation.score_total);
             if (Number.isFinite(score)) {
-                state.recentScores = [score].concat(state.recentScores || []).slice(0, 10);
+                state.recentScores = [score].concat(state.recentScores || []).slice(0, 12);
             }
             const axes = (evaluation && evaluation.axes_amelioration) || [];
             if (axes.length) state.lastAxes = axes.slice(0, 4);
+            recordAxisInHistory(state, axes);
+            recordSectionWeaknesses(state, evaluation);
+            if (evaluation && evaluation.recommandations) {
+                state.lastRecommendations = evaluation.recommandations.slice(0, 4);
+            }
             saveTrainingState(state);
         }
 
@@ -1610,11 +2031,15 @@
             return window.__SIMULATOR_CONFIG__ || {};
         }
 
-        function getTrainingEvolutionBlock() {
+        function getTrainingEvolutionBlock(persona) {
             const state = loadTrainingState();
             const team = (getSimulatorConfig().recentTrainingSessions || []);
             let block = "\n\nÉVOLUTION ENTRAÎNEMENT — session n°" + ((state.sessionCount || 0) + 1) + " :";
-            block += "\n- Varie tes formulations à chaque appel ; ne répète pas les mêmes phrases qu'avant.";
+            block += "\n- Chaque appel est UNIQUE : reformule, change le ton, ne recycle pas les mêmes phrases.";
+            block += "\n- Contexte du jour : " + pickCallContext(state);
+            if (persona && persona.openingLine) {
+                block += "\n- Tu as décroché avec : « " + persona.openingLine + " » — reste cohérent avec cette entrée.";
+            }
             const avg = (state.recentScores || []).length
                 ? (state.recentScores.reduce((a, b) => a + b, 0) / state.recentScores.length) : null;
             if (avg != null && avg >= 78) {
@@ -1622,16 +2047,23 @@
             } else if (avg != null && avg < 55 && (state.sessionCount || 0) >= 3) {
                 block += "\n- L'agent débute : reste dans le niveau choisi, ouvre-toi si l'agent est poli et clair.";
             }
+            const themes = getTopCoachingThemes(state, 2);
+            if (themes.length) {
+                block += "\n- L'agent travaille encore : " + themes.map(t => COACHING_TIPS[t.theme]?.label || t.theme).join(", ")
+                    + " — varie tes objections sur ces points.";
+            }
             if ((state.recentPersonas || []).length) {
-                const used = state.recentPersonas.slice(0, 5).map(p =>
+                const used = state.recentPersonas.slice(0, 6).map(p =>
                     (p.firstName || "") + " " + (p.supplier || "") + " ~" + (p.billAmount || "?") + "€"
                     + (p.scenarioType && p.scenarioType !== "standard" ? " [" + p.scenarioType + "]" : "")
+                    + (p.opening ? " («" + p.opening.slice(0, 24) + "»)" : "")
                 ).join(" | ");
-                block += "\n- Scénarios récents déjà joués sur cet appareil (adapter, ne pas copier) : " + used;
+                block += "\n- Scénarios récents sur cet appareil (NE PAS reproduire mot pour mot) : " + used;
             }
             if (team.length) {
-                block += "\n- L'équipe a déjà fait " + team.length + " simulations : reste naturel et imprévisible.";
+                block += "\n- L'équipe a déjà fait " + team.length + " simulations : reste naturel, surprenant, imprévisible.";
             }
+            block += "\n- Jour " + getDayVarietyKey() + " : évite les formulations génériques type « Oui bonjour ? » si déjà utilisées récemment.";
             return block;
         }
 
@@ -1988,20 +2420,22 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const recentKeys = new Set((state.recentPersonas || []).map(p =>
                 (p.scenarioType || "standard") + "|" + (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
             ));
+            const recentNames = new Set((state.recentPersonas || []).slice(0, 8).map(p => p.firstName || ""));
             let persona = null;
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 36; i++) {
                 const billAmount = randomBillAmount();
-                const offerTarget = Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15]));
+                const offerTarget = Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15, 18]));
                 const supplier = pickRandom(PERSONA_SUPPLIERS);
                 const firstName = profileKey === "curieux"
-                    ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille"])
+                    ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille", "Émilie", "Emilie", "Antoine"])
                     : pickRandom(PERSONA_FIRST_NAMES);
                 const lastName = pickRandom(PERSONA_LAST_NAMES);
                 const oldAddress = pickRandom(PERSONA_ADDRESSES);
                 const newAddress = pickDifferentAddress(oldAddress);
                 const newPdl = randomPdl();
                 const key = scenarioType + "|" + supplier + "|" + firstName + "|" + billAmount;
-                if (!recentKeys.has(key) || i > 20) {
+                const nameRepeat = recentNames.has(firstName) && i < 28;
+                if ((!recentKeys.has(key) && !nameRepeat) || i > 28) {
                     const base = {
                         firstName, lastName,
                         supplier,
@@ -2040,6 +2474,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     persona.gender = inferProspectGender(persona.firstName);
                     persona.voiceId = VOICE_BY_GENDER[persona.gender];
                     persona.mood = getProspectMood(profileKey, getLevel());
+                    persona.openingLine = pickVariedOpening(profileKey, state);
+                    persona.callContext = pickCallContext(state);
                     break;
                 }
             }
@@ -5201,6 +5637,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 <div class="eval-section"><h4>3 points forts de l'agent</h4><ul>${list(data.points_forts)}</ul></div>
                 <div class="eval-section"><h4>3 axes d'amélioration</h4><ul>${list(data.axes_amelioration)}</ul></div>
                 <div class="eval-section"><h4>Recommandations</h4><ul>${list(data.recommandations)}</ul></div>
+                ${renderPostCallCoachingBlock(data)}
                 <p class="eval-interpretation">Interprétation : 85–100 Excellent · 70–84 Bon · 50–69 À améliorer · &lt;50 Coaching nécessaire</p>`;
         }
 
@@ -5331,6 +5768,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             const persona = createProspectPersona(profileKey);
             prospectPersona = persona;
+            const openingLine = persona.openingLine || profile.start;
             updateProspectAvatar();
             await ensureVoices();
 
@@ -5343,8 +5781,10 @@ ${levelBlock}
 
 ${buildProspectFacts(persona)}
 
+CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingState())}
+
 ${CALL_STRUCTURE}
-${getTrainingEvolutionBlock()}
+${getTrainingEvolutionBlock(persona)}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
 - LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
@@ -5360,7 +5800,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 + ". scénario:" + (persona.scenarioType || "standard") + ". PDL " + persona.pdl + ". "
                 + persona.firstName + " " + persona.lastName + ". Pas d'anglais. "
                 + profile.prompt.slice(0, 90);
-            chatTurns = [{ role: "assistant", content: profile.start }];
+            chatTurns = [{ role: "assistant", content: openingLine }];
             callStartedAt = new Date().toISOString();
             agentPersona = { firstNames: [], lastNames: [], tokens: [] };
 
@@ -5375,7 +5815,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             textInput.disabled = false;
             stopBtn.disabled = false;
 
-            addLogMessage("Prospect", profile.start, "prospect-msg");
+            addLogMessage("Prospect", openingLine, "prospect-msg");
             document.getElementById("log").scrollIntoView({ behavior: "smooth", block: "nearest" });
             if (prospectStatusLabel) {
                 prospectStatusLabel.textContent = "En ligne";
@@ -5383,7 +5823,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             startCallTimer();
             setStatus("Appel en cours", "status-listening");
-            await speakProspect(profile.start);
+            await speakProspect(openingLine);
             } catch (e) {
                 console.error("Start call error:", e);
                 alert("Erreur au démarrage : " + (e.message || e));
@@ -5543,6 +5983,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             ensureVoices();
             updateProfilePreview();
+            renderCoachingPanel();
             bindProspectVideos("female");
             syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
