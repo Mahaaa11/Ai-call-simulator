@@ -17,7 +17,7 @@ def main() -> None:
         SIMULATION_HTML,
         page_title="Simulateur d'appels IA — Mode Agent",
         page_icon="📞",
-        iframe_height=2200,
+        iframe_height=2600,
         component=simulation_app_v1,
         frontend_dir=COMPONENT_FRONTEND / "v1",
         extra_config={"v1TrainingEvolution": True},

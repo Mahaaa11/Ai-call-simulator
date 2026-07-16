@@ -567,7 +567,23 @@
         #evaluation {
             display: none;
             border-left: 4px solid var(--accent-warm);
+            scroll-margin-top: 20px;
         }
+
+        .transcript-recap summary { cursor: pointer; margin-bottom: 8px; list-style: none; }
+        .transcript-recap summary::-webkit-details-marker { display: none; }
+        .transcript-recap summary h4 { margin: 0; display: inline; font-size: 15px; color: var(--text); }
+        .transcript-recap-body { padding: 4px 0 8px; }
+        .transcript-line {
+            margin: 8px 0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.45;
+            color: var(--text);
+        }
+        .transcript-line.user { background: rgba(0, 45, 88, 0.06); border-left: 3px solid var(--lc-navy); }
+        .transcript-line.assistant { background: rgba(0, 130, 127, 0.08); border-left: 3px solid var(--lc-teal); }
 
         .eval-header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
         .eval-score-badge { display: inline-flex; flex-direction: column; align-items: center; min-width: 110px; padding: 14px 18px; border-radius: 12px; color: white; font-weight: bold; }
@@ -4942,10 +4958,36 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             });
         }
 
-        function syncStreamlitFrameHeight() {
-            if (!window.Streamlit) return;
-            const h = Math.max(1400, document.documentElement.scrollHeight + 48);
-            Streamlit.setFrameHeight(h);
+        function syncStreamlitFrameHeight(forceMin) {
+            if (!window.Streamlit || typeof Streamlit.setFrameHeight !== "function") return;
+            const baseMin = Number(forceMin) || 1400;
+            const scrollH = Math.max(
+                document.documentElement.scrollHeight || 0,
+                document.body.scrollHeight || 0,
+                document.documentElement.offsetHeight || 0
+            );
+            const h = Math.max(baseMin, scrollH + 72);
+            if (window.__lastStreamlitHeight !== h) {
+                window.__lastStreamlitHeight = h;
+                Streamlit.setFrameHeight(h);
+            }
+        }
+        window.syncStreamlitFrameHeight = syncStreamlitFrameHeight;
+
+        function scheduleStreamlitFrameHeightSync(forceMin) {
+            syncStreamlitFrameHeight(forceMin);
+            requestAnimationFrame(() => syncStreamlitFrameHeight(forceMin));
+            [100, 350, 800, 1500].forEach(ms => {
+                setTimeout(() => syncStreamlitFrameHeight(forceMin), ms);
+            });
+        }
+
+        function installStreamlitHeightObserver() {
+            if (!window.Streamlit || window.__streamlitHeightObserver || typeof ResizeObserver === "undefined") return;
+            window.__streamlitHeightObserver = true;
+            const ro = new ResizeObserver(() => syncStreamlitFrameHeight());
+            if (document.body) ro.observe(document.body);
+            if (document.documentElement) ro.observe(document.documentElement);
         }
 
         function updateLiveCaption(sender, text, mode) {
@@ -6367,6 +6409,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             };
         }
 
+        function renderTranscriptRecapBlock() {
+            if (!chatTurns.length) return "";
+            const lines = chatTurns.map(t => {
+                const who = t.role === "user" ? "Agent" : "Prospect";
+                return `<div class="transcript-line ${escapeHtml(t.role)}"><strong>${who} :</strong> ${escapeHtml(t.content)}</div>`;
+            }).join("");
+            return `<details class="eval-section transcript-recap" open>
+                <summary><h4>Transcription complète de l'appel (${chatTurns.length} messages)</h4></summary>
+                <div class="transcript-recap-body">${lines}</div>
+            </details>`;
+        }
+
         function renderEvaluationReport(data, source) {
             const score = Number(data.score_total) || 0;
             const niveau = data.niveau || "À améliorer";
@@ -6417,6 +6471,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 <div class="eval-section"><h4>3 axes d'amélioration</h4><ul>${list(data.axes_amelioration)}</ul></div>
                 <div class="eval-section"><h4>Recommandations</h4><ul>${list(data.recommandations)}</ul></div>
                 ${renderPostCallCoachingBlock(data)}
+                ${renderTranscriptRecapBlock()}
                 <p class="eval-interpretation">Interprétation : 85–100 Excellent · 70–84 Bon · 50–69 À améliorer · &lt;50 Coaching nécessaire</p>`;
         }
 
@@ -6482,13 +6537,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function revealEvaluationPanel() {
             evaluationDiv.style.display = "block";
+            scheduleStreamlitFrameHeightSync(2000);
             try {
                 evaluationDiv.scrollIntoView({ behavior: "smooth", block: "start" });
             } catch (_) {}
-            if (window.Streamlit && typeof Streamlit.setFrameHeight === "function") {
-                const h = Math.max(1500, (document.body.scrollHeight || 0) + 80);
-                Streamlit.setFrameHeight(h);
-            }
         }
 
         async function showEvaluation(apiKey) {
@@ -6514,6 +6566,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
             recordTrainingSession(evaluationData);
             renderExamPanel();
+            scheduleStreamlitFrameHeightSync(2000);
             return evaluationData;
         }
 
@@ -6715,6 +6768,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                 const parsed = await callEvaluationLLM(apiKey);
                 evalContent.innerHTML = renderEvaluationReport(parsed, "llm");
                 retryBtn.style.display = "none";
+                scheduleStreamlitFrameHeightSync(2000);
                 if (lastConversationId) {
                     await updateConversationEvaluation(lastConversationId, parsed);
                 } else {
@@ -6785,6 +6839,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             renderCoachingPanel();
             renderFormateurAccess();
             renderExamPanel();
+            installStreamlitHeightObserver();
             bindProspectVideos("female");
             syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);

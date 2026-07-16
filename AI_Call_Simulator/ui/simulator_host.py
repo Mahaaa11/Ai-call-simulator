@@ -66,8 +66,16 @@ _STREAMLIT_BOOT = """
   if (window.Streamlit) {
     Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function () {
       applyStreamlitSimulatorConfig();
-      var h = (Streamlit.args && Streamlit.args.height) || 2200;
-      Streamlit.setFrameHeight(h);
+      if (typeof window.syncStreamlitFrameHeight === "function") {
+        window.syncStreamlitFrameHeight();
+      } else {
+        var minH = (Streamlit.args && Streamlit.args.height) || 2200;
+        var scrollH = Math.max(
+          document.documentElement.scrollHeight || 0,
+          document.body.scrollHeight || 0
+        );
+        Streamlit.setFrameHeight(Math.max(minH, scrollH + 64));
+      }
     });
   }
 </script>
