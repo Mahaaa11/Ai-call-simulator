@@ -1973,11 +1973,38 @@
         let examCallContext = null;
         let pendingExamStepIndex = null;
 
+        function isExamPreviewUnlocked() {
+            try {
+                const cfg = window.__SIMULATOR_CONFIG__ || {};
+                if (cfg.examPreview === true || cfg.examPreview === "1") return true;
+            } catch (_) {}
+            try {
+                const p = new URLSearchParams(window.location.search);
+                if (p.get("examPreview") === "1" || p.get("exam") === "preview") return true;
+            } catch (_) {}
+            try {
+                return localStorage.getItem("simulator_exam_preview_v1") === "1";
+            } catch (_) {}
+            return false;
+        }
+
+        function getUpcomingExamDate(fromKey) {
+            const keys = Object.keys(EXAM_CAMPAIGNS).sort();
+            return keys.find(k => k >= fromKey) || keys[keys.length - 1] || null;
+        }
+
         function getActiveExamCampaign() {
             const today = getDayVarietyKey();
-            const campaign = EXAM_CAMPAIGNS[today];
+            let examDate = today;
+            let campaign = EXAM_CAMPAIGNS[today];
+            let isPreview = false;
+            if (!campaign && isExamPreviewUnlocked()) {
+                examDate = getUpcomingExamDate(today);
+                campaign = examDate ? EXAM_CAMPAIGNS[examDate] : null;
+                isPreview = !!(campaign && examDate !== today);
+            }
             if (!campaign) return null;
-            return Object.assign({}, campaign, { examDate: today, isPreview: false });
+            return Object.assign({}, campaign, { examDate, isPreview });
         }
 
         function loadExamProgress(examId) {
@@ -2067,11 +2094,15 @@ ${objList}
             const summary = document.getElementById("examSummary");
             const launchBtn = document.getElementById("examLaunchBtn");
             if (badge) {
-                badge.textContent = "Examen du jour";
-                badge.classList.remove("preview");
+                badge.textContent = campaign.isPreview ? "Mode test formateur" : "Examen du jour";
+                badge.classList.toggle("preview", !!campaign.isPreview);
             }
             if (title) title.textContent = campaign.title + " — " + campaign.dateLabel;
-            if (sub) sub.textContent = campaign.instructions;
+            if (sub) {
+                sub.textContent = campaign.isPreview
+                    ? "Aperçu réservé au formateur — invisible pour les agents jusqu'au " + campaign.dateLabel + ". " + campaign.instructions
+                    : campaign.instructions;
+            }
             if (card && step) {
                 const objPreview = (step.objections || []).slice(0, 5).map(o => "<li>" + o + "</li>").join("");
                 card.innerHTML = `<h5>${step.label}</h5>
