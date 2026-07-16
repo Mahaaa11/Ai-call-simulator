@@ -19,6 +19,12 @@ VOICES = {
     "female": "fr-FR-DeniseNeural",
     "male": "fr-FR-HenriNeural",
 }
+TONE_PROSODY = {
+    "calm": 'rate="-5%" pitch="+0%"',
+    "tense": 'rate="+8%" pitch="+2%"',
+    "angry": 'rate="+15%" pitch="+8%" volume="loud"',
+    "shouting": 'rate="+28%" pitch="+12%" volume="x-loud"',
+}
 PORT = int(os.getenv("TTS_PORT", "8765"))
 BIND_HOST = os.getenv("BIND_HOST", "127.0.0.1")
 
@@ -34,11 +40,24 @@ _thread = threading.Thread(target=_run_loop, daemon=True)
 _thread.start()
 
 
-async def synthesize(text, voice=None):
+async def synthesize(text, voice=None, tone="calm"):
     voice_name = VOICES.get(voice or "", voice) or VOICE
     if voice_name not in VOICES.values():
         voice_name = VOICE
-    communicate = edge_tts.Communicate(text, voice_name)
+    payload = text
+    if tone and tone != "calm":
+        prosody = TONE_PROSODY.get(tone, TONE_PROSODY["calm"])
+        clean = (
+            text.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+        )
+        payload = (
+            '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="fr-FR">'
+            f"<prosody {prosody}>{clean}</prosody></speak>"
+        )
+    communicate = edge_tts.Communicate(payload, voice_name)
     parts = []
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
@@ -49,8 +68,8 @@ async def synthesize(text, voice=None):
     return audio
 
 
-def synthesize_sync(text, voice=None):
-    future = asyncio.run_coroutine_threadsafe(synthesize(text, voice), _loop)
+def synthesize_sync(text, voice=None, tone="calm"):
+    future = asyncio.run_coroutine_threadsafe(synthesize(text, voice, tone), _loop)
     return future.result(timeout=45)
 
 
@@ -102,9 +121,10 @@ class TTSHandler(BaseHTTPRequestHandler):
             return
         text = text[:500]
         voice = (qs.get("voice") or [""])[0].strip() or None
+        tone = (qs.get("tone") or ["calm"])[0].strip() or "calm"
 
         try:
-            audio = synthesize_sync(text, voice)
+            audio = synthesize_sync(text, voice, tone)
         except Exception as e:
             print("Erreur synthèse:", e)
             self.send_error(500, str(e))

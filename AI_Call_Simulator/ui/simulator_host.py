@@ -343,6 +343,7 @@ def _process_hosted_tts(incoming: dict) -> bool:
     request_id = str(incoming.get("request_id") or "")
     text = str(incoming.get("text") or "")
     gender = str(incoming.get("gender") or "female")
+    tone = str(incoming.get("tone") or "calm")
     if not request_id or not text.strip():
         return False
     key = _payload_key(incoming)
@@ -351,7 +352,7 @@ def _process_hosted_tts(incoming: dict) -> bool:
         return False
     try:
         with st.spinner("Synthèse voix française…"):
-            audio = synthesize_speech(text, gender=gender)
+            audio = synthesize_speech(text, gender=gender, tone=tone)
         st.session_state.tts_feedback = {
             "ok": True,
             "request_id": request_id,

@@ -2119,7 +2119,9 @@ ${scenarioBlock ? scenarioBlock + "\n" : ""}- Identité : ${persona.firstName} $
 - Si l'agent propose ${offer} €${persona.scenarioType === "standard" ? " au lieu de " + persona.billAmount + " €" : " pour le nouveau logement"} → réagis au prix en français (« ${offer} euros ? D'accord, expliquez-moi »).
 - UNIQUEMENT en français naturel. JAMAIS d'anglais (« stop speaking », etc.).
 - Ne répète JAMAIS mot pour mot ce que l'agent vient de dire.
-- VARIÉTÉ OBLIGATOIRE : reformule à chaque réplique ; ne recycle pas une phrase d'une session précédente.`;
+- VARIÉTÉ OBLIGATOIRE : reformule à chaque réplique ; ne recycle pas une phrase d'une session précédente.
+- TONALITÉ : si tu es agacé ou en colère, montre-le dans tes mots (ton sec, exclamations, impatience). Si tu cries ou rages, utilise des phrases courtes et énergiques.
+- INCOMPRÉHENSION : si l'agent parle en anglais, de façon confuse, ou avec des phrases sans sens en français → dis « Je ne comprends pas » ou « Pardon, vous pouvez répéter ? » (varie la formulation).`;
         }
 
         function getAntiRepeatContext() {
@@ -4336,6 +4338,118 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 .trim();
         }
 
+        const VOICE_TONE_SETTINGS = {
+            calm: { rate: 0.92, pitch: 1.0, volume: 1, playbackRate: 1.0 },
+            tense: { rate: 1.08, pitch: 1.03, volume: 1, playbackRate: 1.06 },
+            angry: { rate: 1.16, pitch: 1.1, volume: 1, playbackRate: 1.12 },
+            shouting: { rate: 1.3, pitch: 1.18, volume: 1, playbackRate: 1.2 }
+        };
+
+        const INCOMPREHENSION_REPLIES = {
+            agressif: {
+                debutant: ["Pardon ? Je n'ai pas compris.", "Excusez-moi, je n'ai pas suivi.", "Vous pouvez répéter ?"],
+                intermediaire: ["Je n'ai pas compris, parlez clairement.", "Pardon ? Reformulez.", "Là je n'ai pas suivi."],
+                avance: ["Je ne comprends pas, parlez français clairement !", "Qu'est-ce que vous dites ? Je n'ai rien compris.", "Pardon ? Vos phrases n'ont pas de sens."]
+            },
+            presse: {
+                debutant: ["Pardon ? Je n'ai pas compris, faites court.", "Excusez-moi, répétez vite.", "Je n'ai pas suivi."],
+                intermediaire: ["Je n'ai pas compris, allez droit au but.", "Pardon ? Reformulez rapidement.", "Là je n'ai pas suivi, faites court."],
+                avance: ["Je ne comprends pas — et je n'ai pas le temps, parlez clair.", "Pardon ? Dites ça autrement, vite.", "Quoi ? Je n'ai rien compris."]
+            },
+            mefiant_fournisseur: {
+                debutant: ["Pardon ? Je n'ai pas bien compris.", "Excusez-moi, vous pouvez répéter ?", "Je n'ai pas suivi votre phrase."],
+                intermediaire: ["Je ne comprends pas ce que vous dites.", "Pardon, reformulez s'il vous plaît.", "Là je n'ai pas compris."],
+                avance: ["Je ne comprends pas, parlez plus clairement.", "Pardon ? Vos mots ne sont pas clairs.", "Je n'ai pas saisi, répétez."]
+            },
+            mefiant_rgpd: {
+                debutant: ["Pardon ? Je n'ai pas compris.", "Excusez-moi, pouvez-vous répéter ?", "Je n'ai pas bien suivi."],
+                intermediaire: ["Je ne comprends pas votre phrase.", "Pardon, reformulez clairement.", "Là je n'ai pas compris."],
+                avance: ["Je ne comprends pas — et je veux des explications claires.", "Pardon ? Parlez distinctement.", "Qu'est-ce que vous dites exactement ?"]
+            },
+            curieux: {
+                debutant: ["Pardon ? Je n'ai pas compris.", "Excusez-moi, vous pouvez répéter ?", "Je n'ai pas bien suivi."],
+                intermediaire: ["Je ne comprends pas, vous pouvez reformuler ?", "Pardon ? Répétez s'il vous plaît.", "Là je n'ai pas saisi."],
+                avance: ["Je ne comprends pas ce que vous voulez dire.", "Pardon, vos phrases ne sont pas claires.", "Je n'ai pas compris, pouvez-vous expliquer autrement ?"]
+            }
+        };
+
+        function isAgentTextIncomprehensible(text) {
+            const t = (text || "").trim();
+            if (!t) return true;
+            if (/^(oui|non|allo|bonjour|salut|ok|d'accord)[\s.!?]*$/i.test(t)) return false;
+            if (t.length < 8 && /\b(bonjour|je suis|monsieur|madame|génie|genie)\b/i.test(t)) return false;
+            if (t.length < 4) return true;
+            if (/^(euh+|hm+|ah+|oh+)[\s.!?]*$/i.test(t)) return true;
+
+            const englishHits = (t.match(/\b(the|you|your|what|why|how|yes|no|okay|please|sorry|i am|i'm|don't|can't|want|speaking|listen|understand|hello|thank|would|could|should|have|this|that|with|about|call|energy|company|offer)\b/gi) || []).length;
+            const frenchHits = (t.match(/\b(je|j'|nous|vous|oui|non|c'est|pas|pour|avec|chez|bonjour|suis|sommes|êtes|avez|propose|appelle|comparateur|génie|genie|client|facture|fournisseur|énergie|energie|monsieur|madame|alors|donc|bien|très)\b/gi) || []).length;
+            if (englishHits >= 2 && frenchHits < 2) return true;
+            if (englishHits > frenchHits && frenchHits < 2 && t.length > 12) return true;
+
+            const words = t.split(/\s+/).filter(Boolean);
+            if (words.length >= 5) {
+                const hasFrenchStructure = /\b(je|nous|vous|c'est|bonjour|alors|donc|eh bien|monsieur|madame)\b/i.test(t)
+                    || /\b(suis|êtes|avez|fais|fait|peux|voulez|propose|appelle|compar|offre|écoute|comprends|vérifi|regard)\w*/i.test(t);
+                const energyContext = /\b(edf|engie|total|ekwateur|ohm|vattenfall|mint|génie|genie|enedis|linky|kwh|pdl|iban|home\s*énergie|home\s*energie)\b/i.test(t);
+                if (!hasFrenchStructure && !energyContext) return true;
+            }
+
+            const alpha = (t.match(/[a-zA-ZàâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ]/g) || []).length;
+            if (alpha / Math.max(t.length, 1) < 0.65) return true;
+
+            if (/\b(bla bla|nanana|test test|asdf|xxx+|truc machin)\b/i.test(t)) return true;
+            if (/(\b\w{2,5}\b)(?:\s+\1){2,}/i.test(t)) return true;
+            if (/[bcdfghjklmnpqrstvwxyz]{7,}/i.test(t.replace(/\s/g, ""))) return true;
+
+            const weirdTokens = words.filter(w => w.length > 3 && !/[aeiouyàâäéèêëïîôùûü]/i.test(w));
+            if (weirdTokens.length >= 2 && weirdTokens.length >= words.length * 0.4) return true;
+
+            return false;
+        }
+
+        function getIncomprehensionReply() {
+            const profile = getProfileKey();
+            const level = getLevel();
+            const pool = (INCOMPREHENSION_REPLIES[profile] || INCOMPREHENSION_REPLIES.agressif)[level]
+                || INCOMPREHENSION_REPLIES.agressif.debutant;
+            return pickNextUnusedLine(pool) || "Pardon ? Je ne comprends pas, vous pouvez répéter ?";
+        }
+
+        function inferProspectToneFromReply(text) {
+            const t = (text || "").trim();
+            const profile = getProfileKey();
+            const level = getLevel();
+            const base = getProspectMood(profile, level);
+            const shoutMarkers = /\b(arrêtez|arretez|raccroch|laissez-moi|arnaqueur|plainte|insupportable|hors de question|j'en ai marre|taisez-vous|fermez-la|dégagez|degagez)\b/i;
+            const angryMarkers = /\b(ça ne m'intéresse pas|occupé|pourquoi vous m'appelez|je ne veux pas|pas envie|méfiant|bloctel|arnaque|perdez votre temps)\b/i;
+            const tenseMarkers = /\b(pressé|presse|vite|deux minutes|pas le temps|faites court|j'ai pas le temps)\b/i;
+            const capsRatio = (t.match(/[A-ZÀÂÄÉÈÊËÏÎÔÙÛÜÇ]/g) || []).length / Math.max(t.length, 1);
+            const exclamations = (t.match(/!/g) || []).length;
+
+            if (shoutMarkers.test(t) && (exclamations >= 1 || capsRatio > 0.25 || /!{2,}/.test(t))) return "shouting";
+            if (exclamations >= 2 && (base === "angry" || profile === "agressif")) return "shouting";
+            if (isHardObjection(t) && (base === "angry" || profile === "agressif" || level === "avance")) return "angry";
+            if (angryMarkers.test(t) && base !== "calm") return "angry";
+            if (tenseMarkers.test(t) || base === "tense") return "tense";
+            if (base === "angry") return "angry";
+            return "calm";
+        }
+
+        function getProspectVoiceSettings(text) {
+            const tone = inferProspectToneFromReply(text);
+            return Object.assign({ tone }, VOICE_TONE_SETTINGS[tone] || VOICE_TONE_SETTINGS.calm);
+        }
+
+        function applyProspectLiveMood(tone) {
+            const frame = document.getElementById("prospectFrame");
+            if (!frame) return;
+            const mood = tone === "shouting" || tone === "angry" ? "angry"
+                : tone === "tense" ? "tense" : (prospectPersona && prospectPersona.mood) || "calm";
+            frame.classList.remove("mood-calm", "mood-tense", "mood-angry");
+            frame.classList.add("mood-" + mood);
+            if (prospectPersona) prospectPersona.liveTone = tone;
+        }
+
         function pickFrenchVoiceForGender(gender) {
             const synthRef = getSpeechSynth();
             const voices = synthRef ? synthRef.getVoices() : [];
@@ -4596,11 +4710,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }));
         }
 
-        function requestStreamlitHostedTts(text) {
+        function requestStreamlitHostedTts(text, voiceSettings) {
             const requestId = "tts_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+            const settings = voiceSettings || getProspectVoiceSettings(text);
             sessionStorage.setItem(PENDING_TTS_KEY, JSON.stringify({
                 request_id: requestId,
                 text: text,
+                tone: settings.tone || "calm",
                 at: Date.now()
             }));
             setProspectThinking(true);
@@ -4609,13 +4725,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 action: "hosted_tts",
                 request_id: requestId,
                 text: text.slice(0, 500),
-                gender: (prospectPersona && prospectPersona.gender) || "female"
+                gender: (prospectPersona && prospectPersona.gender) || "female",
+                tone: settings.tone || "calm"
             });
             return true;
         }
 
-        async function playAudioBase64(b64, mime, captionText) {
+        async function playAudioBase64(b64, mime, captionText, voiceSettings) {
             if (!b64) return false;
+            const settings = voiceSettings || VOICE_TONE_SETTINGS.calm;
             if (lastProspectAudio) {
                 lastProspectAudio.pause();
                 if (lastProspectAudio._blobUrl) URL.revokeObjectURL(lastProspectAudio._blobUrl);
@@ -4628,7 +4746,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const blobUrl = URL.createObjectURL(blob);
             const audio = new Audio(blobUrl);
             audio._blobUrl = blobUrl;
-            audio.volume = 1;
+            audio.volume = settings.volume || 1;
+            audio.playbackRate = settings.playbackRate || 1;
             lastProspectAudio = audio;
             if (captionText) updateLiveCaption("Prospect", captionText, "prospect");
             setStatus("Le prospect parle…", "status-thinking");
@@ -4671,14 +4790,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     el.innerHTML = "⚠️ Voix hébergée : " + (result.error || "erreur") + " — voix navigateur";
                     el.style.color = "#dc2626";
                 }
-                return await speakBrowser(pending.text || "");
+                return await speakBrowser(pending.text || "", { tone: pending.tone || "calm" });
             }
 
             const b64 = result.audio_b64 || audioB64FromInjectedTts();
             if (!b64) return false;
 
             try {
-                await playAudioBase64(b64, result.mime || "audio/mpeg", pending.text || "");
+                const pendingTone = pending.tone || "calm";
+                await playAudioBase64(b64, result.mime || "audio/mpeg", pending.text || "", getProspectVoiceSettings(pending.text || "") || VOICE_TONE_SETTINGS[pendingTone]);
                 lastPlayedTtsRequestId = result.request_id;
                 sessionStorage.removeItem(PENDING_TTS_KEY);
                 pushToStreamlit({ action: "tts_ack", request_id: result.request_id });
@@ -4763,8 +4883,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
-        async function speakLocalTTS(text) {
+        async function speakLocalTTS(text, voiceSettings) {
             if (!text) return false;
+            const settings = voiceSettings || getProspectVoiceSettings(text);
             const server = getTtsServer();
             if (!server) return false;
             try {
@@ -4774,7 +4895,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     lastProspectAudio = null;
                 }
                 const url = server + "/tts?text=" + encodeURIComponent(text.slice(0, 500))
-                    + "&voice=" + encodeURIComponent((prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER.female);
+                    + "&voice=" + encodeURIComponent((prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER.female)
+                    + "&tone=" + encodeURIComponent(settings.tone || "calm");
                 const res = await fetch(url);
                 if (!res.ok) throw new Error("TTS HTTP " + res.status);
                 const buf = await res.arrayBuffer();
@@ -4784,7 +4906,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const blobUrl = URL.createObjectURL(blob);
                 const audio = new Audio(blobUrl);
                 audio._blobUrl = blobUrl;
-                audio.volume = 1;
+                audio.volume = settings.volume || 1;
+                audio.playbackRate = settings.playbackRate || 1;
                 audio.preload = "auto";
                 lastProspectAudio = audio;
                 setStatus("Le prospect parle...", "status-thinking");
@@ -4822,9 +4945,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
-        function speakBrowser(text) {
+        function speakBrowser(text, voiceSettings) {
             return new Promise(async (resolve) => {
                 if (!text) return resolve(false);
+                const settings = voiceSettings || getProspectVoiceSettings(text);
+                applyProspectLiveMood(settings.tone);
                 const synthRef = getSpeechSynth();
                 if (!synthRef) return resolve(false);
                 await ensureVoices();
@@ -4832,8 +4957,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 try { synthRef.resume(); } catch (_) {}
                 const u = new SpeechSynthesisUtterance(text);
                 u.lang = "fr-FR";
-                u.volume = 1;
-                u.rate = 0.92;
+                u.volume = settings.volume || 1;
+                u.rate = settings.rate || 0.92;
+                u.pitch = settings.pitch || 1;
                 const genderVoice = prospectPersona && pickFrenchVoiceForGender(prospectPersona.gender);
                 if (genderVoice) u.voice = genderVoice;
                 else if (frenchVoice) u.voice = frenchVoice;
@@ -4872,6 +4998,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         async function speakProspect(rawText) {
             const text = cleanForSpeech(rawText);
             if (!text) return false;
+            const voiceSettings = getProspectVoiceSettings(text);
+            applyProspectLiveMood(voiceSettings.tone);
             const voiceOn = document.getElementById("voiceToggle").checked;
 
             if (!voiceOn) {
@@ -4885,18 +5013,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const onHosted = shouldUseHostedTts() || isStreamlitCloud() || getSimulatorConfig().hostedOnStreamlit;
 
             if (onHosted) {
-                let ok = await speakBrowser(text);
+                let ok = await speakBrowser(text, voiceSettings);
                 if (ok) {
                     if (callActive) setStatus("À vous de parler", "status-listening");
                     return true;
                 }
-                requestStreamlitHostedTts(text);
+                requestStreamlitHostedTts(text, voiceSettings);
                 return true;
             }
 
-            let ok = await speakLocalTTS(text);
+            let ok = await speakLocalTTS(text, voiceSettings);
             if (!ok) {
-                ok = await speakBrowser(text);
+                ok = await speakBrowser(text, voiceSettings);
             }
 
             if (callActive) {
@@ -5199,6 +5327,17 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             chatTurns.push({ role: "user", content: userText });
             rememberAgentFromMessage(userText);
             updateLiveStats();
+
+            if (isAgentTextIncomprehensible(userText)) {
+                const reply = finalizeProspectReply(getIncomprehensionReply());
+                chatTurns.push({ role: "assistant", content: reply });
+                addLogMessage("Prospect", reply, "prospect-msg");
+                updateLiveStats();
+                setProspectThinking(false);
+                await speakProspect(reply);
+                setStatus("À vous de parler", "status-listening");
+                return;
+            }
 
             if (agentSaidGoodbye()) {
                 const reply = "Au revoir.";
@@ -5793,6 +5932,8 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 - PAS de markdown (** * #), PAS de titres, PAS de listes.
 - PAS de didascalies (*ton agacé*, (pause), (regardant ailleurs), etc.).
 - NE DIS JAMAIS "prospect", "agressif", "débutant", "ma réponse en tant que", "je reste dans le personnage", "Profil :".
+- Si l'agent est incompréhensible (anglais, charabia, phrase sans sens) → « Je ne comprends pas, répétez ».
+- TONALITÉ ORALE : colère = ton vif et sec ; agacement = exclamations ; pressé = phrases courtes et rapides.
 - 1 à 3 phrases maximum, en français naturel.`;
             compactSystemPromptText = "Prospect " + profileKey + " (" + level + "). "
                 + "FRANÇAIS UNIQUEMENT, 1-3 phrases. Ne répète jamais l'agent. " + persona.supplier + " élec"
