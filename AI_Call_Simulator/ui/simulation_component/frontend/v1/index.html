@@ -749,6 +749,17 @@
             font-size: 12px;
             color: var(--text-muted);
         }
+        .exam-locked-notice {
+            margin: 12px 0 0 0;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.06);
+            border: 1px solid rgba(0, 45, 88, 0.14);
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text);
+        }
+        .exam-locked-notice strong { color: var(--lc-navy); }
         .exam-steps { list-style: none; margin: 0; padding: 0; }
         .exam-step {
             display: grid;
@@ -1158,7 +1169,8 @@
 
     <div class="card settings-card">
         <h3>Configuration de l'appel</h3>
-        <input type="hidden" id="apiKey" autocomplete="off"><div class="settings-grid">
+        <input type="hidden" id="apiKey" autocomplete="off"><div id="examConfigurableBlock">
+        <div class="settings-grid">
             <div>
                 <label for="profileSelect">Profil prospect</label>
                 <select id="profileSelect">
@@ -1190,9 +1202,22 @@
         <label class="calibration-label">
             <input type="checkbox" id="calibrationToggle"> Mode strict (force plus d'objections scriptées)
         </label>
+        </div>
+
+        <div id="examLockedNotice" class="exam-locked-notice" style="display:none;">
+            <strong>Mode examen</strong> — paramètres verrouillés. Le scénario est identique pour tous et se découvre à l'appel. Cliquez « Préparer l'examen » puis « Décrocher ».
+        </div>
 
         <details class="advanced-options" id="advancedOptions">
             <summary>Options avancées (modèle IA)</summary>
+            <div class="exam-formateur-access" id="examFormateurAccess" style="display:none;">
+                <label for="examFormateurCode">Code accès formateur</label>
+                <div class="exam-formateur-row">
+                    <input type="text" id="examFormateurCode" placeholder="formateur" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+                    <button type="button" id="examFormateurBtn" onclick="window.tryUnlockExamFormateur && window.tryUnlockExamFormateur()">Valider</button>
+                </div>
+                <p class="exam-formateur-msg" id="examFormateurMsg"></p>
+            </div>
             <label for="nvidiaModelSelect">Modèle OpenRouter (prospect)</label>
             <select id="nvidiaModelSelect">
                 <optgroup label="Gratuits — recommandés">
@@ -1216,15 +1241,6 @@
             <button type="button" id="benchmarkModelsBtn" class="benchmark-models-btn">⚡ Comparer 4 modèles gratuits (test rapide)</button>
             <div id="benchmarkModelsResult" class="benchmark-models-result" style="display:none;"></div>
         </details>
-
-        <div class="exam-formateur-access" id="examFormateurAccess" style="display:none;">
-            <label for="examFormateurCode">Accès formateur — prévisualiser l'examen</label>
-            <div class="exam-formateur-row">
-                <input type="text" id="examFormateurCode" placeholder="formateur" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
-                <button type="button" id="examFormateurBtn" onclick="window.tryUnlockExamFormateur && window.tryUnlockExamFormateur()">Débloquer</button>
-            </div>
-            <p class="exam-formateur-msg" id="examFormateurMsg">Code formateur requis pour prévisualiser avant le jour J.</p>
-        </div>
 
         <div class="exam-panel" id="examPanel" style="display:none;">
             <span class="exam-badge" id="examBadge">Examen</span>
@@ -2114,6 +2130,22 @@
             return isExamFormateurUnlocked();
         }
 
+        function canViewExamScenarioDetails() {
+            return isExamFormateurUnlocked();
+        }
+
+        function shouldLockExamSettings() {
+            return !!getActiveExamCampaign() && !canViewExamScenarioDetails();
+        }
+
+        function renderExamAgentLock() {
+            const locked = shouldLockExamSettings();
+            const block = document.getElementById("examConfigurableBlock");
+            const notice = document.getElementById("examLockedNotice");
+            if (block) block.style.display = locked ? "none" : "";
+            if (notice) notice.style.display = locked ? "block" : "none";
+        }
+
         function renderFormateurAccess() {
             const block = document.getElementById("examFormateurAccess");
             if (!block) return;
@@ -2137,6 +2169,7 @@
                     msg.style.color = "var(--success)";
                 }
                 renderFormateurAccess();
+                renderExamAgentLock();
                 renderExamPanel();
                 document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                 return;
@@ -2261,21 +2294,38 @@ ${objList}
             }
             if (title) title.textContent = campaign.title + " — " + campaign.dateLabel;
             if (sub) {
-                sub.textContent = campaign.isPreview
-                    ? "Aperçu réservé au formateur — invisible pour les agents jusqu'au " + campaign.dateLabel + ". " + campaign.instructions
-                    : campaign.instructions;
+                if (canViewExamScenarioDetails()) {
+                    sub.textContent = campaign.isPreview
+                        ? "Aperçu formateur — invisible pour les agents. " + campaign.instructions
+                        : campaign.instructions;
+                } else {
+                    sub.textContent = "Examen officiel · Un seul appel · Score minimum "
+                        + campaign.passScore + "/100 · Scénario identique pour tous, découvert à l'appel.";
+                }
             }
             if (card && step) {
-                const objPreview = (step.objections || []).slice(0, 5).map(o => "<li>" + o + "</li>").join("");
-                card.innerHTML = `<h5>${step.label}</h5>
-                    <p style="margin:0 0 8px 0;"><strong>Situation (identique pour tous) :</strong> ${step.brief || ""}</p>
-                    <p style="margin:0;font-size:12px;color:var(--text-muted);">
-                        ${getProfileLabel(step.profile)} · ${getScenarioLabel(step.scenarioType)} · Avancé · Mode strict ·
-                        Client : ${step.firstName || ""} ${step.lastName || ""} · ${step.supplier || ""} · ~${step.billAmount || "?"} €/mois
-                    </p>
-                    <p style="margin:10px 0 4px 0;font-size:12px;"><strong>Objections possibles (le prospect varie) :</strong></p>
-                    <ul>${objPreview}<li><em>+ ${Math.max(0, (step.objections || []).length - 5)} autres variantes en appel…</em></li></ul>`;
+                if (canViewExamScenarioDetails()) {
+                    const objPreview = (step.objections || []).slice(0, 5).map(o => "<li>" + o + "</li>").join("");
+                    card.innerHTML = `<h5>${step.label}</h5>
+                        <p style="margin:0 0 8px 0;"><strong>Situation (identique pour tous) :</strong> ${step.brief || ""}</p>
+                        <p style="margin:0;font-size:12px;color:var(--text-muted);">
+                            ${getProfileLabel(step.profile)} · ${getScenarioLabel(step.scenarioType)} · Avancé · Mode strict ·
+                            Client : ${step.firstName || ""} ${step.lastName || ""} · ${step.supplier || ""} · ~${step.billAmount || "?"} €/mois
+                        </p>
+                        <p style="margin:10px 0 4px 0;font-size:12px;"><strong>Objections possibles (le prospect varie) :</strong></p>
+                        <ul>${objPreview}<li><em>+ ${Math.max(0, (step.objections || []).length - 5)} autres variantes en appel…</em></li></ul>`;
+                } else {
+                    card.innerHTML = `<h5>Examen certification — Vente énergie</h5>
+                        <p style="margin:0 0 8px 0;font-size:13px;line-height:1.5;color:var(--text);">
+                            Le client et la situation vous seront présentés <strong>au moment de l'appel</strong>.
+                            Même scénario pour toute l'équipe — aucun détail n'est affiché avant le décroché.
+                        </p>
+                        <p style="margin:0;font-size:12px;color:var(--text-muted);">
+                            Niveau avancé · Mode strict · Seuil ${campaign.passScore}/100 · Critères : objections, reformulation, réponses convaincantes.
+                        </p>`;
+                }
             }
+            renderExamAgentLock();
             if (launchBtn) {
                 launchBtn.disabled = !!(result && result.passed);
                 launchBtn.textContent = result && result.passed
