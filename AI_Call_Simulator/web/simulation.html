@@ -673,6 +673,98 @@
         }
         .benchmark-models-result .best-row { background: rgba(0, 130, 127, 0.08); font-weight: 600; }
 
+        .exam-panel {
+            margin: 16px 0;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(0, 45, 88, 0.08), rgba(217, 128, 46, 0.1));
+            border: 2px solid rgba(0, 45, 88, 0.2);
+            box-shadow: 0 4px 18px rgba(0, 45, 88, 0.06);
+        }
+        .exam-panel h4 { margin: 0 0 6px 0; font-size: 16px; color: var(--lc-navy); }
+        .exam-panel .exam-sub { margin: 0 0 14px 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+        .exam-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: var(--lc-navy);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .exam-badge.preview { background: var(--lc-orange); }
+        .exam-steps { list-style: none; margin: 0; padding: 0; }
+        .exam-step {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            gap: 10px 12px;
+            align-items: start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 45, 88, 0.1);
+        }
+        .exam-step:last-child { border-bottom: none; }
+        .exam-step-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 45, 88, 0.12);
+            color: var(--lc-navy);
+            font-weight: 800;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .exam-step.done .exam-step-num { background: var(--success); color: #fff; }
+        .exam-step.active .exam-step-num { background: var(--lc-orange); color: #fff; }
+        .exam-step-title { font-weight: 700; font-size: 14px; color: var(--lc-navy); margin: 0 0 4px 0; }
+        .exam-step-meta { font-size: 12px; color: var(--text-muted); margin: 0 0 6px 0; }
+        .exam-objections { font-size: 11px; color: var(--text); margin: 0; padding-left: 16px; line-height: 1.45; }
+        .exam-objections li { margin-bottom: 2px; }
+        .exam-step-score { font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .exam-step-score.pass { color: var(--success); }
+        .exam-step-score.fail { color: var(--danger); }
+        .exam-launch-btn {
+            margin-top: 6px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--lc-navy);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .exam-launch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .exam-summary {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .exam-cert { color: var(--success); font-weight: 700; }
+        .exam-scenario-card {
+            margin: 12px 0;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 45, 88, 0.15);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .exam-scenario-card h5 { margin: 0 0 8px 0; font-size: 14px; color: var(--lc-navy); }
+        .exam-scenario-card ul { margin: 8px 0 0 0; padding-left: 18px; }
+        .exam-scenario-card li { margin-bottom: 4px; }
+        .exam-eval-banner {
+            margin-bottom: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.06);
+            border-left: 4px solid var(--lc-navy);
+        }
+
         .status-badge {
             display: inline-block;
             padding: 8px 16px;
@@ -1028,6 +1120,15 @@
             <button type="button" id="benchmarkModelsBtn" class="benchmark-models-btn">⚡ Comparer 4 modèles gratuits (test rapide)</button>
             <div id="benchmarkModelsResult" class="benchmark-models-result" style="display:none;"></div>
         </details>
+
+        <div class="exam-panel" id="examPanel" style="display:none;">
+            <span class="exam-badge" id="examBadge">Examen</span>
+            <h4 id="examTitle">Examen certification</h4>
+            <p class="exam-sub" id="examSub"></p>
+            <div id="examScenarioCard" class="exam-scenario-card"></div>
+            <button type="button" id="examLaunchBtn" class="exam-launch-btn" style="width:100%;margin-top:12px;padding:10px;">🎯 Préparer l'examen — même scénario pour tous</button>
+            <div class="exam-summary" id="examSummary"></div>
+        </div>
 
         <div class="coaching-panel" id="coachingPanel">
             <h4>🎯 Coaching personnalisé</h4>
@@ -1486,6 +1587,50 @@
 5. CLOSING — seulement si proposition bien menée`;
 
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
+        const V1_EXAM_PROGRESS_KEY = "simulator_v1_exam_progress";
+        const EXAM_CAMPAIGNS = {
+            "2026-07-17": {
+                id: "certif_vente_20260717",
+                title: "Examen certification — Vente énergie",
+                dateLabel: "17 juillet 2026",
+                instructions: "Un seul appel · Même scénario pour tous · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes",
+                passScore: 70,
+                steps: [
+                    {
+                        id: "examen_unique",
+                        label: "Examen certification — Changement fournisseur méfiant",
+                        profile: "mefiant_fournisseur",
+                        level: "avance",
+                        scenarioType: "standard",
+                        firstName: "Philippe",
+                        lastName: "Bernard",
+                        supplier: "EDF",
+                        billAmount: 89,
+                        offerTarget: 74,
+                        yearsAtSupplier: "plus de 4 ans",
+                        address: "18 rue Victor Hugo, 69003 Lyon",
+                        opening: "Oui ? C'est pour quoi… j'ai pas beaucoup de temps.",
+                        brief: "Philippe Bernard, 52 ans, chez EDF à Lyon (~89 €/mois élec seule), même logement depuis 4 ans. Méfiant : ne veut pas « changer pour changer », a déjà eu une mauvaise expérience de changement. Évaluation : traiter les objections, reformuler, réponses convaincantes.",
+                        goal: "Conduire un comparatif classique (changement de fournisseur), traiter chaque objection avec reformulation et des réponses convaincantes (arguments concrets, pas de phrases génériques), rassurer sur EDF/résiliation sans insister lourdement.",
+                        minObjections: 6,
+                        objections: [
+                            "Je ne veux pas changer de fournisseur, j'ai déjà EDF.",
+                            "La dernière fois que j'ai changé, c'était la galère.",
+                            "Comment avez-vous eu mon numéro ?",
+                            "EDF c'est fiable — pourquoi je prendrais le risque ?",
+                            "Votre offre cache sûrement des frais de résiliation.",
+                            "Mon voisin a changé et il regrette amèrement.",
+                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                            "C'est toujours la même promesse au téléphone, je ne vous crois pas.",
+                            "Allez droit au but, j'ai pas le temps pour un discours commercial.",
+                            "Concrètement, qu'est-ce que j'y gagne à changer maintenant ?",
+                            "Envoyez-moi tout par mail, je n'ai pas le temps là.",
+                            "Je vais réfléchir, rappelez-moi plus tard."
+                        ]
+                    }
+                ]
+            }
+        };
         const PERSONA_FIRST_NAMES = [
             "Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc",
             "Camille", "Julie", "Nicolas", "Émilie", "Emilie", "Anne", "Céline", "Celine", "Virginie", "Sandrine",
@@ -1817,6 +1962,180 @@
         function getDayVarietyKey() {
             const d = new Date();
             return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+
+        function getTomorrowKey() {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate() + 0).padStart(2, "0");
+        }
+
+        let examCallContext = null;
+        let pendingExamStepIndex = null;
+
+        function getActiveExamCampaign() {
+            const today = getDayVarietyKey();
+            const campaign = EXAM_CAMPAIGNS[today];
+            if (!campaign) return null;
+            return Object.assign({}, campaign, { examDate: today, isPreview: false });
+        }
+
+        function loadExamProgress(examId) {
+            try {
+                const raw = localStorage.getItem(V1_EXAM_PROGRESS_KEY);
+                const all = raw ? JSON.parse(raw) : {};
+                return all[examId] || { currentStep: 0, results: [] };
+            } catch (_) {
+                return { currentStep: 0, results: [] };
+            }
+        }
+
+        function saveExamProgress(examId, progress) {
+            try {
+                const raw = localStorage.getItem(V1_EXAM_PROGRESS_KEY);
+                const all = raw ? JSON.parse(raw) : {};
+                all[examId] = progress;
+                localStorage.setItem(V1_EXAM_PROGRESS_KEY, JSON.stringify(all));
+            } catch (_) {}
+            renderExamPanel();
+        }
+
+        function getPendingExamStep() {
+            const campaign = getActiveExamCampaign();
+            if (!campaign || pendingExamStepIndex == null) return null;
+            const step = campaign.steps[pendingExamStepIndex];
+            if (!step) return null;
+            return { campaign, stepIdx: pendingExamStepIndex, step };
+        }
+
+        function buildExamPromptBlock(ctx) {
+            if (!ctx) return "";
+            const step = ctx.step;
+            const n = ctx.stepIdx + 1;
+            const total = ctx.campaign.steps.length;
+            const objList = (step.objections || []).map(o => "- " + o).join("\n");
+            return `
+
+MODE EXAMEN — ${step.label.toUpperCase()} (${n}/${total})
+Objectif formateur : ${step.goal}
+- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+- Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
+- Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
+${objList}
+- Niveau AVANCÉ : reste exigeant même si l'agent est poli.
+- Si l'agent répète la même phrase, ignore ton objection ou reste vague → relance ou durcis ton ton.
+- Ne facilite pas la vente tant que les réponses ne te convainquent pas vraiment.`;
+        }
+
+        function applyExamStepToForm(stepIdx) {
+            const campaign = getActiveExamCampaign();
+            if (!campaign) return;
+            const step = campaign.steps[stepIdx];
+            if (!step) return;
+            pendingExamStepIndex = stepIdx;
+            const profileSel = document.getElementById("profileSelect");
+            const levelSel = document.getElementById("levelSelect");
+            const calib = document.getElementById("calibrationToggle");
+            if (profileSel) profileSel.value = step.profile;
+            if (levelSel) levelSel.value = step.level || "avance";
+            if (calib) calib.checked = true;
+            updateProfilePreview();
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) {
+                startBtn.textContent = "📞 Décrocher — Examen certification";
+            }
+            renderExamPanel();
+            document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function renderExamPanel() {
+            const panel = document.getElementById("examPanel");
+            if (!panel) return;
+            const campaign = getActiveExamCampaign();
+            if (!campaign) {
+                panel.style.display = "none";
+                return;
+            }
+            panel.style.display = "block";
+            const step = campaign.steps[0];
+            const progress = loadExamProgress(campaign.id);
+            const result = progress.results && progress.results[0];
+            const badge = document.getElementById("examBadge");
+            const title = document.getElementById("examTitle");
+            const sub = document.getElementById("examSub");
+            const card = document.getElementById("examScenarioCard");
+            const summary = document.getElementById("examSummary");
+            const launchBtn = document.getElementById("examLaunchBtn");
+            if (badge) {
+                badge.textContent = "Examen du jour";
+                badge.classList.remove("preview");
+            }
+            if (title) title.textContent = campaign.title + " — " + campaign.dateLabel;
+            if (sub) sub.textContent = campaign.instructions;
+            if (card && step) {
+                const objPreview = (step.objections || []).slice(0, 5).map(o => "<li>" + o + "</li>").join("");
+                card.innerHTML = `<h5>${step.label}</h5>
+                    <p style="margin:0 0 8px 0;"><strong>Situation (identique pour tous) :</strong> ${step.brief || ""}</p>
+                    <p style="margin:0;font-size:12px;color:var(--text-muted);">
+                        ${getProfileLabel(step.profile)} · ${getScenarioLabel(step.scenarioType)} · Avancé · Mode strict ·
+                        Client : ${step.firstName || ""} ${step.lastName || ""} · ${step.supplier || ""} · ~${step.billAmount || "?"} €/mois
+                    </p>
+                    <p style="margin:10px 0 4px 0;font-size:12px;"><strong>Objections possibles (le prospect varie) :</strong></p>
+                    <ul>${objPreview}<li><em>+ ${Math.max(0, (step.objections || []).length - 5)} autres variantes en appel…</em></li></ul>`;
+            }
+            if (launchBtn) {
+                launchBtn.disabled = !!(result && result.passed);
+                launchBtn.textContent = result && result.passed
+                    ? "✓ Examen validé — " + result.score + "/100"
+                    : (pendingExamStepIndex === 0 ? "✓ Scénario chargé — cliquez Décrocher" : "🎯 Préparer l'examen — même scénario pour tous");
+            }
+            if (summary) {
+                let html = `<strong>Seuil de validation :</strong> ${campaign.passScore}/100 minimum`;
+                if (result) {
+                    html += `<br>Dernier score : <strong>${result.score}/100</strong> — `
+                        + (result.passed
+                            ? `<span class="exam-cert">✓ Examen réussi</span>`
+                            : `<span style="color:var(--danger)">✗ Non validé — recommencez après analyse du rapport</span>`);
+                    if (result.passed) {
+                        html += `<br><span class="exam-cert">🏆 Certification obtenue — bravo !</span>`;
+                    }
+                } else if (pendingExamStepIndex === 0) {
+                    html += `<br><em>Scénario prêt — cliquez sur « Décrocher » pour passer l'examen.</em>`;
+                } else {
+                    html += `<br><em>Cliquez sur « Préparer l'examen » puis « Décrocher ».</em>`;
+                }
+                summary.innerHTML = html;
+            }
+        }
+
+        function recordExamStepResult(evaluation) {
+            if (!examCallContext) return null;
+            const { campaignId, stepIdx } = examCallContext;
+            const campaign = getActiveExamCampaign();
+            if (!campaign || campaign.id !== campaignId) return null;
+            const score = Number(evaluation && evaluation.score_total);
+            if (!Number.isFinite(score)) return null;
+            const progress = loadExamProgress(campaignId);
+            const passed = score >= campaign.passScore;
+            progress.results[stepIdx] = { score, passed, at: Date.now() };
+            if (passed) {
+                progress.currentStep = Math.max(progress.currentStep || 0, stepIdx + 1);
+            }
+            saveExamProgress(campaignId, progress);
+            examCallContext = null;
+            pendingExamStepIndex = passed ? null : 0;
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) startBtn.textContent = "📞 Décrocher — lancer la simulation";
+            return { passed, score, step: campaign.steps[stepIdx], campaign };
+        }
+
+        function renderExamEvalBanner(examResult) {
+            if (!examResult) return "";
+            const step = examResult.step;
+            const status = examResult.passed
+                ? `<strong style="color:var(--success)">Examen validé</strong> — ${examResult.score}/100 (seuil ${examResult.campaign.passScore}/100)`
+                : `<strong style="color:var(--danger)">Examen non validé</strong> — ${examResult.score}/100 (minimum ${examResult.campaign.passScore}/100 requis)`;
+            return `<div class="exam-eval-banner"><h4 style="margin:0 0 8px 0;">📋 ${step.label}</h4><p style="margin:0;">${status}. ${examResult.passed ? "Certification obtenue — félicitations !" : "Analysez le rapport et repassez l'examen."}</p></div>`;
         }
 
         function normalizeCoachingTheme(text) {
@@ -2473,30 +2792,36 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function createProspectPersona(profileKey) {
             const state = loadTrainingState();
-            const scenarioType = pickScenarioType(state);
+            const examCtx = getPendingExamStep();
+            const examStep = examCtx && examCtx.step.profile === profileKey ? examCtx.step : null;
+            const scenarioType = examStep?.scenarioType || pickScenarioType(state);
             const recentKeys = new Set((state.recentPersonas || []).map(p =>
                 (p.scenarioType || "standard") + "|" + (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
             ));
             const recentNames = new Set((state.recentPersonas || []).slice(0, 8).map(p => p.firstName || ""));
             let persona = null;
             for (let i = 0; i < 36; i++) {
-                const billAmount = randomBillAmount();
-                const offerTarget = Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15, 18]));
-                const supplier = pickRandom(PERSONA_SUPPLIERS);
-                const firstName = profileKey === "curieux"
+                const billAmount = examStep?.billAmount || randomBillAmount();
+                const offerTarget = examStep?.offerTarget != null
+                    ? examStep.offerTarget
+                    : (examStep?.billAmount
+                        ? Math.max(45, billAmount - 12)
+                        : Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15, 18])));
+                const supplier = examStep?.supplier || pickRandom(PERSONA_SUPPLIERS);
+                const firstName = examStep?.firstName || (profileKey === "curieux"
                     ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille", "Émilie", "Emilie", "Antoine"])
-                    : pickRandom(PERSONA_FIRST_NAMES);
-                const lastName = pickRandom(PERSONA_LAST_NAMES);
-                const oldAddress = pickRandom(PERSONA_ADDRESSES);
-                const newAddress = pickDifferentAddress(oldAddress);
+                    : pickRandom(PERSONA_FIRST_NAMES));
+                const lastName = examStep?.lastName || pickRandom(PERSONA_LAST_NAMES);
+                const oldAddress = examStep?.oldAddress || pickRandom(PERSONA_ADDRESSES);
+                const newAddress = examStep?.newAddress || pickDifferentAddress(oldAddress);
                 const newPdl = randomPdl();
                 const key = scenarioType + "|" + supplier + "|" + firstName + "|" + billAmount;
                 const nameRepeat = recentNames.has(firstName) && i < 28;
-                if ((!recentKeys.has(key) && !nameRepeat) || i > 28) {
+                if (examStep || (!recentKeys.has(key) && !nameRepeat) || i > 28) {
                     const base = {
                         firstName, lastName,
                         supplier,
-                        yearsAtSupplier: pickRandom(PERSONA_YEARS),
+                        yearsAtSupplier: examStep?.yearsAtSupplier || pickRandom(PERSONA_YEARS),
                         billAmount, offerTarget,
                         scenarioType,
                         gaveFirst: false, gaveLast: false,
@@ -2504,35 +2829,38 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         gaveAddress: false
                     };
                     if (scenarioType === "demenagement") {
-                        const alreadyMoved = Math.random() > 0.55;
+                        const alreadyMoved = examStep?.alreadyMoved != null ? examStep.alreadyMoved : Math.random() > 0.55;
                         persona = Object.assign(base, {
                             oldAddress,
                             newAddress,
-                            moveWhen: pickRandom(MOVE_WHEN_OPTIONS),
+                            moveWhen: examStep?.moveWhen || pickRandom(MOVE_WHEN_OPTIONS),
                             alreadyMoved,
                             address: alreadyMoved ? newAddress : oldAddress,
                             newPdl,
-                            newPdlKnown: Math.random() > 0.45
+                            newPdlKnown: examStep?.newPdlKnown != null ? examStep.newPdlKnown : Math.random() > 0.45
                         });
                     } else if (scenarioType === "mise_en_service") {
                         persona = Object.assign(base, {
                             newAddress,
                             address: newAddress,
-                            mesStatus: pickRandom(MES_STATUS_OPTIONS),
-                            hasContractAtNew: Math.random() > 0.55,
+                            mesStatus: examStep?.mesStatus || pickRandom(MES_STATUS_OPTIONS),
+                            hasContractAtNew: examStep?.hasContractAtNew != null ? examStep.hasContractAtNew : Math.random() > 0.55,
                             newPdl,
-                            newPdlKnown: Math.random() > 0.5
+                            newPdlKnown: examStep?.newPdlKnown != null ? examStep.newPdlKnown : Math.random() > 0.5,
+                            billAmount: examStep?.billAmount || billAmount,
+                            offerTarget: examStep?.billAmount ? Math.max(45, 55) : offerTarget
                         });
                     } else {
                         persona = Object.assign(base, {
-                            address: pickRandom(PERSONA_ADDRESSES)
+                            address: examStep?.address || examStep?.oldAddress || pickRandom(PERSONA_ADDRESSES)
                         });
                     }
                     persona.gender = inferProspectGender(persona.firstName);
                     persona.voiceId = VOICE_BY_GENDER[persona.gender];
                     persona.mood = getProspectMood(profileKey, getLevel());
-                    persona.openingLine = pickVariedOpening(profileKey, state);
+                    persona.openingLine = examStep?.opening || pickVariedOpening(profileKey, state);
                     persona.callContext = pickCallContext(state);
+                    if (examStep) persona.examStepId = examStep.id;
                     break;
                 }
             }
@@ -6046,7 +6374,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (retryBtn) retryBtn.style.display = "block";
             }
             revealEvaluationPanel();
+            const examResult = recordExamStepResult(evaluationData);
+            if (examResult) {
+                evalContent.innerHTML = renderExamEvalBanner(examResult) + evalContent.innerHTML;
+            }
             recordTrainingSession(evaluationData);
+            renderExamPanel();
             return evaluationData;
         }
 
@@ -6064,6 +6397,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             setProspectThinking(false);
             stopCallTimer();
             setStatus("Ligne inactive", "status-idle");
+            const startBtnEl = document.getElementById("startBtn");
+            if (startBtnEl && !getPendingExamStep()) {
+                startBtnEl.textContent = "📞 Décrocher — lancer la simulation";
+            }
         }
 
         startBtn.addEventListener('click', async () => {
@@ -6079,6 +6416,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const profile = PROFILES[profileKey];
             const level = document.getElementById('levelSelect').value;
             callLevel = level;
+
+            const examCtx = getPendingExamStep();
+            if (examCtx && examCtx.step.profile === profileKey && examCtx.step.level === level) {
+                examCallContext = { campaignId: examCtx.campaign.id, stepIdx: examCtx.stepIdx };
+                const calib = document.getElementById("calibrationToggle");
+                if (calib) calib.checked = true;
+            } else {
+                examCallContext = null;
+            }
 
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
             const levelBlock = profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant;
@@ -6101,7 +6447,7 @@ ${buildProspectFacts(persona)}
 CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingState())}
 
 ${CALL_STRUCTURE}
-${getTrainingEvolutionBlock(persona)}
+${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : getTrainingEvolutionBlock(persona)}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
 - LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
@@ -6303,12 +6649,15 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             ensureVoices();
             updateProfilePreview();
             renderCoachingPanel();
+            renderExamPanel();
             bindProspectVideos("female");
             syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
             document.getElementById("levelSelect").addEventListener("change", updateProfilePreview);
             const benchmarkBtn = document.getElementById("benchmarkModelsBtn");
             if (benchmarkBtn) benchmarkBtn.addEventListener("click", () => { void runFreeModelsBenchmark(); });
+            const examLaunchBtn = document.getElementById("examLaunchBtn");
+            if (examLaunchBtn) examLaunchBtn.addEventListener("click", () => applyExamStepToForm(0));
             if (!ready) {
                 const el = document.getElementById("dbStatus");
                 if (el) {
