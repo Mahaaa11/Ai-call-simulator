@@ -2264,8 +2264,7 @@ ${objList}
                         ? "Aperçu formateur — invisible pour les agents. " + campaign.instructions
                         : campaign.instructions;
                 } else {
-                    sub.textContent = "Examen officiel · Un seul appel · Score minimum "
-                        + campaign.passScore + "/100 · Scénario identique pour tous, découvert à l'appel.";
+                    sub.textContent = "Examen officiel · Un seul appel · Scénario identique pour tous, découvert à l'appel · Résultat communiqué par le formateur.";
                 }
             }
             if (card && step) {
@@ -2274,19 +2273,31 @@ ${objList}
             renderExamAgentLock();
             if (launchBtn) {
                 launchBtn.disabled = !!(result && result.passed);
-                launchBtn.textContent = result && result.passed
-                    ? "✓ Examen validé — " + result.score + "/100"
-                    : (pendingExamStepIndex === 0 ? "✓ Scénario chargé — cliquez Décrocher" : "🎯 Préparer l'examen — même scénario pour tous");
+                if (result && result.passed) {
+                    launchBtn.textContent = canViewExamScenarioDetails()
+                        ? "✓ Examen validé — " + result.score + "/100"
+                        : "✓ Examen soumis — en attente de validation";
+                } else {
+                    launchBtn.textContent = pendingExamStepIndex === 0
+                        ? "✓ Scénario chargé — cliquez Décrocher"
+                        : "🎯 Préparer l'examen — même scénario pour tous";
+                }
             }
             if (summary) {
-                let html = `<strong>Seuil de validation :</strong> ${campaign.passScore}/100 minimum`;
+                let html = canViewExamScenarioDetails()
+                    ? `<strong>Seuil de validation :</strong> ${campaign.passScore}/100 minimum`
+                    : `<strong>Examen certification</strong> — votre appel sera analysé par le formateur`;
                 if (result) {
-                    html += `<br>Dernier score : <strong>${result.score}/100</strong> — `
-                        + (result.passed
-                            ? `<span class="exam-cert">✓ Examen réussi</span>`
-                            : `<span style="color:var(--danger)">✗ Non validé — recommencez après analyse du rapport</span>`);
-                    if (result.passed) {
-                        html += `<br><span class="exam-cert">🏆 Certification obtenue — bravo !</span>`;
+                    if (canViewExamScenarioDetails()) {
+                        html += `<br>Dernier score : <strong>${result.score}/100</strong> — `
+                            + (result.passed
+                                ? `<span class="exam-cert">✓ Examen réussi</span>`
+                                : `<span style="color:var(--danger)">✗ Non validé — recommencez après analyse du rapport</span>`);
+                        if (result.passed) {
+                            html += `<br><span class="exam-cert">🏆 Certification obtenue — bravo !</span>`;
+                        }
+                    } else {
+                        html += `<br><em>Appel enregistré — votre formateur vous communiquera le résultat.</em>`;
                     }
                 } else if (pendingExamStepIndex === 0) {
                     html += `<br><em>Scénario prêt — cliquez sur « Décrocher » pour passer l'examen.</em>`;
@@ -2325,6 +2336,15 @@ ${objList}
                 ? `<strong style="color:var(--success)">Examen validé</strong> — ${examResult.score}/100 (seuil ${examResult.campaign.passScore}/100)`
                 : `<strong style="color:var(--danger)">Examen non validé</strong> — ${examResult.score}/100 (minimum ${examResult.campaign.passScore}/100 requis)`;
             return `<div class="exam-eval-banner"><h4 style="margin:0 0 8px 0;">📋 ${step.label}</h4><p style="margin:0;">${status}. ${examResult.passed ? "Certification obtenue — félicitations !" : "Analysez le rapport et repassez l'examen."}</p></div>`;
+        }
+
+        function isExamAgentMode() {
+            return isExamCallActive() && !canViewExamScenarioDetails();
+        }
+
+        function setEvaluationPanelTitle(text) {
+            const h = document.querySelector("#evaluation h3");
+            if (h) h.textContent = text;
         }
 
         function normalizeCoachingTheme(text) {
@@ -6621,26 +6641,43 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         async function showEvaluation(apiKey) {
-            setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
+            const examAgentMode = isExamAgentMode();
+            setStatus(examAgentMode ? "Enregistrement de votre examen…" : "Génération de l'évaluation (10–30 s)…", "status-thinking");
             const retryBtn = document.getElementById("retryEvalBtn");
             let evaluationData = null;
             try {
                 const evalResult = await runEvaluation(apiKey);
-                evalContent.innerHTML = evalResult.html;
                 evaluationData = evalResult.evaluation;
-                if (retryBtn) {
-                    retryBtn.style.display = evalResult.source === "heuristic" ? "block" : "none";
+                if (!examAgentMode) {
+                    evalContent.innerHTML = evalResult.html;
+                    if (retryBtn) {
+                        retryBtn.style.display = evalResult.source === "heuristic" ? "block" : "none";
+                    }
+                } else if (retryBtn) {
+                    retryBtn.style.display = "none";
                 }
             } catch (_) {
                 evaluationData = computeHeuristicEvaluation();
-                evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
-                if (retryBtn) retryBtn.style.display = "block";
+                if (!examAgentMode) {
+                    evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
+                    if (retryBtn) retryBtn.style.display = "block";
+                } else if (retryBtn) {
+                    retryBtn.style.display = "none";
+                }
             }
             evaluationData = finalizeEvaluationData(evaluationData);
-            revealEvaluationPanel();
             const examResult = recordExamStepResult(evaluationData);
-            if (examResult) {
-                evalContent.innerHTML = renderExamEvalBanner(examResult) + evalContent.innerHTML;
+            if (examAgentMode) {
+                evaluationDiv.style.display = "none";
+                evalContent.innerHTML = "";
+                setEvaluationPanelTitle("Rapport pédagogique — Évaluation (/100)");
+                setStatus("Examen enregistré — merci", "status-idle");
+                document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            } else {
+                if (examResult) {
+                    evalContent.innerHTML = renderExamEvalBanner(examResult) + evalContent.innerHTML;
+                }
+                revealEvaluationPanel();
             }
             recordTrainingSession(evaluationData);
             renderExamPanel();
