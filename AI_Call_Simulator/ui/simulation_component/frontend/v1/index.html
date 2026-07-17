@@ -2304,26 +2304,7 @@ ${objList}
                 }
             }
             if (card && step) {
-                if (canViewExamScenarioDetails()) {
-                    const objPreview = (step.objections || []).slice(0, 5).map(o => "<li>" + o + "</li>").join("");
-                    card.innerHTML = `<h5>${step.label}</h5>
-                        <p style="margin:0 0 8px 0;"><strong>Situation (identique pour tous) :</strong> ${step.brief || ""}</p>
-                        <p style="margin:0;font-size:12px;color:var(--text-muted);">
-                            ${getProfileLabel(step.profile)} · ${getScenarioLabel(step.scenarioType)} · Avancé · Mode strict ·
-                            Client : ${step.firstName || ""} ${step.lastName || ""} · ${step.supplier || ""} · ~${step.billAmount || "?"} €/mois
-                        </p>
-                        <p style="margin:10px 0 4px 0;font-size:12px;"><strong>Objections possibles (le prospect varie) :</strong></p>
-                        <ul>${objPreview}<li><em>+ ${Math.max(0, (step.objections || []).length - 5)} autres variantes en appel…</em></li></ul>`;
-                } else {
-                    card.innerHTML = `<h5>Examen certification — Vente énergie</h5>
-                        <p style="margin:0 0 8px 0;font-size:13px;line-height:1.5;color:var(--text);">
-                            Le client et la situation vous seront présentés <strong>au moment de l'appel</strong>.
-                            Même scénario pour toute l'équipe — aucun détail n'est affiché avant le décroché.
-                        </p>
-                        <p style="margin:0;font-size:12px;color:var(--text-muted);">
-                            Niveau avancé · Mode strict · Seuil ${campaign.passScore}/100 · Critères : objections, reformulation, réponses convaincantes.
-                        </p>`;
-                }
+                card.innerHTML = `<h5 style="margin:0;">${step.label || campaign.title}</h5>`;
             }
             renderExamAgentLock();
             if (launchBtn) {
