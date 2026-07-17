@@ -133,6 +133,10 @@ def ensure_schema() -> None:
                 cur.execute("SELECT training_mode FROM conversations LIMIT 1")
             except Exception:
                 cur.execute("ALTER TABLE conversations ADD COLUMN training_mode VARCHAR(32) NULL")
+            try:
+                cur.execute("SELECT agent_name FROM conversations LIMIT 1")
+            except Exception:
+                cur.execute("ALTER TABLE conversations ADD COLUMN agent_name VARCHAR(128) NULL")
     finally:
         conn.close()
     _SCHEMA_READY = True
@@ -165,6 +169,10 @@ def save_conversation(payload: dict) -> int:
     evaluation = payload.get("evaluation") or {}
     messages = payload.get("messages") or []
     training_mode = (payload.get("training_mode") or "train_agent").strip() or "train_agent"
+    agent_name = (payload.get("agent_name") or "").strip() or None
+    exam_meta = payload.get("exam_meta") or (evaluation.get("exam_meta") if evaluation else None)
+    if not agent_name and isinstance(exam_meta, dict):
+        agent_name = (exam_meta.get("agent_name") or "").strip() or None
 
     score_total = evaluation.get("score_total")
     score_level = evaluation.get("niveau")
@@ -178,9 +186,10 @@ def save_conversation(payload: dict) -> int:
                 INSERT INTO conversations (
                   profile_key, level_key, training_mode, model,
                   prospect_first_name, prospect_last_name,
+                  agent_name,
                   started_at, ended_at,
                   score_total, score_level, evaluation_json
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     profile,
@@ -189,6 +198,7 @@ def save_conversation(payload: dict) -> int:
                     model,
                     (persona.get("firstName") or persona.get("first_name") or None),
                     (persona.get("lastName") or persona.get("last_name") or None),
+                    agent_name,
                     started_at,
                     ended_at,
                     score_total,
@@ -229,18 +239,32 @@ def update_conversation_evaluation(conversation_id: int, evaluation: dict) -> No
     score_total = evaluation.get("score_total")
     score_level = evaluation.get("niveau")
     evaluation_json = json.dumps(evaluation, ensure_ascii=False) if evaluation else None
+    exam_meta = evaluation.get("exam_meta") if isinstance(evaluation, dict) else None
+    agent_name = None
+    if isinstance(exam_meta, dict):
+        agent_name = (exam_meta.get("agent_name") or "").strip() or None
 
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE conversations
-                SET score_total = %s, score_level = %s, evaluation_json = %s
-                WHERE id = %s
-                """,
-                (score_total, score_level, evaluation_json, conversation_id),
-            )
+            if agent_name:
+                cur.execute(
+                    """
+                    UPDATE conversations
+                    SET score_total = %s, score_level = %s, evaluation_json = %s, agent_name = %s
+                    WHERE id = %s
+                    """,
+                    (score_total, score_level, evaluation_json, agent_name, conversation_id),
+                )
+            else:
+                cur.execute(
+                    """
+                    UPDATE conversations
+                    SET score_total = %s, score_level = %s, evaluation_json = %s
+                    WHERE id = %s
+                    """,
+                    (score_total, score_level, evaluation_json, conversation_id),
+                )
     finally:
         conn.close()
 
@@ -275,6 +299,47 @@ def list_conversations(limit: int = 50) -> list[dict]:
                 """,
                 (limit,),
             )
+            return list(cur.fetchall())
+    finally:
+        conn.close()
+
+
+def list_exam_certified_conversations(
+    *,
+    min_score: int = 70,
+    exam_date: str | None = "2026-07-17",
+    limit: int = 500,
+) -> list[dict]:
+    """Return exam calls that meet the certification threshold."""
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            sql = """
+                SELECT id, agent_name, profile_key, level_key, training_mode, model,
+                       prospect_first_name, prospect_last_name,
+                       score_total, score_level, evaluation_json,
+                       started_at, ended_at, created_at
+                FROM conversations
+                WHERE score_total IS NOT NULL
+                  AND score_total >= %s
+                  AND (
+                    training_mode = 'exam_certif'
+                    OR (
+                      profile_key = 'mefiant_fournisseur'
+                      AND level_key = 'avance'
+                      AND prospect_first_name = 'Philippe'
+                      AND prospect_last_name = 'Bernard'
+                    )
+                  )
+            """
+            params: list = [min_score]
+            if exam_date:
+                sql += " AND DATE(created_at) = %s"
+                params.append(exam_date)
+            sql += " ORDER BY score_total DESC, id DESC LIMIT %s"
+            params.append(limit)
+            cur.execute(sql, params)
             return list(cur.fetchall())
     finally:
         conn.close()

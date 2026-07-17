@@ -1247,6 +1247,8 @@
             <h4 id="examTitle">Examen certification</h4>
             <p class="exam-sub" id="examSub"></p>
             <div id="examScenarioCard" class="exam-scenario-card"></div>
+            <label for="examAgentName" style="display:block;margin:12px 0 6px;font-size:13px;font-weight:600;color:var(--lc-navy);">Votre nom et prénom (obligatoire)</label>
+            <input type="text" id="examAgentName" placeholder="Ex : Marie Dupont" autocomplete="name" style="width:100%;margin-bottom:8px;">
             <button type="button" id="examLaunchBtn" class="exam-launch-btn" style="width:100%;margin-top:12px;padding:10px;">🎯 Préparer l'examen — même scénario pour tous</button>
             <div class="exam-summary" id="examSummary"></div>
         </div>
@@ -2252,6 +2254,12 @@ ${objList}
         function applyExamStepToForm(stepIdx) {
             const campaign = getActiveExamCampaign();
             if (!campaign) return;
+            const agentName = getExamAgentName();
+            if (!agentName) {
+                alert("Indiquez votre nom et prénom avant de préparer l'examen.");
+                document.getElementById("examAgentName")?.focus();
+                return;
+            }
             const step = campaign.steps[stepIdx];
             if (!step) return;
             pendingExamStepIndex = stepIdx;
@@ -3229,17 +3237,49 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
+        function getExamAgentName() {
+            const el = document.getElementById("examAgentName");
+            return el ? el.value.trim() : "";
+        }
+
+        function isExamCallActive() {
+            return !!(examCallContext || pendingExamStepIndex != null || (prospectPersona && prospectPersona.examStepId));
+        }
+
+        function attachExamMetaToEvaluation(evaluation) {
+            if (!evaluation || !isExamCallActive()) return evaluation;
+            const campaign = getActiveExamCampaign();
+            const passScore = campaign?.passScore || 70;
+            const score = Number(evaluation.score_total);
+            evaluation.exam_meta = {
+                agent_name: getExamAgentName(),
+                campaign_id: examCallContext?.campaignId || campaign?.id || "certif_vente_20260717",
+                passed: Number.isFinite(score) && score >= passScore,
+                pass_score: passScore,
+                exam_date: campaign?.examDate || getDayVarietyKey()
+            };
+            return evaluation;
+        }
+
         function buildConversationPayload(evaluation) {
-            return {
+            let evalData = evaluation || null;
+            if (evalData) evalData = attachExamMetaToEvaluation(Object.assign({}, evalData));
+            const payload = {
                 profile: document.getElementById("profileSelect").value,
                 level: getLevel(),
                 model: getNvidiaModel(),
                 started_at: callStartedAt,
                 ended_at: new Date().toISOString(),
                 persona: prospectPersona,
-                evaluation: evaluation || null,
+                evaluation: evalData,
                 messages: chatTurns.map(t => ({ role: t.role, content: t.content }))
             };
+            if (isExamCallActive()) {
+                payload.training_mode = "exam_certif";
+                payload.agent_name = getExamAgentName() || null;
+                payload.exam_campaign_id = examCallContext?.campaignId || getActiveExamCampaign()?.id || null;
+            }
+            return payload;
         }
 
         function stashPendingEvaluation(apiKey) {
@@ -3249,6 +3289,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 callStartedAt: callStartedAt,
                 persona: prospectPersona,
                 level: getLevel(),
+                agent_name: getExamAgentName(),
+                exam_campaign_id: examCallContext?.campaignId || getActiveExamCampaign()?.id || null,
                 stashed_at: Date.now()
             }));
         }
@@ -3272,6 +3314,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 callStartedAt = pending.callStartedAt || null;
                 prospectPersona = pending.persona || prospectPersona;
                 callLevel = pending.level || callLevel;
+                if (pending.agent_name) {
+                    const nameEl = document.getElementById("examAgentName");
+                    if (nameEl && !nameEl.value.trim()) nameEl.value = pending.agent_name;
+                }
                 lastConversationId = result.conversation_id;
 
                 setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
@@ -6633,6 +6679,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
                 if (retryBtn) retryBtn.style.display = "block";
             }
+            evaluationData = finalizeEvaluationData(evaluationData);
             revealEvaluationPanel();
             const examResult = recordExamStepResult(evaluationData);
             if (examResult) {
@@ -6642,6 +6689,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             renderExamPanel();
             scheduleStreamlitFrameHeightSync(2000);
             return evaluationData;
+        }
+
+        function finalizeEvaluationData(evaluationData) {
+            if (!evaluationData) return evaluationData;
+            return attachExamMetaToEvaluation(Object.assign({}, evaluationData));
         }
 
         function resetUi() {
