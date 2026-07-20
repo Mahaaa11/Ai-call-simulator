@@ -65,7 +65,7 @@ def _mysql_from_secrets() -> bool:
 
 st.set_page_config(page_title="Export examen certification", page_icon="📊", layout="wide")
 st.title("📊 Export examen certification")
-st.caption("Agents ayant validé l'examen (score ≥ 70/100) — transcriptions et évaluations")
+st.caption("Archive — examen du 17/07/2026 terminé. Export des agents certifiés (score ≥ 70/100).")
 
 if not _mysql_from_secrets():
     st.error("MySQL non configuré. Ajoutez MYSQL_* dans les Secrets Streamlit.")

@@ -319,6 +319,31 @@
             z-index: 1;
         }
 
+        .prospect-video.avatar-live {
+            opacity: 0;
+            z-index: 2;
+        }
+
+        .lipsync-overlay .lipsync-mouth {
+            width: 100%;
+            height: 100%;
+            border-radius: 50% 50% 45% 45%;
+            background: linear-gradient(180deg, rgba(80, 40, 35, 0.85) 0%, rgba(120, 55, 48, 0.9) 100%);
+            box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.35);
+            transform: scale(1, 0.35);
+            transform-origin: center center;
+            opacity: 0.5;
+            transition: opacity 0.05s linear;
+        }
+
+        .prospect-frame.lipsync-active .prospect-video.speaking-layer {
+            opacity: 0.35;
+        }
+
+        .prospect-frame.lipsync-active .lipsync-overlay {
+            opacity: 1;
+        }
+
         .prospect-frame.speaking .prospect-video.speaking-layer {
             opacity: 1;
         }
@@ -1102,6 +1127,8 @@
             font-size: 14px;
         }
     </style>
+    <script src="avatar_client.js"></script>
+    <script src="viseme_lipsync.js"></script>
 </head>
 <body>
 
@@ -1669,47 +1696,8 @@
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
         const V1_EXAM_PROGRESS_KEY = "simulator_v1_exam_progress";
         const EXAM_CAMPAIGNS = {
-            "2026-07-17": {
-                id: "certif_vente_20260717",
-                title: "Examen certification — Vente énergie",
-                dateLabel: "17 juillet 2026",
-                instructions: "Un seul appel · Même scénario pour tous · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes",
-                passScore: 70,
-                steps: [
-                    {
-                        id: "examen_unique",
-                        label: "Examen certification — Changement fournisseur méfiant",
-                        profile: "mefiant_fournisseur",
-                        level: "avance",
-                        scenarioType: "standard",
-                        firstName: "Philippe",
-                        lastName: "Bernard",
-                        supplier: "EDF",
-                        billAmount: 89,
-                        offerTarget: 74,
-                        yearsAtSupplier: "plus de 4 ans",
-                        address: "18 rue Victor Hugo, 69003 Lyon",
-                        opening: "Oui ? C'est pour quoi… j'ai pas beaucoup de temps.",
-                        brief: "Philippe Bernard, 52 ans, chez EDF à Lyon (~89 €/mois élec seule), même logement depuis 4 ans. Méfiant : ne veut pas « changer pour changer », a déjà eu une mauvaise expérience de changement. Évaluation : traiter les objections, reformuler, réponses convaincantes.",
-                        goal: "Conduire un comparatif classique (changement de fournisseur), traiter chaque objection avec reformulation et des réponses convaincantes (arguments concrets, pas de phrases génériques), rassurer sur EDF/résiliation sans insister lourdement.",
-                        minObjections: 6,
-                        objections: [
-                            "Je ne veux pas changer de fournisseur, j'ai déjà EDF.",
-                            "La dernière fois que j'ai changé, c'était la galère.",
-                            "Comment avez-vous eu mon numéro ?",
-                            "EDF c'est fiable — pourquoi je prendrais le risque ?",
-                            "Votre offre cache sûrement des frais de résiliation.",
-                            "Mon voisin a changé et il regrette amèrement.",
-                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
-                            "C'est toujours la même promesse au téléphone, je ne vous crois pas.",
-                            "Allez droit au but, j'ai pas le temps pour un discours commercial.",
-                            "Concrètement, qu'est-ce que j'y gagne à changer maintenant ?",
-                            "Envoyez-moi tout par mail, je n'ai pas le temps là.",
-                            "Je vais réfléchir, rappelez-moi plus tard."
-                        ]
-                    }
-                ]
-            }
+            // Examen certification du 17/07/2026 — terminé.
+            // Pour un prochain examen : ajouter "YYYY-MM-DD": { id, title, steps, ... }
         };
         const PERSONA_FIRST_NAMES = [
             "Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc",
@@ -2108,6 +2096,11 @@
         function renderFormateurAccess() {
             const block = document.getElementById("examFormateurAccess");
             if (!block) return;
+            const hasCampaigns = Object.keys(EXAM_CAMPAIGNS).length > 0;
+            if (!hasCampaigns) {
+                block.style.display = "none";
+                return;
+            }
             const today = getDayVarietyKey();
             if (EXAM_CAMPAIGNS[today] || isExamFormateurUnlocked()) {
                 block.style.display = "none";
@@ -2233,6 +2226,17 @@ ${objList}
             }
             renderExamPanel();
             document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function resetExamUiAfterCampaignEnded() {
+            if (Object.keys(EXAM_CAMPAIGNS).length > 0) return;
+            pendingExamStepIndex = null;
+            examCallContext = null;
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn && /examen/i.test(startBtn.textContent || "")) {
+                startBtn.textContent = "📞 Décrocher — lancer la simulation";
+            }
+            renderExamAgentLock();
         }
 
         function renderExamPanel() {
@@ -2884,7 +2888,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return location.origin + prodPath;
         }
         const TTS_SERVER = getServiceUrl(8765, "/tts");
+        const AVATAR_SERVER = getServiceUrl(8767, "/avatar-api");
         let CONVERSATION_API = getServiceUrl(8766, "/conv-api");
+        let avatarClient = null;
+        let avatarServerOk = false;
 
         function resolveConversationApi() {
             const cfg = window.__SIMULATOR_CONFIG__ || {};
@@ -3176,11 +3183,20 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (cfg.ttsApiUrl) {
                     window.__TTS_OVERRIDE__ = String(cfg.ttsApiUrl).replace(/\/$/, "");
                 }
+                if (cfg.avatarApiUrl) {
+                    window.__AVATAR_OVERRIDE__ = String(cfg.avatarApiUrl).replace(/\/$/, "");
+                }
             } catch (_) {}
+        }
+
+        function getAvatarServer() {
+            if (window.__AVATAR_OVERRIDE__) return window.__AVATAR_OVERRIDE__;
+            return AVATAR_SERVER;
         }
 
         function getTtsServer() {
             if (window.__TTS_OVERRIDE__) return window.__TTS_OVERRIDE__;
+            if (avatarServerOk && getAvatarServer()) return getAvatarServer();
             return TTS_SERVER;
         }
 
@@ -5045,6 +5061,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function stopProspectMouthAnim() {
             clearTimeout(prospectMouthTimer);
             setProspectSpeaking(false);
+            if (typeof lipSyncManager !== "undefined") lipSyncManager.stop();
         }
 
         function runProspectMouthForDuration(ms) {
@@ -5417,11 +5434,70 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
         }
 
+        async function checkAvatarServer() {
+            if (shouldUseHostedTts() || isStreamlitCloud() || getSimulatorConfig().hostedOnStreamlit) {
+                avatarServerOk = false;
+                avatarClient = null;
+                return false;
+            }
+            const base = getAvatarServer();
+            if (!base || typeof AvatarClient === "undefined") {
+                avatarServerOk = false;
+                avatarClient = null;
+                return false;
+            }
+            try {
+                avatarClient = avatarClient || new AvatarClient({ httpBase: base });
+                avatarServerOk = await avatarClient.checkHealth();
+            } catch (_) {
+                avatarServerOk = false;
+            }
+            return avatarServerOk;
+        }
+
+        async function speakAvatarStream(text, voiceSettings) {
+            if (!avatarServerOk || !avatarClient) return false;
+            try {
+                const gender = (prospectPersona && prospectPersona.gender) || "female";
+                const ok = await avatarClient.speak({
+                    text,
+                    voice: (prospectPersona && prospectPersona.voiceId) || VOICE_BY_GENDER[gender] || VOICE_BY_GENDER.female,
+                    tone: (voiceSettings && voiceSettings.tone) || "calm",
+                    portrait: gender,
+                    voiceSettings,
+                    onSpeechStart: () => {
+                        setStatus("Le prospect parle...", "status-thinking");
+                        startProspectMouthAnim();
+                    },
+                    onFallbackLoop: () => startProspectMouthAnim(),
+                    onSpeechEnd: () => stopProspectMouthAnim(),
+                });
+                if (ok && ok.ok) {
+                    ttsServerOk = true;
+                    audioUnlocked = true;
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Avatar stream:", e);
+            }
+            return false;
+        }
+
         async function checkTtsServer() {
             const el = document.getElementById("ttsStatus");
-            const server = getTtsServer();
+            await checkAvatarServer();
+            const avatarBase = getAvatarServer();
+            const server = avatarServerOk ? avatarBase : getTtsServer();
             if (!server) {
-                if (shouldUseHostedTts()) {
+                if (shouldUseHostedTts() || isStreamlitCloud() || getSimulatorConfig().hostedOnStreamlit) {
+                    const cfg = getSimulatorConfig();
+                    if (cfg.lipsyncCloudEnabled) {
+                        el.innerHTML = "✅ Streamlit — lip-sync cloud (Replicate) + voix";
+                    } else {
+                        el.innerHTML = "✅ Streamlit — lip-sync audio + voix (sans GPU)";
+                    }
+                    el.style.color = "#16a34a";
+                } else if (shouldUseHostedTts()) {
                     el.innerHTML = "✅ Voix française (navigateur, secours serveur)";
                     el.style.color = "#16a34a";
                 } else if (isHostedMode()) {
@@ -5438,7 +5514,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 setTimeout(() => ctrl.abort(), 8000);
                 const r = await fetch(server + "/health", { signal: ctrl.signal });
                 if (!r.ok) throw new Error("health " + r.status);
-                ttsServerOk = (await r.text()).trim() === "ok";
+                if (avatarServerOk) {
+                    const data = await r.json();
+                    ttsServerOk = !!(data && data.ok);
+                } else {
+                    ttsServerOk = (await r.text()).trim() === "ok";
+                }
             } catch (_) {
                 try {
                     const ctrl2 = new AbortController();
@@ -5453,7 +5534,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
             }
             if (ttsServerOk) {
-                el.innerHTML = "✅ Serveur voix actif (français Denise)";
+                if (avatarServerOk) {
+                    el.innerHTML = "✅ Avatar FastAPI actif (WebSocket + TTS)";
+                } else {
+                    el.innerHTML = "✅ Serveur voix actif (français Denise)";
+                }
                 el.style.color = "#16a34a";
             } else if (isHostedMode()) {
                 const cfg = getSimulatorConfig();
@@ -5510,6 +5595,58 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return true;
         }
 
+        async function playProspectVideoBase64(b64, mime, captionText) {
+            if (!b64) return false;
+            const live = document.getElementById("prospectAvatarLive") || (function () {
+                const media = document.querySelector("#prospectFrame .prospect-media");
+                if (!media) return null;
+                let vid = document.getElementById("prospectAvatarLive");
+                if (!vid) {
+                    vid = document.createElement("video");
+                    vid.id = "prospectAvatarLive";
+                    vid.className = "prospect-video speaking-layer avatar-live";
+                    vid.playsInline = true;
+                    vid.preload = "auto";
+                    media.appendChild(vid);
+                }
+                return vid;
+            })();
+            if (!live) return false;
+            const idle = document.getElementById("prospectVideoIdle");
+            const speak = document.getElementById("prospectVideoSpeak");
+            if (idle) idle.style.opacity = "0";
+            if (speak) speak.style.opacity = "0";
+            live.style.opacity = "1";
+            if (typeof lipSyncManager !== "undefined") lipSyncManager.stop();
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: mime || "video/mp4" });
+            const blobUrl = URL.createObjectURL(blob);
+            live.src = blobUrl;
+            live.load();
+            if (captionText) updateLiveCaption("Prospect", captionText, "prospect");
+            setStatus("Le prospect parle…", "status-thinking");
+            setProspectSpeaking(true);
+            await new Promise((resolve, reject) => {
+                live.onended = () => {
+                    URL.revokeObjectURL(blobUrl);
+                    live.style.opacity = "0";
+                    if (idle) idle.style.opacity = "1";
+                    if (speak) speak.style.opacity = "1";
+                    stopProspectMouthAnim();
+                    resolve();
+                };
+                live.onerror = () => {
+                    URL.revokeObjectURL(blobUrl);
+                    reject(new Error("Lecture vidéo échouée"));
+                };
+                const p = live.play();
+                if (p && p.catch) p.catch(reject);
+            });
+            return true;
+        }
+
         async function playAudioBase64(b64, mime, captionText, voiceSettings) {
             if (!b64) return false;
             const settings = voiceSettings || VOICE_TONE_SETTINGS.calm;
@@ -5531,6 +5668,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (captionText) updateLiveCaption("Prospect", captionText, "prospect");
             setStatus("Le prospect parle…", "status-thinking");
             startProspectMouthAnim();
+            const gender = (prospectPersona && prospectPersona.gender) || "female";
+            if (typeof lipSyncManager !== "undefined") {
+                lipSyncManager.syncWithAudio(audio, gender);
+            }
             await new Promise((resolve, reject) => {
                 audio.onended = () => {
                     stopProspectMouthAnim();
@@ -5577,7 +5718,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             try {
                 const pendingTone = pending.tone || "calm";
-                await playAudioBase64(b64, result.mime || "audio/mpeg", pending.text || "", getProspectVoiceSettings(pending.text || "") || VOICE_TONE_SETTINGS[pendingTone]);
+                const pendingText = pending.text || "";
+                if (result.video_b64) {
+                    await playProspectVideoBase64(result.video_b64, result.video_mime || "video/mp4", pendingText);
+                } else {
+                    await playAudioBase64(b64, result.mime || "audio/mpeg", pendingText, getProspectVoiceSettings(pendingText) || VOICE_TONE_SETTINGS[pendingTone]);
+                }
                 lastPlayedTtsRequestId = result.request_id;
                 sessionStorage.removeItem(PENDING_TTS_KEY);
                 pushToStreamlit({ action: "tts_ack", request_id: result.request_id });
@@ -5691,6 +5837,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 lastProspectAudio = audio;
                 setStatus("Le prospect parle...", "status-thinking");
                 startProspectMouthAnim();
+                const gender = (prospectPersona && prospectPersona.gender) || "female";
+                if (typeof lipSyncManager !== "undefined") {
+                    lipSyncManager.syncWithAudio(audio, gender);
+                }
                 await new Promise((resolve, reject) => {
                     audio.onended = () => {
                         stopProspectMouthAnim();
@@ -5755,6 +5905,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     updateLiveCaption("Prospect", text, "prospect");
                     setStatus("Le prospect parle...", "status-thinking");
                     startProspectMouthAnim();
+                    if (typeof lipSyncManager !== "undefined") {
+                        lipSyncManager.syncEstimated(text, (prospectPersona && prospectPersona.gender) || "female");
+                    }
                 };
                 u.onend = () => finish(true);
                 u.onerror = () => finish(false);
@@ -5790,6 +5943,14 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             await ensureVoices();
 
             const onHosted = shouldUseHostedTts() || isStreamlitCloud() || getSimulatorConfig().hostedOnStreamlit;
+
+            if (!onHosted && avatarServerOk) {
+                let ok = await speakAvatarStream(text, voiceSettings);
+                if (ok) {
+                    if (callActive) setStatus("À vous de parler", "status-listening");
+                    return true;
+                }
+            }
 
             if (onHosted) {
                 let ok = await speakBrowser(text, voiceSettings);
@@ -6957,6 +7118,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             ensureVoices();
             updateProfilePreview();
             renderCoachingPanel();
+            resetExamUiAfterCampaignEnded();
             renderFormateurAccess();
             renderExamPanel();
             installStreamlitHeightObserver();

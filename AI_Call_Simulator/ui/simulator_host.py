@@ -236,6 +236,12 @@ def _sync_component_assets(frontend_dir: Path) -> None:
     lib_dst = frontend_dir / "streamlit-component-lib.js"
     if lib_src.exists():
         shutil.copy2(lib_src, lib_dst)
+    avatar_js = WEB_DIR / "avatar_client.js"
+    if avatar_js.exists():
+        shutil.copy2(avatar_js, frontend_dir / "avatar_client.js")
+    viseme_js = WEB_DIR / "viseme_lipsync.js"
+    if viseme_js.exists():
+        shutil.copy2(viseme_js, frontend_dir / "viseme_lipsync.js")
     assets_src = WEB_DIR / "assets"
     assets_dst = frontend_dir / "assets"
     if assets_src.is_dir():
@@ -289,6 +295,8 @@ def _build_streamlit_config(
         config["lastTtsResult"] = tts_feedback
     if _get_secret_or_env("OPENROUTER_API_KEY"):
         config["hostedTtsEnabled"] = True
+    if _get_secret_or_env("REPLICATE_API_TOKEN"):
+        config["lipsyncCloudEnabled"] = True
     return config
 
 
@@ -346,6 +354,7 @@ def _process_eval_update(incoming: dict) -> bool:
 def _process_hosted_tts(incoming: dict) -> bool:
     import base64
 
+    from ui.lipsync_cloud import generate_lipsync_video, lipsync_available
     from ui.streamlit_tts import synthesize_speech
 
     request_id = str(incoming.get("request_id") or "")
@@ -359,14 +368,24 @@ def _process_hosted_tts(incoming: dict) -> bool:
     if st.session_state.get("last_tts_key") == tts_key:
         return False
     try:
-        with st.spinner("Synthèse voix française…"):
+        spinner_msg = "Synthèse voix française…"
+        if lipsync_available():
+            spinner_msg = "Voix + lip-sync cloud (15–45 s)…"
+        with st.spinner(spinner_msg):
             audio = synthesize_speech(text, gender=gender, tone=tone)
-        st.session_state.tts_feedback = {
+        feedback: dict = {
             "ok": True,
             "request_id": request_id,
             "audio_b64": base64.b64encode(audio).decode("ascii"),
             "mime": "audio/mpeg",
         }
+        if lipsync_available():
+            video = generate_lipsync_video(audio, gender=gender)
+            if video:
+                feedback["video_b64"] = base64.b64encode(video).decode("ascii")
+                feedback["video_mime"] = "video/mp4"
+                feedback["lipsync"] = "replicate_wav2lip"
+        st.session_state.tts_feedback = feedback
     except Exception as exc:
         st.session_state.tts_feedback = {
             "ok": False,

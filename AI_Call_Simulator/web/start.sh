@@ -16,22 +16,28 @@ if [ ! -f .env ] && [ -f .env.example ]; then
 fi
 
 pip3 install -q pymysql edge-tts 2>/dev/null || pip install -q pymysql edge-tts
+pip3 install -q -r "$ROOT/requirements-avatar.txt" 2>/dev/null || pip install -q -r "$ROOT/requirements-avatar.txt" 2>/dev/null || true
 
 kill_port() { lsof -ti :"$1" | xargs kill -9 2>/dev/null || true; }
 
 kill_port 8765
 kill_port 8766
+kill_port 8767
 kill_port 8080
 
-python3 "$ROOT/tts_server.py" &
+# FastAPI avatar + TTS (WebSocket, MuseTalk-ready). Falls back to loop videos without GPU.
+python3 "$ROOT/run_avatar_server.py" &
 python3 "$ROOT/conversation_api.py" &
 python3 -m http.server 8080 &
 
 echo ""
 echo "  Page      : http://localhost:8080/simulation.html"
-echo "  TTS       : http://127.0.0.1:8765/health"
+echo "  Avatar API: http://127.0.0.1:8767/health  (TTS + WebSocket ws://127.0.0.1:8767/ws/avatar)"
 echo "  MySQL API : http://127.0.0.1:8766/health"
 echo ""
-echo "Ctrl+C pour arrêter — puis : kill \$(lsof -ti :8080,:8765,:8766)"
+echo "  MuseTalk  : AVATAR_BACKEND=musetalk MUSETALK_URL=http://127.0.0.1:8780"
+echo "  Idle face : AVATAR_BACKEND=musetalk+liveportrait LIVEPORTRAIT_URL=http://127.0.0.1:8781"
+echo ""
+echo "Ctrl+C pour arrêter — puis : kill \$(lsof -ti :8080,:8766,:8767)"
 
 wait

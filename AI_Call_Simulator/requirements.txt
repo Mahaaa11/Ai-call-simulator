@@ -3,3 +3,4 @@ pymysql>=1.1.0
 edge-tts>=6.1.0
 pandas>=2.2.0
 openpyxl>=3.1.0
+replicate>=0.25.0
