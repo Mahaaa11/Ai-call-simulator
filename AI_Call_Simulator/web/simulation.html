@@ -846,6 +846,13 @@
         .exam-scenario-card h5 { margin: 0 0 8px 0; font-size: 14px; color: var(--lc-navy); }
         .exam-scenario-card ul { margin: 8px 0 0 0; padding-left: 18px; }
         .exam-scenario-card li { margin-bottom: 4px; }
+        .training-scenario-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 6px 0 14px 0;
+            line-height: 1.45;
+        }
+        .training-scenario-hint strong { color: var(--lc-navy); }
         .exam-eval-banner {
             margin-bottom: 16px;
             padding: 14px;
@@ -1154,6 +1161,13 @@
         <p class="hint" id="apiHint">OpenRouter : <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> · <strong id="appUrlLabel"></strong></p>
 
         <div id="examConfigurableBlock">
+        <label for="trainingScenarioSelect">Scénario d'entraînement</label>
+        <select id="trainingScenarioSelect">
+            <option value="random">🎲 Aléatoire — profil et client variables</option>
+            <option value="certif_fournisseur_mefiant" selected>🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
+        </select>
+        <p class="training-scenario-hint" id="trainingScenarioHint">Choisissez un scénario guidé ou laissez en aléatoire pour varier les profils.</p>
+
         <div class="settings-grid">
             <div>
                 <label for="profileSelect">Profil prospect</label>
@@ -1513,13 +1527,18 @@
             const key = document.getElementById("profileSelect").value;
             const ui = PROFILE_UI[key] || PROFILE_UI.agressif;
             const mood = getProspectMood(key, getLevel());
+            const scenario = getSelectedTrainingScenario();
             const el = document.getElementById("profilePreview");
             const icon = document.getElementById("profilePreviewIcon");
             const title = document.getElementById("profilePreviewTitle");
             const desc = document.getElementById("profilePreviewDesc");
             if (icon) icon.textContent = ui.icon;
-            if (title) title.textContent = ui.title;
-            if (desc) desc.textContent = ui.desc;
+            if (title) title.textContent = scenario ? scenario.label : ui.title;
+            if (desc) {
+                desc.textContent = scenario
+                    ? scenario.description + " · Objections exigeantes · Évaluation à la fin."
+                    : ui.desc;
+            }
             if (el) {
                 el.classList.remove("mood-calm", "mood-tense", "mood-angry");
                 el.classList.add("mood-" + mood);
@@ -1698,6 +1717,40 @@
         const EXAM_CAMPAIGNS = {
             // Examen certification du 17/07/2026 — terminé.
             // Pour un prochain examen : ajouter "YYYY-MM-DD": { id, title, steps, ... }
+        };
+        const TRAINING_SCENARIOS = {
+            certif_fournisseur_mefiant: {
+                id: "certif_fournisseur_mefiant",
+                label: "Certification — Changement fournisseur méfiant",
+                description: "Philippe Bernard, 52 ans, EDF à Lyon (~89 €/mois) — même scénario que l'examen certification.",
+                profile: "mefiant_fournisseur",
+                level: "avance",
+                scenarioType: "standard",
+                firstName: "Philippe",
+                lastName: "Bernard",
+                supplier: "EDF",
+                billAmount: 89,
+                offerTarget: 74,
+                yearsAtSupplier: "plus de 4 ans",
+                address: "18 rue Victor Hugo, 69003 Lyon",
+                opening: "Oui ? C'est pour quoi… j'ai pas beaucoup de temps.",
+                goal: "Conduire un comparatif classique (changement de fournisseur), traiter chaque objection avec reformulation et des réponses convaincantes (arguments concrets, pas de phrases génériques), rassurer sur EDF/résiliation sans insister lourdement.",
+                minObjections: 6,
+                objections: [
+                    "Je ne veux pas changer de fournisseur, j'ai déjà EDF.",
+                    "La dernière fois que j'ai changé, c'était la galère.",
+                    "Comment avez-vous eu mon numéro ?",
+                    "EDF c'est fiable — pourquoi je prendrais le risque ?",
+                    "Votre offre cache sûrement des frais de résiliation.",
+                    "Mon voisin a changé et il regrette amèrement.",
+                    "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                    "C'est toujours la même promesse au téléphone, je ne vous crois pas.",
+                    "Allez droit au but, j'ai pas le temps pour un discours commercial.",
+                    "Concrètement, qu'est-ce que j'y gagne à changer maintenant ?",
+                    "Envoyez-moi tout par mail, je n'ai pas le temps là.",
+                    "Je vais réfléchir, rappelez-moi plus tard."
+                ]
+            }
         };
         const PERSONA_FIRST_NAMES = [
             "Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas", "Isabelle", "Marc", "Nathalie", "Luc",
@@ -2180,6 +2233,73 @@
             const step = campaign.steps[pendingExamStepIndex];
             if (!step) return null;
             return { campaign, stepIdx: pendingExamStepIndex, step };
+        }
+
+        function getSelectedTrainingScenario() {
+            const sel = document.getElementById("trainingScenarioSelect");
+            const id = sel ? sel.value : "random";
+            if (!id || id === "random") return null;
+            return TRAINING_SCENARIOS[id] || null;
+        }
+
+        function getFixedScenarioStep() {
+            const examCtx = getPendingExamStep();
+            if (examCtx) return examCtx.step;
+            return getSelectedTrainingScenario();
+        }
+
+        function buildTrainingScenarioPromptBlock(step) {
+            if (!step) return "";
+            const objList = (step.objections || []).map(o => "- " + o).join("\n");
+            return `
+
+MODE ENTRAÎNEMENT — ${step.label.toUpperCase()}
+Objectif : ${step.goal}
+- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+- Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
+- Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
+${objList}
+- Niveau AVANCÉ : reste exigeant même si l'agent est poli.
+- Si l'agent répète la même phrase, ignore ton objection ou reste vague → relance ou durcis ton ton.
+- Ne facilite pas la vente tant que les réponses ne te convainquent pas vraiment.`;
+        }
+
+        function applyTrainingScenarioToForm() {
+            const scenario = getSelectedTrainingScenario();
+            const profileSel = document.getElementById("profileSelect");
+            const levelSel = document.getElementById("levelSelect");
+            const calib = document.getElementById("calibrationToggle");
+            if (scenario) {
+                if (profileSel) profileSel.value = scenario.profile;
+                if (levelSel) levelSel.value = scenario.level || "avance";
+                if (calib) calib.checked = true;
+            }
+            renderTrainingScenarioLock();
+            updateTrainingScenarioHint();
+            updateProfilePreview();
+        }
+
+        function renderTrainingScenarioLock() {
+            const scenario = getSelectedTrainingScenario();
+            const locked = !!scenario;
+            const profileSel = document.getElementById("profileSelect");
+            const levelSel = document.getElementById("levelSelect");
+            const calib = document.getElementById("calibrationToggle");
+            if (profileSel) profileSel.disabled = locked;
+            if (levelSel) levelSel.disabled = locked;
+            if (calib) calib.disabled = locked;
+        }
+
+        function updateTrainingScenarioHint() {
+            const el = document.getElementById("trainingScenarioHint");
+            if (!el) return;
+            const scenario = getSelectedTrainingScenario();
+            if (!scenario) {
+                el.innerHTML = "Choisissez un scénario guidé ou laissez en aléatoire pour varier les profils.";
+                return;
+            }
+            el.innerHTML = "<strong>" + scenario.label + "</strong> — " + scenario.description
+                + " · Profil verrouillé · Mode strict activé · Évaluation visible à la fin.";
         }
 
         function buildExamPromptBlock(ctx) {
@@ -3008,36 +3128,35 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function createProspectPersona(profileKey) {
             const state = loadTrainingState();
-            const examCtx = getPendingExamStep();
-            const examStep = examCtx && examCtx.step.profile === profileKey ? examCtx.step : null;
-            const scenarioType = examStep?.scenarioType || pickScenarioType(state);
+            const fixedStep = getFixedScenarioStep();
+            const scenarioType = fixedStep?.scenarioType || pickScenarioType(state);
             const recentKeys = new Set((state.recentPersonas || []).map(p =>
                 (p.scenarioType || "standard") + "|" + (p.supplier || "") + "|" + (p.firstName || "") + "|" + (p.billAmount || "")
             ));
             const recentNames = new Set((state.recentPersonas || []).slice(0, 8).map(p => p.firstName || ""));
             let persona = null;
             for (let i = 0; i < 36; i++) {
-                const billAmount = examStep?.billAmount || randomBillAmount();
-                const offerTarget = examStep?.offerTarget != null
-                    ? examStep.offerTarget
-                    : (examStep?.billAmount
+                const billAmount = fixedStep?.billAmount || randomBillAmount();
+                const offerTarget = fixedStep?.offerTarget != null
+                    ? fixedStep.offerTarget
+                    : (fixedStep?.billAmount
                         ? Math.max(45, billAmount - 12)
                         : Math.max(45, billAmount - pickRandom([8, 10, 12, 14, 15, 18])));
-                const supplier = examStep?.supplier || pickRandom(PERSONA_SUPPLIERS);
-                const firstName = examStep?.firstName || (profileKey === "curieux"
+                const supplier = fixedStep?.supplier || pickRandom(PERSONA_SUPPLIERS);
+                const firstName = fixedStep?.firstName || (profileKey === "curieux"
                     ? pickRandom(["Thomas", "Claire", "Julie", "Nicolas", "Camille", "Émilie", "Emilie", "Antoine"])
                     : pickRandom(PERSONA_FIRST_NAMES));
-                const lastName = examStep?.lastName || pickRandom(PERSONA_LAST_NAMES);
-                const oldAddress = examStep?.oldAddress || pickRandom(PERSONA_ADDRESSES);
-                const newAddress = examStep?.newAddress || pickDifferentAddress(oldAddress);
+                const lastName = fixedStep?.lastName || pickRandom(PERSONA_LAST_NAMES);
+                const oldAddress = fixedStep?.oldAddress || pickRandom(PERSONA_ADDRESSES);
+                const newAddress = fixedStep?.newAddress || pickDifferentAddress(oldAddress);
                 const newPdl = randomPdl();
                 const key = scenarioType + "|" + supplier + "|" + firstName + "|" + billAmount;
                 const nameRepeat = recentNames.has(firstName) && i < 28;
-                if (examStep || (!recentKeys.has(key) && !nameRepeat) || i > 28) {
+                if (fixedStep || (!recentKeys.has(key) && !nameRepeat) || i > 28) {
                     const base = {
                         firstName, lastName,
                         supplier,
-                        yearsAtSupplier: examStep?.yearsAtSupplier || pickRandom(PERSONA_YEARS),
+                        yearsAtSupplier: fixedStep?.yearsAtSupplier || pickRandom(PERSONA_YEARS),
                         billAmount, offerTarget,
                         scenarioType,
                         gaveFirst: false, gaveLast: false,
@@ -3045,38 +3164,39 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         gaveAddress: false
                     };
                     if (scenarioType === "demenagement") {
-                        const alreadyMoved = examStep?.alreadyMoved != null ? examStep.alreadyMoved : Math.random() > 0.55;
+                        const alreadyMoved = fixedStep?.alreadyMoved != null ? fixedStep.alreadyMoved : Math.random() > 0.55;
                         persona = Object.assign(base, {
                             oldAddress,
                             newAddress,
-                            moveWhen: examStep?.moveWhen || pickRandom(MOVE_WHEN_OPTIONS),
+                            moveWhen: fixedStep?.moveWhen || pickRandom(MOVE_WHEN_OPTIONS),
                             alreadyMoved,
                             address: alreadyMoved ? newAddress : oldAddress,
                             newPdl,
-                            newPdlKnown: examStep?.newPdlKnown != null ? examStep.newPdlKnown : Math.random() > 0.45
+                            newPdlKnown: fixedStep?.newPdlKnown != null ? fixedStep.newPdlKnown : Math.random() > 0.45
                         });
                     } else if (scenarioType === "mise_en_service") {
                         persona = Object.assign(base, {
                             newAddress,
                             address: newAddress,
-                            mesStatus: examStep?.mesStatus || pickRandom(MES_STATUS_OPTIONS),
-                            hasContractAtNew: examStep?.hasContractAtNew != null ? examStep.hasContractAtNew : Math.random() > 0.55,
+                            mesStatus: fixedStep?.mesStatus || pickRandom(MES_STATUS_OPTIONS),
+                            hasContractAtNew: fixedStep?.hasContractAtNew != null ? fixedStep.hasContractAtNew : Math.random() > 0.55,
                             newPdl,
-                            newPdlKnown: examStep?.newPdlKnown != null ? examStep.newPdlKnown : Math.random() > 0.5,
-                            billAmount: examStep?.billAmount || billAmount,
-                            offerTarget: examStep?.billAmount ? Math.max(45, 55) : offerTarget
+                            newPdlKnown: fixedStep?.newPdlKnown != null ? fixedStep.newPdlKnown : Math.random() > 0.5,
+                            billAmount: fixedStep?.billAmount || billAmount,
+                            offerTarget: fixedStep?.billAmount ? Math.max(45, 55) : offerTarget
                         });
                     } else {
                         persona = Object.assign(base, {
-                            address: examStep?.address || examStep?.oldAddress || pickRandom(PERSONA_ADDRESSES)
+                            address: fixedStep?.address || fixedStep?.oldAddress || pickRandom(PERSONA_ADDRESSES)
                         });
                     }
                     persona.gender = inferProspectGender(persona.firstName);
                     persona.voiceId = VOICE_BY_GENDER[persona.gender];
                     persona.mood = getProspectMood(profileKey, getLevel());
-                    persona.openingLine = examStep?.opening || pickVariedOpening(profileKey, state);
+                    persona.openingLine = fixedStep?.opening || pickVariedOpening(profileKey, state);
                     persona.callContext = pickCallContext(state);
-                    if (examStep) persona.examStepId = examStep.id;
+                    if (fixedStep?.id) persona.trainingScenarioId = fixedStep.id;
+                    if (fixedStep && getPendingExamStep()) persona.examStepId = fixedStep.id;
                     break;
                 }
             }
@@ -3271,6 +3391,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 payload.training_mode = "exam_certif";
                 payload.agent_name = getExamAgentName() || null;
                 payload.exam_campaign_id = examCallContext?.campaignId || getActiveExamCampaign()?.id || null;
+            } else {
+                const trainingScenario = getSelectedTrainingScenario();
+                if (trainingScenario) {
+                    payload.training_mode = "scenario_certif";
+                    payload.training_scenario_id = trainingScenario.id;
+                }
             }
             return payload;
         }
@@ -6894,6 +7020,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 examCallContext = null;
             }
 
+            const trainingScenario = getSelectedTrainingScenario();
+            if (trainingScenario && !examCtx) {
+                const calib = document.getElementById("calibrationToggle");
+                if (calib) calib.checked = true;
+            }
+
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
             const levelBlock = profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant;
 
@@ -6915,7 +7047,7 @@ ${buildProspectFacts(persona)}
 CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingState())}
 
 ${CALL_STRUCTURE}
-${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : getTrainingEvolutionBlock(persona)}
+${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : (trainingScenario ? buildTrainingScenarioPromptBlock(trainingScenario) : getTrainingEvolutionBlock(persona))}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
 - LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
@@ -7117,6 +7249,8 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             }
             ensureVoices();
             updateProfilePreview();
+            renderTrainingScenarioLock();
+            updateTrainingScenarioHint();
             renderCoachingPanel();
             resetExamUiAfterCampaignEnded();
             renderFormateurAccess();
@@ -7126,6 +7260,9 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             syncStreamlitFrameHeight();
             document.getElementById("profileSelect").addEventListener("change", updateProfilePreview);
             document.getElementById("levelSelect").addEventListener("change", updateProfilePreview);
+            const trainingScenarioSel = document.getElementById("trainingScenarioSelect");
+            if (trainingScenarioSel) trainingScenarioSel.addEventListener("change", applyTrainingScenarioToForm);
+            applyTrainingScenarioToForm();
             const benchmarkBtn = document.getElementById("benchmarkModelsBtn");
             if (benchmarkBtn) benchmarkBtn.addEventListener("click", () => { void runFreeModelsBenchmark(); });
             const examLaunchBtn = document.getElementById("examLaunchBtn");
