@@ -21,6 +21,20 @@ from engine.processor import (
     _parse_date_column,
     process_data,
 )
+from engine.status_labels import apply_resolved_status_labels
+
+_COLOR_DISPLAY: dict[str, str] = {
+    "Green": "Vert",
+    "Blue": "Bleu",
+    "Orange": "Orange",
+    "Red": "Rouge",
+    "Unknown": "Noir",
+}
+
+
+def _color_to_display(series: pd.Series) -> pd.Series:
+    return series.astype(str).map(lambda c: _COLOR_DISPLAY.get(c, "Noir")).fillna("Noir")
+
 
 COLOR_LABELS_FR: dict[str, str] = {
     "Green": "Vert (>60 j)",
@@ -58,12 +72,7 @@ def _status_code_series(series: pd.Series) -> pd.Series:
 
 
 def _apply_status_labels(hist: pd.DataFrame, status_mapping: dict[int, str]) -> pd.Series:
-    mapped = _map_status(hist["STATUS"], status_mapping)
-    if "LIB_STATUS" in hist.columns:
-        lib = hist["LIB_STATUS"].astype(str).str.strip()
-        lib = lib.replace({"": pd.NA, "nan": pd.NA, "None": pd.NA})
-        mapped = mapped.fillna(lib)
-    return mapped.fillna("Autre")
+    return apply_resolved_status_labels(hist, status_mapping=status_mapping).fillna("Autre")
 
 
 def _sort_history_chronologically(hist: pd.DataFrame) -> pd.DataFrame:
@@ -98,6 +107,17 @@ def _compute_status_transitions(hist: pd.DataFrame) -> pd.DataFrame:
     ordered["STATUS_CODE"] = _status_code_series(ordered["STATUS"])
     ordered["Prior_Status_Code"] = ordered.groupby("TEL")["STATUS_CODE"].shift(1)
     ordered["Prior_Status"] = ordered.groupby("TEL")["Status_Category"].shift(1)
+    ordered["Prior_Status_Label"] = ordered.groupby("TEL")["Status_Label"].shift(1)
+    for src, dst in (
+        ("LIB_DETAIL", "Prior_LIB_DETAIL"),
+        ("STATUS_STATUS", "Prior_STATUS_STATUS"),
+        ("LIB_STATUS", "Prior_LIB_STATUS"),
+    ):
+        if src in ordered.columns:
+            ordered[dst] = ordered.groupby("TEL")[src].shift(1)
+    if "Color" in ordered.columns:
+        ordered["Prior_Color"] = ordered.groupby("TEL")["Color"].shift(1)
+        ordered["Prior_Color_Display"] = _color_to_display(ordered["Prior_Color"].fillna("Unknown"))
     transitions = ordered[ordered["Prior_Status"].notna()].copy()
     return transitions.reset_index(drop=True)
 
@@ -259,6 +279,7 @@ def _prepare_history_frame(
     hist["DATE"] = _parse_date_column(hist["DATE"])
     hist = hist[hist["DATE"].notna()].copy()
     hist["Status_Category"] = _apply_status_labels(hist, status_mapping)
+    hist["Status_Label"] = apply_resolved_status_labels(hist, status_mapping=status_mapping)
     hist["Color"] = (pd.Timestamp.today().normalize() - hist["DATE"]).dt.days.apply(_assign_color)
     return hist.reset_index(drop=True)
 

@@ -877,6 +877,7 @@ def process_data(
     df_hist: pd.DataFrame | None = None,
     status_mapping: dict[int, str] | None = None,
     return_stats: bool = False,
+    drop_unmapped_status: bool = True,
 ) -> pd.DataFrame | tuple[pd.DataFrame, dict]:
     """Run the full pipeline and return the merged latest-per-TEL DataFrame."""
     status_mapping = status_mapping or DEFAULT_STATUS_MAPPING
@@ -986,8 +987,12 @@ def process_data(
         latest["Status_Category"].value_counts(dropna=False).to_dict()
     )
 
-    latest = latest[latest["Status_Category"].notna()].copy()
+    if drop_unmapped_status:
+        latest = latest[latest["Status_Category"].notna()].copy()
     stats["latest_rows"] = len(latest)
+    stats["latest_unmapped_status"] = int(
+        stats["latest_before_status_filter"] - stats["latest_rows"]
+    )
 
     db_unique_cols = [col for col in df_db.columns if col not in latest.columns and col != "TEL"]
     if db_unique_cols and not latest.empty:

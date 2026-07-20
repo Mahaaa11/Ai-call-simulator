@@ -1,12 +1,12 @@
-"""Streamlit interface for Recyclage Data Client export."""
+"""Lead & Connect Analytics — all-in-one data analytics platform."""
 
 from __future__ import annotations
 
-import importlib
 import io
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -17,15 +17,22 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import engine.database as database
 import engine.dashboard as dashboard
+import engine.data_client_dashboard as data_client_dashboard
 import engine.forecast as forecast
 import engine.processor as processor
 import engine.vente_tracking as vente_tracking
-
-processor = importlib.reload(processor)
-database = importlib.reload(database)
-dashboard = importlib.reload(dashboard)
-forecast = importlib.reload(forecast)
-vente_tracking = importlib.reload(vente_tracking)
+from ui.data_client_board import render_data_client_board
+from ui.ventes_board import render_ventes_page
+from ui.app_shell import (
+    inject_global_theme,
+    render_global_data_source,
+    render_navigation,
+    render_overview_board,
+    render_section_header,
+    render_sidebar_brand,
+)
+import engine.analytics_hub as analytics_hub
+import engine.ventes_analytics as ventes_analytics
 
 ALL_COLORS = processor.ALL_COLORS
 DEFAULT_STATUS_MAPPING = processor.DEFAULT_STATUS_MAPPING
@@ -35,6 +42,79 @@ process_data = processor.process_data
 attach_onoff_durations = processor.attach_onoff_durations
 _format_duration = processor._format_duration
 NOT_FOUND_LABEL = vente_tracking.NOT_FOUND_LABEL
+
+BUCKET_BAR_HEX = {
+    **{k: f"#{v}" for k, v in processor.DEFAULT_COLOR_FILLS.items()},
+    "Unknown": "#A6A6A6",
+}
+
+
+def _render_colored_bucket_bar_chart(by_color: dict[str, int]) -> None:
+    """Bar chart with one bar color per ancienneté bucket."""
+    import plotly.graph_objects as go
+
+    rows = [
+        {
+            "Bucket": dashboard.COLOR_LABELS_FR.get(color, color),
+            "Contacts": int(by_color.get(color, 0)),
+            "ColorKey": color,
+        }
+        for color in dashboard.COLOR_ORDER
+        if int(by_color.get(color, 0)) > 0 or color != "Unknown"
+    ]
+    bucket_df = pd.DataFrame(rows)
+    if bucket_df.empty:
+        st.info("Aucun contact dans les buckets couleur.")
+        return
+
+    bar_colors = [BUCKET_BAR_HEX.get(key, "#A6A6A6") for key in bucket_df["ColorKey"]]
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=bucket_df["Bucket"],
+                y=bucket_df["Contacts"],
+                marker={"color": bar_colors},
+                text=bucket_df["Contacts"].map(lambda n: f"{n:,}".replace(",", "\u202f")),
+                textposition="outside",
+            )
+        ]
+    )
+    fig.update_layout(
+        height=380,
+        margin={"l": 24, "r": 16, "t": 16, "b": 72},
+        xaxis_title="",
+        yaxis_title="Contacts",
+        showlegend=False,
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font={"family": "Segoe UI, system-ui, sans-serif", "color": "#00234E"},
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def _store_cache_token() -> str:
+    if not database.store_exists():
+        return "no-store"
+    stats = database.get_store_stats()
+    return "|".join(
+        str(stats.get(k, ""))
+        for k in ("last_update", "hist_rows", "db_tels", "onoff_rows")
+    )
+
+
+def _needs_analytics_refresh(
+    cache_name: str,
+    *,
+    refresh_clicked: bool,
+    token: str,
+    **filters: Any,
+) -> bool:
+    filter_key = "|".join(f"{k}={filters[k]!r}" for k in sorted(filters))
+    full_key = f"{token}|{filter_key}"
+    if refresh_clicked or st.session_state.get(f"{cache_name}_key") != full_key:
+        st.session_state[f"{cache_name}_key"] = full_key
+        return True
+    return cache_name not in st.session_state
 
 
 def _format_duration_label(seconds: int) -> str:
@@ -219,6 +299,185 @@ def _render_vente_daily_tracking(
             st.dataframe(hist_summary.head(200), hide_index=True, use_container_width=True)
 
 
+def _render_data_client_dashboard(
+    *,
+    use_store: bool,
+    db_file,
+    hist_file,
+    year: int,
+    month: int | None,
+    colors: list[str] | None,
+    statuses: list[str] | None,
+    refresh: bool,
+) -> None:
+    token = _store_cache_token() if use_store else f"upload:{getattr(db_file, 'name', '')}:{getattr(hist_file, 'name', '')}"
+    if not _needs_analytics_refresh(
+        "data_client_metrics",
+        refresh_clicked=refresh,
+        token=token,
+        year=year,
+        month=month,
+        colors=tuple(colors or []),
+        statuses=tuple(statuses or []),
+        use_store=use_store,
+    ):
+        render_data_client_board(st.session_state["data_client_metrics"])
+        return
+
+    try:
+        if use_store:
+            if not database.store_exists():
+                st.warning(
+                    "Base non initialisée. Allez dans **Base de données** pour importer les fichiers master."
+                )
+                return
+            with st.spinner("Calcul du tableau de bord Data Client…"):
+                metrics = data_client_dashboard.compute_data_client_dashboard(
+                    database.load_db(),
+                    database.load_history(),
+                    year=year,
+                    month=month,
+                    colors=colors,
+                    statuses=statuses,
+                )
+        else:
+            if not db_file or not hist_file:
+                st.info("Chargez la base client et l'historique, ou activez la base enregistrée.")
+                return
+            with st.spinner("Calcul du tableau de bord Data Client…"):
+                df_db = processor._read_excel(db_file, is_history=False)
+                if str(hist_file.name).lower().endswith(".csv"):
+                    df_hist = processor._read_csv(hist_file)
+                else:
+                    df_hist = processor._read_excel(hist_file, is_history=True)
+                metrics = data_client_dashboard.compute_data_client_dashboard(
+                    df_db,
+                    df_hist,
+                    year=year,
+                    month=month,
+                    colors=colors,
+                    statuses=statuses,
+                )
+    except Exception as exc:
+        st.error(f"Erreur tableau de bord Data Client : {exc}")
+        return
+
+    if metrics["total_fiches"] == 0:
+        st.warning("Aucune fiche dans la Data Client après filtres.")
+        return
+
+    excel_bytes = render_data_client_board(metrics)
+    st.session_state["data_client_metrics"] = metrics
+    if excel_bytes:
+        st.session_state["data_client_excel_bytes"] = excel_bytes
+
+
+def _load_analytics_frames(
+    *,
+    use_store: bool,
+    db_file,
+    hist_file,
+) -> tuple[pd.DataFrame, pd.DataFrame] | None:
+    if use_store:
+        if not database.store_exists():
+            return None
+        return database.load_db(), database.load_history()
+    if not db_file or not hist_file:
+        return None
+    df_db = processor._read_excel(db_file, is_history=False)
+    if str(hist_file.name).lower().endswith(".csv"):
+        df_hist = processor._read_csv(hist_file)
+    else:
+        df_hist = processor._read_excel(hist_file, is_history=True)
+    return df_db, df_hist
+
+
+def _render_overview_dashboard(
+    *,
+    use_store: bool,
+    db_file,
+    hist_file,
+    year: int,
+    refresh: bool = False,
+) -> None:
+    token = _store_cache_token() if use_store else f"upload:{getattr(db_file, 'name', '')}:{getattr(hist_file, 'name', '')}"
+    if not _needs_analytics_refresh(
+        "overview_metrics",
+        refresh_clicked=refresh,
+        token=token,
+        year=year,
+        use_store=use_store,
+    ):
+        render_overview_board(st.session_state["overview_metrics"])
+        return
+
+    frames = _load_analytics_frames(use_store=use_store, db_file=db_file, hist_file=hist_file)
+    if frames is None:
+        st.info(
+            "Activez la **base persistante** ou uploadez la base client et l'historique "
+            "dans la barre latérale pour charger la vue d'ensemble."
+        )
+        return
+    try:
+        with st.spinner("Calcul des indicateurs globaux…"):
+            store_stats = database.get_store_stats() if database.store_exists() else {}
+            metrics = analytics_hub.compute_overview_metrics(
+                frames[0],
+                frames[1],
+                year=year,
+                store_stats=store_stats,
+            )
+        render_overview_board(metrics)
+        st.session_state["overview_metrics"] = metrics
+    except Exception as exc:
+        st.error(f"Erreur vue d'ensemble : {exc}")
+
+
+def _render_ventes_analytics(
+    *,
+    use_store: bool,
+    db_file,
+    hist_file,
+    year: int,
+    month: int | None,
+    prior_colors: list[str] | None,
+    prior_statuses: list[str] | None,
+    vente_track_config: dict | None,
+) -> None:
+    frames = _load_analytics_frames(use_store=use_store, db_file=db_file, hist_file=hist_file)
+    if frames is None:
+        st.info(
+            "Activez la **base persistante** ou uploadez la base client et l'historique "
+            "dans la barre latérale."
+        )
+        return
+
+    tab_analyse, tab_quotidien = st.tabs(["Analyse des ventes", "Suivi quotidien"])
+
+    with tab_analyse:
+        try:
+            with st.spinner("Analyse des parcours vente…"):
+                metrics = ventes_analytics.compute_ventes_analytics(
+                    frames[0],
+                    frames[1],
+                    year=year,
+                    month=month,
+                    prior_colors=prior_colors,
+                    prior_statuses=prior_statuses,
+                )
+            excel_bytes = render_ventes_page(metrics)
+            if excel_bytes:
+                st.session_state["ventes_excel_bytes"] = excel_bytes
+        except Exception as exc:
+            st.error(f"Erreur analyse ventes : {exc}")
+
+    with tab_quotidien:
+        if vente_track_config:
+            _render_vente_daily_tracking(**vente_track_config)
+        else:
+            st.info("Configuration suivi quotidien indisponible.")
+
+
 def _render_performance_dashboard(
     *,
     use_store: bool,
@@ -227,44 +486,57 @@ def _render_performance_dashboard(
     stale_days: int,
     retry_days: int,
     vente_track_config: dict | None = None,
+    refresh: bool = False,
 ) -> None:
-    try:
-        if use_store:
-            if not database.store_exists():
-                st.warning(
-                    "Base non initialisée. Allez dans **Base de données** pour importer les fichiers master."
-                )
-                return
-            with st.spinner("Calcul des indicateurs…"):
-                metrics = dashboard.compute_dashboard(
-                    database.load_db(),
-                    database.load_history(),
-                    stale_days=stale_days,
-                    retry_days=retry_days,
-                )
-        else:
-            if not db_file or not hist_file:
-                st.info("Chargez la base client et l'historique, ou activez la base enregistrée.")
-                return
-            with st.spinner("Calcul des indicateurs…"):
-                df_db = processor._read_excel(db_file, is_history=False)
-                if str(hist_file.name).lower().endswith(".csv"):
-                    df_hist = processor._read_csv(hist_file)
-                else:
-                    df_hist = processor._read_excel(hist_file, is_history=True)
-                metrics = dashboard.compute_dashboard(
-                    df_db,
-                    df_hist,
-                    stale_days=stale_days,
-                    retry_days=retry_days,
-                )
-    except Exception as exc:
-        st.error(f"Erreur tableau de bord : {exc}")
-        return
+    token = _store_cache_token() if use_store else f"upload:{getattr(db_file, 'name', '')}:{getattr(hist_file, 'name', '')}"
+    if _needs_analytics_refresh(
+        "performance_metrics",
+        refresh_clicked=refresh,
+        token=token,
+        stale_days=stale_days,
+        retry_days=retry_days,
+        use_store=use_store,
+    ):
+        try:
+            if use_store:
+                if not database.store_exists():
+                    st.warning(
+                        "Base non initialisée. Allez dans **Base de données** pour importer les fichiers master."
+                    )
+                    return
+                with st.spinner("Calcul des indicateurs…"):
+                    metrics = dashboard.compute_dashboard(
+                        database.load_db(),
+                        database.load_history(),
+                        stale_days=stale_days,
+                        retry_days=retry_days,
+                    )
+            else:
+                if not db_file or not hist_file:
+                    st.info("Chargez la base client et l'historique, ou activez la base enregistrée.")
+                    return
+                with st.spinner("Calcul des indicateurs…"):
+                    df_db = processor._read_excel(db_file, is_history=False)
+                    if str(hist_file.name).lower().endswith(".csv"):
+                        df_hist = processor._read_csv(hist_file)
+                    else:
+                        df_hist = processor._read_excel(hist_file, is_history=True)
+                    metrics = dashboard.compute_dashboard(
+                        df_db,
+                        df_hist,
+                        stale_days=stale_days,
+                        retry_days=retry_days,
+                    )
+        except Exception as exc:
+            st.error(f"Erreur tableau de bord : {exc}")
+            return
 
-    if metrics["contacts_by_bucket"]["total_contacts"] == 0:
-        st.warning("Aucun contact exploitable après traitement.")
-        return
+        if metrics["contacts_by_bucket"]["total_contacts"] == 0:
+            st.warning("Aucun contact exploitable après traitement.")
+            return
+        st.session_state["performance_metrics"] = metrics
+    else:
+        metrics = st.session_state["performance_metrics"]
 
     st.subheader("Vue d'ensemble")
     vente = metrics.get("vente_conversion", {})
@@ -401,13 +673,8 @@ def _render_performance_dashboard(
 
     with tab_buckets:
         st.markdown("Répartition des contacts par ancienneté (couleur).")
-        bucket_df = pd.DataFrame(
-            {
-                "Bucket": list(metrics["contacts_by_bucket"]["by_color_fr"].keys()),
-                "Contacts": list(metrics["contacts_by_bucket"]["by_color_fr"].values()),
-            }
-        )
-        st.bar_chart(bucket_df.set_index("Bucket"))
+        by_color = metrics["contacts_by_bucket"]["by_color"]
+        _render_colored_bucket_bar_chart(by_color)
         st.dataframe(
             metrics["contacts_by_bucket"]["by_status_color"][
                 ["Status_Category", "Couleur", "Contacts"]
@@ -1018,15 +1285,46 @@ def _render_diagnostics(stats: dict) -> None:
         st.write("Colonnes historique :", ", ".join(stats.get("hist_columns", [])))
 
 
-def _render_store_stats() -> None:
+def _render_store_stats(*, before: dict[str, Any] | None = None) -> None:
     stats = database.get_store_stats()
     backend = stats.get("backend", "—")
     st.caption(f"Stockage : **{backend}** — {stats.get('database_url_hint', '')}")
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("TEL base client", f"{stats.get('db_tels', 0):,}")
-    c2.metric("Lignes historique", f"{stats.get('hist_rows', 0):,}")
-    c3.metric("Durées Onoff (TEL)", f"{stats.get('onoff_totals_rows', stats.get('onoff_rows', 0)):,}")
-    c4.metric("Dernière MAJ", stats.get("last_update", "—")[:10] if stats.get("last_update") else "—")
+
+    def _delta(key: str) -> str | None:
+        if not before:
+            return None
+        old = before.get(key)
+        new = stats.get(key)
+        if old is None or new is None or old == new:
+            return None
+        diff = int(new) - int(old)
+        return f"{diff:+,}"
+
+    c1.metric(
+        "TEL base client",
+        f"{stats.get('db_tels', 0):,}",
+        delta=_delta("db_tels"),
+        help="Nombre de TEL uniques en base. Inchangé si seuls des TEL existants sont mis à jour.",
+    )
+    c2.metric(
+        "Lignes historique",
+        f"{stats.get('hist_rows', 0):,}",
+        delta=_delta("hist_rows"),
+    )
+    c3.metric(
+        "Appels Onoff",
+        f"{stats.get('onoff_rows', 0):,}",
+        delta=_delta("onoff_rows"),
+        help="Nombre total d'appels Onoff enregistrés.",
+    )
+    c4.metric(
+        "Durées Onoff (TEL)",
+        f"{stats.get('onoff_totals_rows', 0):,}",
+        delta=_delta("onoff_totals_rows"),
+        help="TEL avec une durée totale Onoff calculée.",
+    )
+    st.caption(f"Dernière MAJ : **{stats.get('last_update', '—')}**")
     if stats.get("db_tels", 0) < 5000:
         st.warning(
             "Base petite détectée. Pour un export complet fusionné (~20 000 lignes), "
@@ -1036,6 +1334,88 @@ def _render_store_stats() -> None:
     if stats.get("updates"):
         with st.expander("Historique des mises à jour"):
             st.dataframe(pd.DataFrame(stats["updates"]).iloc[::-1], hide_index=True)
+
+
+def _render_merge_persistence_report(
+    report: dict[str, Any],
+    before_stats: dict[str, Any],
+) -> None:
+    """Résumé clair : ce qui a été enregistré sur la base persistante."""
+    after_stats = report.get("store") or database.get_store_stats()
+    db_path = after_stats.get("database_url_hint", "recyclage.db")
+
+    st.success(
+        f"**Enregistré sur la base persistante** — {db_path}\n\n"
+        "Les fusions du jour sont sauvegardées dans SQLite. "
+        "Demain, uploadez uniquement les nouveaux fichiers du jour."
+    )
+
+    details: list[dict[str, str]] = []
+
+    if "db" in report:
+        db_part = report["db"]
+        tel_after = after_stats.get("db_tels", 0)
+        tel_before = before_stats.get("db_tels", 0)
+        details.append(
+            {
+                "Donnée": "Base client (TEL)",
+                "Avant": f"{tel_before:,}",
+                "Après": f"{tel_after:,}",
+                "Action": (
+                    f"{db_part.get('updated_tels', 0):,} TEL mis à jour · "
+                    f"{db_part.get('added_tels', 0):,} ajoutés · "
+                    f"{db_part.get('skipped_new_tels', 0):,} nouveaux ignorés"
+                ),
+            }
+        )
+
+    if "history" in report:
+        h = report["history"]
+        details.append(
+            {
+                "Donnée": "Historique",
+                "Avant": f"{before_stats.get('hist_rows', 0):,}",
+                "Après": f"{after_stats.get('hist_rows', 0):,}",
+                "Action": f"+{h.get('rows_added', 0):,} lignes ajoutées",
+            }
+        )
+
+    if "onoff" in report:
+        o = report["onoff"]
+        details.append(
+            {
+                "Donnée": "Onoff (appels)",
+                "Avant": f"{before_stats.get('onoff_rows', 0):,}",
+                "Après": f"{after_stats.get('onoff_rows', 0):,}",
+                "Action": f"+{o.get('rows_added', 0):,} appels",
+            }
+        )
+        details.append(
+            {
+                "Donnée": "Onoff (durées TEL)",
+                "Avant": f"{before_stats.get('onoff_totals_rows', 0):,}",
+                "Après": f"{after_stats.get('onoff_totals_rows', 0):,}",
+                "Action": f"+{o.get('totals_added', 0):,} TEL avec durée",
+            }
+        )
+
+    if details:
+        st.dataframe(pd.DataFrame(details), hide_index=True, use_container_width=True)
+
+    if report.get("db", {}).get("updated_tels", 0) == 0 and report.get("db", {}).get("daily_tels", 0) > 0:
+        st.warning(
+            "Aucun TEL mis à jour. Vérifiez que la base master contient bien vos clients "
+            "(réinitialisez avec la DB master complète si besoin)."
+        )
+    elif report.get("db", {}).get("updated_tels", 0) and report.get("db", {}).get("added_tels", 0) == 0:
+        st.info(
+            "Le nombre total de TEL reste identique car les fiches du jour **mettent à jour** "
+            "des clients déjà en base (pas de nouveaux TEL ajoutés). "
+            "Cochez « Autoriser les nouveaux TEL » pour en ajouter."
+        )
+
+    st.markdown("**État actuel de la base**")
+    _render_store_stats(before=before_stats)
 
 
 def _clear_export_cache() -> None:
@@ -1324,26 +1704,269 @@ def _run_export(
             st.session_state.pop("summary", None)
 
 
-st.set_page_config(page_title="Recyclage Data Client", page_icon="📊", layout="wide")
-
-st.title("Recyclage Data Client")
-st.caption(
-    "Base persistante + mises à jour quotidiennes par TEL, puis export recyclage filtré."
+st.set_page_config(
+    page_title="Lead & Connect Analytics",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-with st.sidebar:
-    app_mode = st.radio(
-        "Mode",
-        options=["export", "database", "dashboard", "forecast"],
-        format_func=lambda x: {
-            "export": "Export recyclage",
-            "database": "Base de données",
-            "dashboard": "Tableau de bord",
-            "forecast": "Prévisionnel",
-        }[x],
-    )
+inject_global_theme()
 
-    if app_mode == "database":
+with st.sidebar:
+    render_sidebar_brand()
+    app_mode = render_navigation(default="overview")
+
+    store_ready = database.store_exists()
+    store_stats = database.get_store_stats() if store_ready else {}
+
+    analytics_modes = {"overview", "data_client", "ventes", "dashboard"}
+    if app_mode in analytics_modes:
+        st.divider()
+        data_source = render_global_data_source(
+            store_exists=store_ready,
+            store_stats=store_stats,
+            key_prefix=app_mode,
+        )
+        use_store = data_source["use_store"]
+        db_file = data_source["db_file"]
+        hist_file = data_source["hist_file"]
+    else:
+        use_store = store_ready
+        db_file = hist_file = None
+
+    if app_mode == "overview":
+        init_btn = daily_btn = generate = merge_all_btn = False
+        export_full = export_limited = False
+        init_db = init_hist = init_onoff = daily_db = daily_hist = daily_onoff = None
+        onoff_files = None
+        selected_statuses = selected_colors = []
+        limit_enabled = False
+        limit_scope = "per_status"
+        max_rows = 500
+        sort_priority = "oldest"
+        stale_days = 60
+        retry_days = 90
+        vente_track_config = None
+        fichier_filter = None
+        data_client_filters = None
+
+        st.divider()
+        current_year = datetime.now().year
+        overview_year = st.selectbox(
+            "Année de référence (ventes)",
+            options=list(range(current_year - 2, current_year + 2)),
+            index=2,
+            key="overview_year",
+        )
+        refresh_overview = st.button(
+            "Actualiser la vue d'ensemble",
+            type="primary",
+            use_container_width=True,
+            key="overview_refresh",
+        )
+        overview_config = {"year": overview_year, "refresh": refresh_overview}
+        ventes_filters = None
+
+    elif app_mode == "data_client":
+        init_btn = daily_btn = generate = merge_all_btn = False
+        export_full = export_limited = False
+        init_db = init_hist = init_onoff = daily_db = daily_hist = daily_onoff = None
+        onoff_files = None
+        selected_statuses = selected_colors = []
+        limit_enabled = False
+        limit_scope = "per_status"
+        max_rows = 500
+        sort_priority = "oldest"
+        stale_days = 60
+        retry_days = 90
+        vente_track_config = None
+        fichier_filter = None
+        overview_config = None
+        ventes_filters = None
+
+        st.divider()
+        st.markdown("**FILTRES**")
+        dc_colors = st.multiselect(
+            "Couleur",
+            options=data_client_dashboard.COLOR_DISPLAY_ORDER,
+            default=data_client_dashboard.COLOR_DISPLAY_ORDER,
+            key="dc_colors",
+        )
+        dc_statuses = st.multiselect(
+            "Statut (optionnel)",
+            options=data_client_dashboard.STATUS_DISPLAY_ORDER,
+            default=[],
+            key="dc_statuses",
+            help="Filtre les statuts affichés. Laissez vide pour tous les statuts des couleurs sélectionnées.",
+        )
+        current_year = datetime.now().year
+        dc_year = st.selectbox(
+            "Année",
+            options=list(range(current_year - 2, current_year + 2)),
+            index=2,
+            key="dc_year",
+        )
+        month_labels = ["Tous les mois"] + [
+            datetime(2000, m, 1).strftime("%B").capitalize() for m in range(1, 13)
+        ]
+        month_values = [None, *range(1, 13)]
+        dc_month_idx = st.selectbox(
+            "Mois",
+            options=range(len(month_labels)),
+            format_func=lambda i: month_labels[i],
+            key="dc_month",
+        )
+        dc_month_value = month_values[dc_month_idx]
+
+        refresh_data_client = st.button(
+            "APPLIQUER LES FILTRES",
+            type="primary",
+            use_container_width=True,
+            key="dc_apply_filters",
+        )
+        export_data_client = st.button(
+            "Exporter",
+            use_container_width=True,
+            key="dc_export_btn",
+        )
+
+        if refresh_data_client or "dc_applied" not in st.session_state:
+            st.session_state["dc_applied"] = {
+                "year": dc_year,
+                "month": dc_month_value,
+                "colors": dc_colors or None,
+                "statuses": dc_statuses or None,
+            }
+
+        applied = st.session_state["dc_applied"]
+        data_client_filters = {
+            "year": applied["year"],
+            "month": applied["month"],
+            "colors": applied["colors"],
+            "statuses": applied["statuses"],
+            "refresh": refresh_data_client or "data_client_metrics" not in st.session_state,
+            "export": export_data_client,
+        }
+
+    elif app_mode == "ventes":
+        init_btn = daily_btn = generate = merge_all_btn = False
+        export_full = export_limited = False
+        init_db = init_hist = init_onoff = daily_db = daily_hist = daily_onoff = None
+        onoff_files = None
+        selected_statuses = selected_colors = []
+        limit_enabled = False
+        limit_scope = "per_status"
+        max_rows = 500
+        sort_priority = "oldest"
+        stale_days = 60
+        retry_days = 90
+        fichier_filter = None
+        overview_config = None
+        data_client_filters = None
+
+        st.divider()
+        st.markdown("**Période & filtres**")
+        current_year = datetime.now().year
+        v_year = st.selectbox(
+            "Année ventes",
+            options=list(range(current_year - 2, current_year + 2)),
+            index=2,
+            key="ventes_year",
+        )
+        month_labels = ["Tous les mois"] + [
+            datetime(2000, m, 1).strftime("%B").capitalize() for m in range(1, 13)
+        ]
+        month_values = [None, *range(1, 13)]
+        v_month_idx = st.selectbox(
+            "Mois",
+            options=range(len(month_labels)),
+            format_func=lambda i: month_labels[i],
+            key="ventes_month",
+        )
+        v_month = month_values[v_month_idx]
+        v_prior_colors = st.multiselect(
+            "Couleur avant vente",
+            options=data_client_dashboard.COLOR_DISPLAY_ORDER,
+            default=[],
+            key="ventes_prior_colors",
+            help="Filtre sur la couleur du contact avant la vente.",
+        )
+        v_prior_statuses = st.multiselect(
+            "Statut avant vente",
+            options=data_client_dashboard.STATUS_DISPLAY_ORDER,
+            default=[],
+            key="ventes_prior_statuses",
+            help="Filtre sur le statut du contact avant la vente.",
+        )
+
+        st.divider()
+        st.markdown("**Suivi quotidien**")
+        baseline_mode = st.radio(
+            "Source baseline",
+            options=["store_snapshot+upload", "store_snapshot", "recyclage_upload", "client_upload"],
+            format_func=lambda x: {
+                "store_snapshot+upload": "Snapshot base + uploads",
+                "store_snapshot": "Snapshot base seul",
+                "recyclage_upload": "Export recyclage uploadé",
+                "client_upload": "Fichiers client uploadés",
+            }[x],
+            index=0,
+            key="ventes_vt_baseline_mode",
+        )
+        baseline_recyclage_file = None
+        baseline_client_files: list = []
+        if baseline_mode in ("recyclage_upload", "store_snapshot+upload"):
+            baseline_recyclage_file = st.file_uploader(
+                "Export recyclage (baseline)",
+                type=["xls", "xlsx", "xlsm"],
+                key="ventes_vt_baseline_recyclage",
+            )
+        if baseline_mode in ("client_upload", "store_snapshot+upload"):
+            baseline_client_files = st.file_uploader(
+                "Fichiers client baseline",
+                type=["xls", "xlsx", "xlsm"],
+                accept_multiple_files=True,
+                key="ventes_vt_baseline_client",
+            ) or []
+        daily_vente_files = st.file_uploader(
+            "Exports ventes du jour",
+            type=["xls", "xlsx", "xlsm"],
+            accept_multiple_files=True,
+            key="ventes_vt_daily",
+        ) or []
+        save_vente_history = st.checkbox(
+            "Enregistrer dans l'historique",
+            value=True,
+            key="ventes_vt_save_history",
+        )
+        capture_baseline_btn = st.button(
+            "Capturer baseline",
+            use_container_width=True,
+            key="ventes_vt_capture",
+        )
+        analyze_ventes_btn = st.button(
+            "Analyser ventes du jour",
+            use_container_width=True,
+            key="ventes_vt_analyze",
+        )
+        vente_track_config = {
+            "baseline_mode": baseline_mode,
+            "baseline_recyclage_file": baseline_recyclage_file,
+            "baseline_client_files": baseline_client_files,
+            "daily_vente_files": daily_vente_files,
+            "save_to_history": save_vente_history,
+            "analyze_btn": analyze_ventes_btn,
+            "capture_baseline_btn": capture_baseline_btn,
+        }
+        ventes_filters = {
+            "year": v_year,
+            "month": v_month,
+            "prior_colors": v_prior_colors or None,
+            "prior_statuses": v_prior_statuses or None,
+        }
+
+    elif app_mode == "database":
         store_ready = database.store_exists()
         merge_master_db = merge_master_hist = merge_master_onoff = None
         init_db = init_hist = init_onoff = None
@@ -1579,6 +2202,8 @@ with st.sidebar:
         stale_days = 60
         retry_days = 90
         refresh_dashboard = False
+        data_client_filters = None
+        ventes_filters = None
     elif app_mode == "dashboard":
         init_btn = daily_btn = generate = merge_all_btn = False
         export_full = export_limited = False
@@ -1591,33 +2216,17 @@ with st.sidebar:
         status_color_quotas = None
         sort_priority = "oldest"
         vente_track_config = None
-
-        st.header("Source des données")
-        store_ready = database.store_exists()
-        use_store = st.checkbox(
-            "Utiliser la base enregistrée",
-            value=store_ready,
-            disabled=not store_ready,
-        )
-        if not use_store:
-            db_file = st.file_uploader(
-                "Base client (DB)", type=["xls", "xlsx", "xlsm"], key="dash_db"
-            )
-            hist_file = st.file_uploader(
-                "Historique", type=["xls", "xlsx", "xlsm", "csv"], key="dash_hist"
-            )
-        else:
-            db_file = hist_file = None
-            store_stats = database.get_store_stats()
-            st.info(f"Source : base {store_stats.get('backend', 'SQL')} enregistrée.")
+        data_client_filters = None
+        overview_config = None
+        ventes_filters = None
 
         st.divider()
-        st.header("Paramètres")
+        st.markdown("**Paramètres**")
         stale_days = st.slider("Seuil contacts obsolètes (jours)", 30, 120, 60, 5)
         retry_days = st.slider("Fenêtre relances (jours)", 7, 180, 90, 7)
 
         st.divider()
-        st.header("Suivi ventes quotidien")
+        st.markdown("**Suivi ventes quotidien**")
         st.caption(
             "Baseline = statut **avant** les appels. Capturer avant la MAJ du jour, "
             "ou uploader l'export recyclage du matin."
@@ -1682,6 +2291,7 @@ with st.sidebar:
             "analyze_btn": analyze_ventes_btn,
             "capture_baseline_btn": capture_baseline_btn,
         }
+        data_client_filters = None
     elif app_mode == "forecast":
         init_btn = daily_btn = generate = merge_all_btn = False
         export_full = export_limited = False
@@ -1699,6 +2309,7 @@ with st.sidebar:
         fichier_filter_enabled = False
         fichier_filter_mode = "include"
         vente_track_config = None
+        ventes_filters = None
 
         st.header("Fichier recyclage")
         st.caption(
@@ -1831,6 +2442,8 @@ with st.sidebar:
             use_container_width=True,
             key="forecast_generate_btn",
         )
+        data_client_filters = None
+        ventes_filters = None
     else:
         init_btn = daily_btn = merge_all_btn = False
         export_full = export_limited = False
@@ -1912,291 +2525,398 @@ with st.sidebar:
 
         st.divider()
         generate = st.button("Générer l'export", type="primary", use_container_width=True)
+        data_client_filters = None
 
-col_info, col_legend = st.columns([2, 1])
 
-with col_legend:
-    st.subheader("Légende couleurs")
-    st.markdown(
-        """
-        - **Green** — plus de 60 jours depuis le dernier contact
-        - **Blue** — entre 39 et 60 jours
-        - **Orange** — entre 15 et 38 jours
-        - **Red** — moins de 15 jours
-        """
+if app_mode == "overview":
+    can_render_overview = (use_store and database.store_exists()) or (
+        not use_store and db_file is not None and hist_file is not None
     )
-
-with col_info:
-    if app_mode == "dashboard":
-        st.subheader("Tableau de bord performance")
-        st.caption(
-            "Suivi des buckets, contacts obsolètes, doublons, relances et résultats de recyclage."
+    if can_render_overview:
+        _render_overview_dashboard(
+            use_store=use_store,
+            db_file=db_file,
+            hist_file=hist_file,
+            year=overview_config["year"] if overview_config else datetime.now().year,
+            refresh=bool(overview_config and overview_config.get("refresh")),
         )
-        if database.store_exists():
-            _render_store_stats()
-        can_render_dashboard = (use_store and database.store_exists()) or (
-            not use_store and db_file is not None and hist_file is not None
+    else:
+        render_section_header(
+            "Vue d'ensemble",
+            "Hub analytics — KPIs Data Client, performance, ventes et base persistante",
         )
-        if can_render_dashboard:
-            _render_performance_dashboard(
-                use_store=use_store,
-                db_file=db_file,
-                hist_file=hist_file,
-                stale_days=stale_days,
-                retry_days=retry_days,
-                vente_track_config=vente_track_config,
-            )
-        else:
-            st.info(
-                "Chargez la base et l'historique dans la barre latérale, "
-                "ou activez la base enregistrée."
-            )
+        st.info(
+            "Activez la **base persistante** ou uploadez la base client et l'historique "
+            "dans la barre latérale."
+        )
 
-    elif app_mode == "database":
-        if database.store_exists():
-            st.subheader("État de la base")
-            _render_store_stats()
-        else:
-            st.warning(
-                "Base non initialisée. Uploadez la **DB master** et l'**historique master** "
-                "dans la barre latérale (une seule fois)."
-            )
+elif app_mode == "ventes":
+    render_section_header(
+        "Ventes",
+        "Analyse des parcours — statut et couleur avant vente, matrice origine, suivi quotidien",
+        badge=f"Année {ventes_filters['year']}" if ventes_filters else None,
+    )
+    can_render_ventes = (use_store and database.store_exists()) or (
+        not use_store and db_file is not None and hist_file is not None
+    )
+    if can_render_ventes and ventes_filters is not None:
+        _render_ventes_analytics(
+            use_store=use_store,
+            db_file=db_file,
+            hist_file=hist_file,
+            year=ventes_filters["year"],
+            month=ventes_filters["month"],
+            prior_colors=ventes_filters["prior_colors"],
+            prior_statuses=ventes_filters["prior_statuses"],
+            vente_track_config=vente_track_config,
+        )
+    else:
+        st.info(
+            "Activez la base persistante ou uploadez DB + historique dans la barre latérale."
+        )
 
-        if init_btn:
-            if not init_db or not init_hist:
-                st.error("DB master et historique master sont obligatoires.")
+elif app_mode == "data_client":
+    render_section_header(
+        "Data Client",
+        "KPIs, répartition couleur/statut, chaîne exploitables",
+        badge=f"Année {data_client_filters['year']}" if data_client_filters else None,
+    )
+    can_render_dc = (use_store and database.store_exists()) or (
+        not use_store and db_file is not None and hist_file is not None
+    )
+    if can_render_dc and data_client_filters is not None:
+        _render_data_client_dashboard(
+            use_store=use_store,
+            db_file=db_file,
+            hist_file=hist_file,
+            year=data_client_filters["year"],
+            month=data_client_filters["month"],
+            colors=data_client_filters["colors"],
+            statuses=data_client_filters.get("statuses"),
+            refresh=bool(data_client_filters.get("refresh")),
+        )
+    elif not can_render_dc:
+        st.info(
+            "Chargez la base et l'historique dans la barre latérale, "
+            "ou activez la base persistante, puis cliquez **APPLIQUER LES FILTRES**."
+        )
+
+else:
+    section_titles = {
+        "dashboard": ("Performance", "Conversion, parcours statuts, obsolètes, ventes"),
+        "forecast": ("Prévisionnel", "Projection J+1 à J+7, quotas et export"),
+        "export": ("Export recyclage", "Sélection par statut, couleur et quotas"),
+        "database": ("Base de données", "Fusion quotidienne et persistance SQLite"),
+    }
+    if app_mode in section_titles:
+        title, subtitle = section_titles[app_mode]
+        render_section_header(title, subtitle)
+
+    show_legend = app_mode in ("export", "dashboard", "database")
+    if show_legend:
+        col_info, col_legend = st.columns([2, 1])
+        with col_legend:
+            with st.expander("Légende couleurs"):
+                st.markdown(
+                    """
+                    - **Green** — plus de 60 jours depuis le dernier contact
+                    - **Blue** — entre 39 et 60 jours
+                    - **Orange** — entre 15 et 38 jours
+                    - **Red** — moins de 15 jours
+                    """
+                )
+    else:
+        col_info = st.container()
+
+    with col_info:
+        if app_mode == "dashboard":
+            if database.store_exists():
+                _render_store_stats()
+            can_render_dashboard = (use_store and database.store_exists()) or (
+                not use_store and db_file is not None and hist_file is not None
+            )
+            if can_render_dashboard:
+                _render_performance_dashboard(
+                    use_store=use_store,
+                    db_file=db_file,
+                    hist_file=hist_file,
+                    stale_days=stale_days,
+                    retry_days=retry_days,
+                    vente_track_config=vente_track_config,
+                    refresh=bool(refresh_dashboard),
+                )
             else:
-                try:
-                    init_label = (
-                        "réinitialisation master"
-                        if database.store_exists()
-                        else "initialisation master"
-                    )
-                    stats = database.initialize_store(
-                        init_db, init_hist, init_onoff or None, label=init_label
-                    )
-                    st.success(
-                        f"Base master enregistrée : {stats['db_tels']:,} TEL · "
-                        f"{stats['hist_rows']:,} lignes historique · "
-                        f"{stats['onoff_rows']:,} appels Onoff."
-                    )
+                st.info(
+                    "Chargez la base et l'historique dans la barre latérale, "
+                    "ou activez la base enregistrée."
+                )
+
+        elif app_mode == "database":
+            if database.store_exists():
+                if not merge_all_btn and not daily_btn:
+                    st.subheader("État de la base")
                     _render_store_stats()
-                except Exception as exc:
-                    st.error(f"Erreur initialisation : {exc}")
-
-        if merge_all_btn:
-            if fichier_filter == [] and fichier_filter_mode == "include":
-                st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
-            elif not database.store_exists():
-                st.error(
-                    "Base non initialisée. Enregistrez d'abord la DB et l'historique master "
-                    "(une seule fois)."
-                )
-            elif not merge_daily_db or not merge_daily_hist:
-                missing = []
-                if not merge_daily_db:
-                    missing.append("Data du jour")
-                if not merge_daily_hist:
-                    missing.append("Histo du jour")
-                st.error(
-                    f"Fichiers manquants : **{', '.join(missing)}**. "
-                    "Uploadez chaque fichier — un bandeau vert confirme la mémorisation."
-                )
             else:
-                try:
-                    with st.spinner("Mise à jour du jour en cours…"):
+                st.warning(
+                    "Base non initialisée. Uploadez la **DB master** et l'**historique master** "
+                    "dans la barre latérale (une seule fois)."
+                )
+
+            if init_btn:
+                if not init_db or not init_hist:
+                    st.error("DB master et historique master sont obligatoires.")
+                else:
+                    try:
+                        init_label = (
+                            "réinitialisation master"
+                            if database.store_exists()
+                            else "initialisation master"
+                        )
+                        stats = database.initialize_store(
+                            init_db, init_hist, init_onoff or None, label=init_label
+                        )
+                        st.success(
+                            f"Base master enregistrée : {stats['db_tels']:,} TEL · "
+                            f"{stats['hist_rows']:,} lignes historique · "
+                            f"{stats['onoff_rows']:,} appels Onoff."
+                        )
+                        _render_store_stats()
+                    except Exception as exc:
+                        st.error(f"Erreur initialisation : {exc}")
+
+            if merge_all_btn:
+                if fichier_filter == [] and fichier_filter_mode == "include":
+                    st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
+                elif not database.store_exists():
+                    st.error(
+                        "Base non initialisée. Enregistrez d'abord la DB et l'historique master "
+                        "(une seule fois)."
+                    )
+                elif not merge_daily_db or not merge_daily_hist:
+                    missing = []
+                    if not merge_daily_db:
+                        missing.append("Data du jour")
+                    if not merge_daily_hist:
+                        missing.append("Histo du jour")
+                    st.error(
+                        f"Fichiers manquants : **{', '.join(missing)}**. "
+                        "Uploadez chaque fichier — un bandeau vert confirme la mémorisation."
+                    )
+                else:
+                    try:
+                        before_stats = database.get_store_stats()
+                        with st.spinner("Mise à jour du jour en cours…"):
+                            report = database.apply_daily_update(
+                                daily_db=merge_daily_db,
+                                daily_hist=merge_daily_hist,
+                                daily_onoff=merge_daily_onoff or None,
+                                allow_new_tels=allow_new_tels,
+                                label="fusion quotidienne",
+                            )
+                        st.subheader("Fusion enregistrée")
+                        _render_merge_persistence_report(report, before_stats)
+
+                        preview_rows = database.process_merged_store()[0]
+                        st.info(
+                            f"Données fusionnées : **{len(preview_rows):,}** lignes exportables."
+                        )
+
+                        with st.spinner("Génération de l'export complet coloré…"):
+                            excel_bytes, summary = database.export_full_recyclage(
+                                fichier_filter=fichier_filter,
+                                fichier_filter_mode=fichier_filter_mode,
+                            )
+                        st.session_state["excel_bytes"] = excel_bytes
+                        st.session_state["summary"] = summary
+                        st.success(
+                            f"Export complet prêt : **{summary['total_exported']:,}** lignes "
+                            f"sur {len(summary.get('by_status', {}))} feuilles."
+                            + (
+                                f" ({summary.get('rows_removed_by_fichier_filter', 0):,} lignes "
+                                f"retirées par filtre FICHIER)"
+                                if summary.get("rows_removed_by_fichier_filter")
+                                else ""
+                            )
+                        )
+                        _clear_all_daily_uploads()
+                    except Exception as exc:
+                        st.error(f"Erreur mise à jour : {exc}")
+
+            elif full_merge_btn:
+                if not merge_master_db or not merge_master_hist:
+                    st.error("DB master et historique master sont obligatoires pour la fusion complète.")
+                elif not merge_daily_db and not merge_daily_hist and not merge_daily_onoff:
+                    st.error("Uploadez au moins un fichier du jour (Data, Histo ou Onoff).")
+                elif fichier_filter == [] and fichier_filter_mode == "include":
+                    st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
+                else:
+                    try:
+                        with st.spinner("Fusion master + jour en cours…"):
+                            report = database.merge_master_and_daily(
+                                master_db=merge_master_db,
+                                master_hist=merge_master_hist,
+                                master_onoff=merge_master_onoff or None,
+                                daily_db=merge_daily_db,
+                                daily_hist=merge_daily_hist,
+                                daily_onoff=merge_daily_onoff or None,
+                                allow_new_tels=allow_new_tels,
+                            )
+                        m = report["master"]
+                        st.success(
+                            f"Master chargé : {m['db_tels']:,} TEL · {m['hist_rows']:,} lignes historique."
+                        )
+                        d = report["daily"]
+                        if "db" in d:
+                            st.write(
+                                f"DB fusionnée : {d['db']['updated_tels']:,} TEL mis à jour · "
+                                f"{d['db'].get('added_tels', 0):,} ajoutés."
+                            )
+                        if "history" in d:
+                            st.write(f"Historique : +{d['history']['rows_added']:,} lignes.")
+                        if "onoff" in report:
+                            o = report["onoff"]
+                            st.write(
+                                f"Onoff fusionné : {o.get('onoff_rows', 0):,} appels · "
+                                f"{o.get('onoff_totals_rows', 0):,} TEL (totaux)."
+                            )
+                        _render_store_stats()
+                        with st.spinner("Génération de l'export complet coloré…"):
+                            excel_bytes, summary = database.export_full_recyclage(
+                                fichier_filter=fichier_filter,
+                                fichier_filter_mode=fichier_filter_mode,
+                            )
+                        st.session_state["excel_bytes"] = excel_bytes
+                        st.session_state["summary"] = summary
+                        st.success(
+                            f"Export complet prêt : **{summary['total_exported']:,}** lignes."
+                        )
+                    except Exception as exc:
+                        st.error(f"Erreur fusion : {exc}")
+
+            if daily_btn:
+                if not database.store_exists():
+                    st.error("Initialisez d'abord la base master.")
+                elif not daily_db and not daily_hist and not daily_onoff:
+                    st.error("Importez au moins un fichier du jour.")
+                else:
+                    try:
+                        before_stats = database.get_store_stats()
                         report = database.apply_daily_update(
-                            daily_db=merge_daily_db,
-                            daily_hist=merge_daily_hist,
-                            daily_onoff=merge_daily_onoff or None,
+                            daily_db=daily_db,
+                            daily_hist=daily_hist,
+                            daily_onoff=daily_onoff or None,
                             allow_new_tels=allow_new_tels,
-                            label="fusion quotidienne",
                         )
-                    if "db" in report:
-                        d = report["db"]
-                        st.write(
-                            f"DB fusionnée ({d.get('files_processed', 1)} fichier(s)) : "
-                            f"{d['updated_tels']:,} TEL mis à jour · "
-                            f"{d.get('added_tels', 0):,} ajoutés · "
-                            f"{d.get('skipped_new_tels', 0):,} ignorés."
+                        st.subheader("Fusion enregistrée")
+                        _render_merge_persistence_report(report, before_stats)
+                        preview_rows = database.process_merged_store()[0]
+                        st.info(
+                            f"Base fusionnée prête : **{len(preview_rows):,}** lignes exportables. "
+                            "Utilisez **Générer l'export complet** pour obtenir le fichier type (15).xlsx."
                         )
-                        if d.get("updated_tels", 0) == 0 and d.get("daily_tels", 0) > 0:
-                            st.warning(
-                                "Aucun TEL mis à jour. Vérifiez que la base master contient bien "
-                                "vos clients."
-                            )
-                    if "history" in report:
-                        h = report["history"]
-                        st.write(
-                            f"Historique ({h.get('files_processed', 1)} fichier(s)) : "
-                            f"+{h['rows_added']:,} lignes."
-                        )
-                    if "onoff" in report:
-                        o = report["onoff"]
-                        st.write(
-                            f"Onoff : +{o.get('rows_added', 0):,} appels "
-                            f"({o.get('total_onoff_rows', 0):,} au total)."
-                        )
+                    except Exception as exc:
+                        st.error(f"Erreur mise à jour : {exc}")
 
-                    preview_rows = database.process_merged_store()[0]
-                    st.info(
-                        f"Données fusionnées : **{len(preview_rows):,}** lignes exportables."
+            if database.store_exists():
+                status_color_quotas = None
+                if (
+                    export_limited
+                    and limit_enabled
+                    and limit_scope == "custom"
+                    and selected_statuses
+                    and selected_colors
+                ):
+                    status_color_quotas = _render_custom_quotas(
+                        selected_statuses,
+                        selected_colors,
+                        sort_priority=sort_priority,
                     )
-                    _render_store_stats()
 
-                    with st.spinner("Génération de l'export complet coloré…"):
-                        excel_bytes, summary = database.export_full_recyclage(
+                if generate:
+                    if export_full:
+                        if fichier_filter == [] and fichier_filter_mode == "include":
+                            st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
+                        else:
+                            try:
+                                with st.spinner("Génération export complet…"):
+                                    excel_bytes, summary = database.export_full_recyclage(
+                                        fichier_filter=fichier_filter,
+                                        fichier_filter_mode=fichier_filter_mode,
+                                    )
+                                st.session_state["excel_bytes"] = excel_bytes
+                                st.session_state["summary"] = {
+                                    **summary,
+                                    "limit_enabled": False,
+                                    "limit_scope": "per_status",
+                                    "sort_priority": "oldest",
+                                }
+                                st.success(f"Export complet : {summary['total_exported']:,} lignes.")
+                            except Exception as exc:
+                                st.error(f"Erreur export : {exc}")
+                    elif not selected_statuses or not selected_colors:
+                        st.warning("Sélectionnez au moins un statut et une couleur.")
+                    elif (
+                        limit_enabled
+                        and limit_scope == "custom"
+                        and sum(
+                            q for colors in (status_color_quotas or {}).values() for q in colors.values()
+                        )
+                        <= 0
+                    ):
+                        st.warning("Définissez au moins un quota > 0.")
+                    elif fichier_filter == [] and fichier_filter_mode == "include":
+                        st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
+                    else:
+                        _run_export(
+                            db_file=None,
+                            hist_file=None,
+                            onoff_files=None,
+                            use_store=True,
+                            selected_statuses=selected_statuses,
+                            selected_colors=selected_colors,
+                            limit_enabled=limit_enabled,
+                            limit_scope=limit_scope,
+                            max_rows=max_rows,
+                            status_color_quotas=status_color_quotas,
+                            sort_priority=sort_priority,
                             fichier_filter=fichier_filter,
                             fichier_filter_mode=fichier_filter_mode,
                         )
-                    st.session_state["excel_bytes"] = excel_bytes
-                    st.session_state["summary"] = summary
-                    st.success(
-                        f"Export complet prêt : **{summary['total_exported']:,}** lignes "
-                        f"sur {len(summary.get('by_status', {}))} feuilles."
-                        + (
-                            f" ({summary.get('rows_removed_by_fichier_filter', 0):,} lignes "
-                            f"retirées par filtre FICHIER)"
-                            if summary.get("rows_removed_by_fichier_filter")
-                            else ""
-                        )
-                    )
-                    _clear_all_daily_uploads()
-                except Exception as exc:
-                    st.error(f"Erreur mise à jour : {exc}")
 
-        elif full_merge_btn:
-            if not merge_master_db or not merge_master_hist:
-                st.error("DB master et historique master sont obligatoires pour la fusion complète.")
-            elif not merge_daily_db and not merge_daily_hist and not merge_daily_onoff:
-                st.error("Uploadez au moins un fichier du jour (Data, Histo ou Onoff).")
-            elif fichier_filter == [] and fichier_filter_mode == "include":
-                st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
+        elif app_mode == "forecast":
+            forecast_df, exclusion_stats = _get_forecast_working_df()
+            if not st.session_state.get("forecast_upload_bytes"):
+                st.info(
+                    "Uploadez un fichier **Recyclage_Data_Client.xlsx** dans la barre latérale "
+                    "pour voir les projections demain / après-demain et générer une sélection."
+                )
+            elif forecast_df is None or forecast_df.empty:
+                st.warning("Le fichier ne contient aucune fiche exploitable.")
             else:
-                try:
-                    with st.spinner("Fusion master + jour en cours…"):
-                        report = database.merge_master_and_daily(
-                            master_db=merge_master_db,
-                            master_hist=merge_master_hist,
-                            master_onoff=merge_master_onoff or None,
-                            daily_db=merge_daily_db,
-                            daily_hist=merge_daily_hist,
-                            daily_onoff=merge_daily_onoff or None,
-                            allow_new_tels=allow_new_tels,
-                        )
-                    m = report["master"]
-                    st.success(
-                        f"Master chargé : {m['db_tels']:,} TEL · {m['hist_rows']:,} lignes historique."
-                    )
-                    d = report["daily"]
-                    if "db" in d:
-                        st.write(
-                            f"DB fusionnée : {d['db']['updated_tels']:,} TEL mis à jour · "
-                            f"{d['db'].get('added_tels', 0):,} ajoutés."
-                        )
-                    if "history" in d:
-                        st.write(f"Historique : +{d['history']['rows_added']:,} lignes.")
-                    if "onoff" in report:
-                        o = report["onoff"]
-                        st.write(
-                            f"Onoff fusionné : {o.get('onoff_rows', 0):,} appels · "
-                            f"{o.get('onoff_totals_rows', 0):,} TEL (totaux)."
-                        )
-                    _render_store_stats()
-                    with st.spinner("Génération de l'export complet coloré…"):
-                        excel_bytes, summary = database.export_full_recyclage(
-                            fichier_filter=fichier_filter,
-                            fichier_filter_mode=fichier_filter_mode,
-                        )
-                    st.session_state["excel_bytes"] = excel_bytes
-                    st.session_state["summary"] = summary
-                    st.success(
-                        f"Export complet prêt : **{summary['total_exported']:,}** lignes."
-                    )
-                except Exception as exc:
-                    st.error(f"Erreur fusion : {exc}")
+                _render_forecast_main(
+                    forecast_df,
+                    target_offset=target_offset,
+                    sort_priority=sort_priority,
+                    forecast_quotas=forecast_quotas,
+                    generate_btn=generate_forecast_btn,
+                    exclusion_stats=exclusion_stats,
+                )
 
-        if daily_btn:
-            if not database.store_exists():
-                st.error("Initialisez d'abord la base master.")
-            elif not daily_db and not daily_hist and not daily_onoff:
-                st.error("Importez au moins un fichier du jour.")
-            else:
-                try:
-                    report = database.apply_daily_update(
-                        daily_db=daily_db,
-                        daily_hist=daily_hist,
-                        daily_onoff=daily_onoff or None,
-                        allow_new_tels=allow_new_tels,
-                    )
-                    st.success("Mise à jour appliquée et enregistrée en base.")
-                    if "db" in report:
-                        db_report = report["db"]
-                        st.write(
-                            f"DB : {db_report['updated_tels']:,} TEL mis à jour · "
-                            f"{db_report.get('added_tels', 0):,} ajoutés · "
-                            f"{db_report.get('skipped_new_tels', 0):,} ignorés (TEL inconnus)."
-                        )
-                        if db_report.get("updated_tels", 0) == 0 and db_report.get("daily_tels", 0) > 0:
-                            st.warning(
-                                "Aucun TEL mis à jour. Vérifiez que la base master contient bien "
-                                "vos clients (réinitialisez avec la DB master complète si besoin)."
-                            )
-                    if "history" in report:
-                        st.write(
-                            f"Historique : +{report['history']['rows_added']:,} lignes "
-                            f"({report['history']['total_hist_rows']:,} au total)."
-                        )
-                    if "onoff" in report:
-                        st.write(
-                            f"Onoff : +{report['onoff']['rows_added']:,} appels "
-                            f"({report['onoff']['total_onoff_rows']:,} au total)."
-                        )
-                    _render_store_stats()
-                    preview_rows = database.process_merged_store()[0]
-                    st.info(
-                        f"Base fusionnée prête : **{len(preview_rows):,}** lignes exportables. "
-                        "Utilisez **Générer l'export complet** pour obtenir le fichier type (15).xlsx."
-                    )
-                except Exception as exc:
-                    st.error(f"Erreur mise à jour : {exc}")
-
-        if database.store_exists():
+        else:
             status_color_quotas = None
-            if (
-                export_limited
-                and limit_enabled
-                and limit_scope == "custom"
-                and selected_statuses
-                and selected_colors
-            ):
+            if limit_enabled and limit_scope == "custom" and selected_statuses and selected_colors:
                 status_color_quotas = _render_custom_quotas(
                     selected_statuses,
                     selected_colors,
                     sort_priority=sort_priority,
                 )
 
+            if database.store_exists() and use_store:
+                _render_store_stats()
+
             if generate:
-                if export_full:
-                    if fichier_filter == [] and fichier_filter_mode == "include":
-                        st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
-                    else:
-                        try:
-                            with st.spinner("Génération export complet…"):
-                                excel_bytes, summary = database.export_full_recyclage(
-                                    fichier_filter=fichier_filter,
-                                    fichier_filter_mode=fichier_filter_mode,
-                                )
-                            st.session_state["excel_bytes"] = excel_bytes
-                            st.session_state["summary"] = {
-                                **summary,
-                                "limit_enabled": False,
-                                "limit_scope": "per_status",
-                                "sort_priority": "oldest",
-                            }
-                            st.success(f"Export complet : {summary['total_exported']:,} lignes.")
-                        except Exception as exc:
-                            st.error(f"Erreur export : {exc}")
+                if not use_store and (not db_file or not hist_file):
+                    st.warning("Chargez la base client et l'historique, ou activez la base enregistrée.")
                 elif not selected_statuses or not selected_colors:
                     st.warning("Sélectionnez au moins un statut et une couleur.")
                 elif (
@@ -2208,14 +2928,12 @@ with col_info:
                     <= 0
                 ):
                     st.warning("Définissez au moins un quota > 0.")
-                elif fichier_filter == [] and fichier_filter_mode == "include":
-                    st.error("Filtre FICHIER : sélectionnez au moins une valeur à conserver.")
                 else:
                     _run_export(
-                        db_file=None,
-                        hist_file=None,
-                        onoff_files=None,
-                        use_store=True,
+                        db_file=db_file,
+                        hist_file=hist_file,
+                        onoff_files=onoff_files,
+                        use_store=use_store,
                         selected_statuses=selected_statuses,
                         selected_colors=selected_colors,
                         limit_enabled=limit_enabled,
@@ -2223,121 +2941,81 @@ with col_info:
                         max_rows=max_rows,
                         status_color_quotas=status_color_quotas,
                         sort_priority=sort_priority,
-                        fichier_filter=fichier_filter,
-                        fichier_filter_mode=fichier_filter_mode,
                     )
+            elif not database.store_exists() and not use_store:
+                st.info("Initialisez la base dans l'onglet **Base de données**, ou uploadez les fichiers manuellement.")
 
-    elif app_mode == "forecast":
-        forecast_df, exclusion_stats = _get_forecast_working_df()
-        if not st.session_state.get("forecast_upload_bytes"):
-            st.subheader("Prévisionnel")
-            st.info(
-                "Uploadez un fichier **Recyclage_Data_Client.xlsx** dans la barre latérale "
-                "pour voir les projections demain / après-demain et générer une sélection."
-            )
-        elif forecast_df is None or forecast_df.empty:
-            st.warning("Le fichier ne contient aucune fiche exploitable.")
-        else:
-            _render_forecast_main(
-                forecast_df,
-                target_offset=target_offset,
-                sort_priority=sort_priority,
-                forecast_quotas=forecast_quotas,
-                generate_btn=generate_forecast_btn,
-                exclusion_stats=exclusion_stats,
-            )
+    if "summary" in st.session_state and app_mode in ("export", "database"):
+        summary = st.session_state["summary"]
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("TEL traités", f"{summary['total_processed']:,}")
+        m2.metric("Correspondances", f"{summary['total_matching']:,}")
+        m3.metric("Lignes exportées", f"{summary['total_exported']:,}")
+        m4.metric("Feuilles", len(summary["by_status"]))
 
-    else:
-        status_color_quotas = None
-        if limit_enabled and limit_scope == "custom" and selected_statuses and selected_colors:
-            status_color_quotas = _render_custom_quotas(
-                selected_statuses,
-                selected_colors,
-                sort_priority=sort_priority,
+        if summary.get("onoff_stats"):
+            onoff = summary["onoff_stats"]
+            st.caption(
+                f"Durées Onoff : {onoff.get('onoff_tels_matched', 0):,} TEL durée totale · "
+                f"{onoff.get('onoff_last_call_matched', 0):,} dernier appel · "
+                f"{onoff.get('onoff_tels_without_duration', 0):,} sans durée · "
+                f"total {_format_duration_label(onoff.get('onoff_total_duration_seconds', 0))}"
             )
 
-        if database.store_exists() and use_store:
-            _render_store_stats()
-
-        if generate:
-            if not use_store and (not db_file or not hist_file):
-                st.warning("Chargez la base client et l'historique, ou activez la base enregistrée.")
-            elif not selected_statuses or not selected_colors:
-                st.warning("Sélectionnez au moins un statut et une couleur.")
-            elif (
-                limit_enabled
-                and limit_scope == "custom"
-                and sum(
-                    q for colors in (status_color_quotas or {}).values() for q in colors.values()
+        if summary.get("fichier_filter"):
+            mode_label = "exclus" if summary.get("fichier_filter_mode") == "exclude" else "conservés"
+            st.caption(
+                f"Filtre FICHIER ({mode_label}) : {', '.join(summary['fichier_filter'])}"
+                + (
+                    f" · {summary.get('rows_removed_by_fichier_filter', 0):,} lignes retirées"
+                    if summary.get("rows_removed_by_fichier_filter")
+                    else ""
                 )
-                <= 0
-            ):
-                st.warning("Définissez au moins un quota > 0.")
-            else:
-                _run_export(
-                    db_file=db_file,
-                    hist_file=hist_file,
-                    onoff_files=onoff_files,
-                    use_store=use_store,
-                    selected_statuses=selected_statuses,
-                    selected_colors=selected_colors,
-                    limit_enabled=limit_enabled,
-                    limit_scope=limit_scope,
-                    max_rows=max_rows,
-                    status_color_quotas=status_color_quotas,
-                    sort_priority=sort_priority,
-                )
-        elif not database.store_exists() and not use_store:
-            st.info("Initialisez la base dans l'onglet **Base de données**, ou uploadez les fichiers manuellement.")
+            )
 
-if "summary" in st.session_state and app_mode in ("export", "database"):
-    summary = st.session_state["summary"]
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("TEL traités", f"{summary['total_processed']:,}")
-    m2.metric("Correspondances", f"{summary['total_matching']:,}")
-    m3.metric("Lignes exportées", f"{summary['total_exported']:,}")
-    m4.metric("Feuilles", len(summary["by_status"]))
+        _render_export_summary(summary)
 
-    if summary.get("onoff_stats"):
-        onoff = summary["onoff_stats"]
-        st.caption(
-            f"Durées Onoff : {onoff.get('onoff_tels_matched', 0):,} TEL durée totale · "
-            f"{onoff.get('onoff_last_call_matched', 0):,} dernier appel · "
-            f"{onoff.get('onoff_tels_without_duration', 0):,} sans durée · "
-            f"total {_format_duration_label(onoff.get('onoff_total_duration_seconds', 0))}"
+    if "excel_bytes" in st.session_state and app_mode in ("export", "database"):
+        stamp = datetime.now().strftime("%Y%m%d_%H%M")
+        st.download_button(
+            label="Télécharger Recyclage_Data_Client.xlsx",
+            data=st.session_state["excel_bytes"],
+            file_name=f"Recyclage_Data_Client_{stamp}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+            use_container_width=True,
         )
 
-    if summary.get("fichier_filter"):
-        mode_label = "exclus" if summary.get("fichier_filter_mode") == "exclude" else "conservés"
-        st.caption(
-            f"Filtre FICHIER ({mode_label}) : {', '.join(summary['fichier_filter'])}"
-            + (
-                f" · {summary.get('rows_removed_by_fichier_filter', 0):,} lignes retirées"
-                if summary.get("rows_removed_by_fichier_filter")
-                else ""
-            )
-        )
+    if "forecast_excel_bytes" in st.session_state and app_mode == "forecast":
+        stamp = datetime.now().strftime("%Y%m%d_%H%M")
+        offset = st.session_state.get("forecast_summary", {}).get("offset_days", 1)
+        st.download_button(
+            label="Télécharger export prévisionnel",
+            data=st.session_state["forecast_excel_bytes"],
+            file_name=f"Recyclage_Previsionnel_J{offset}_{stamp}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+            use_container_width=True,
 
-    _render_export_summary(summary)
+    )
 
-if "excel_bytes" in st.session_state and app_mode in ("export", "database"):
+if "data_client_excel_bytes" in st.session_state and app_mode == "data_client":
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
     st.download_button(
-        label="Télécharger Recyclage_Data_Client.xlsx",
-        data=st.session_state["excel_bytes"],
-        file_name=f"Recyclage_Data_Client_{stamp}.xlsx",
+        label="Télécharger tableau de bord Data Client",
+        data=st.session_state["data_client_excel_bytes"],
+        file_name=f"Data_Client_Dashboard_{stamp}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         type="primary",
         use_container_width=True,
     )
 
-if "forecast_excel_bytes" in st.session_state and app_mode == "forecast":
+if "ventes_excel_bytes" in st.session_state and app_mode == "ventes":
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
-    offset = st.session_state.get("forecast_summary", {}).get("offset_days", 1)
     st.download_button(
-        label="Télécharger export prévisionnel",
-        data=st.session_state["forecast_excel_bytes"],
-        file_name=f"Recyclage_Previsionnel_J{offset}_{stamp}.xlsx",
+        label="Télécharger rapport ventes",
+        data=st.session_state["ventes_excel_bytes"],
+        file_name=f"Ventes_Analytics_{stamp}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         type="primary",
         use_container_width=True,
