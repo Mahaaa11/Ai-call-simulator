@@ -1011,6 +1011,18 @@ ${transcript.slice(0, 2500)}`;
                 el.innerHTML = "ℹ️ Ajoutez MYSQL_* dans les Secrets Streamlit";
                 el.style.color = "#2563eb";
             }
+            syncStreamlitFrameHeight();
+        }
+
+        function syncStreamlitFrameHeight(forceMin) {
+            if (!window.Streamlit || typeof Streamlit.setFrameHeight !== "function") return;
+            const minH = Number(forceMin) || 1050;
+            const scrollH = Math.max(
+                document.documentElement.scrollHeight || 0,
+                document.body.scrollHeight || 0,
+                document.documentElement.offsetHeight || 0
+            );
+            Streamlit.setFrameHeight(Math.max(minH, scrollH + 48));
         }
 
         window.addEventListener("message", function (event) {
@@ -1040,7 +1052,12 @@ ${transcript.slice(0, 2500)}`;
                 const el = document.getElementById("dbStatus");
                 if (el) el.textContent = "Connexion Streamlit…";
             }
+            syncStreamlitFrameHeight();
         })();
+
+        window.onStreamlitConfigApplied = onStreamlitConfigApplied;
+        window.resumePendingEvaluation = resumePendingEval;
+        window.syncStreamlitFrameHeight = syncStreamlitFrameHeight;
     })();
     </script>
 </body>
