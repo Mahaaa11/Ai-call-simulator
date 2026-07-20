@@ -5022,10 +5022,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 max_tokens: tokenLimit,
                 temperature: temperature != null ? temperature : getLevelTemperature()
             };
-            const attempts = [
-                { ...basePayload, reasoning: { effort: "none", exclude: true } },
-                basePayload
-            ];
+            const attempts = isFreeOpenRouterModel(resolvedModel)
+                ? [basePayload, { ...basePayload, reasoning: { effort: "none", exclude: true } }]
+                : [{ ...basePayload, reasoning: { effort: "none", exclude: true } }, basePayload];
             let lastError = null;
 
             for (const payload of attempts) {
@@ -5126,13 +5125,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         return await callOpenRouter(messages, apiKey, model, modelTokens, temp, isEval);
                     } catch (e) {
                         lastError = e;
-                        const retryable = isPromptTokenLimitError(e.message) || /can only afford/i.test(e.message);
+                        const errMsg = e.message || String(e);
+                        if (/rate limit|429|too many requests|503|provider returned error/i.test(errMsg)) {
+                            errors.push(model + ": " + errMsg);
+                            break;
+                        }
+                        const retryable = isPromptTokenLimitError(errMsg) || /can only afford/i.test(errMsg);
                         if (!retryable) {
-                            errors.push(model + ": " + e.message);
+                            errors.push(model + ": " + errMsg);
                             modelFailed = true;
                             break;
                         }
-                        console.warn("OpenRouter retry", model, plan, e.message);
+                        console.warn("OpenRouter retry", model, plan, errMsg);
                     }
                 }
                 if (!modelFailed && lastError) {
@@ -5685,6 +5689,27 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return !!(cfg.hostedTtsEnabled || cfg.hostedOnStreamlit || useStreamlitSave() || isStreamlitCloud());
         }
 
+        function clearTtsWatchdog() {
+            if (window.__ttsWatchdog) {
+                clearTimeout(window.__ttsWatchdog);
+                window.__ttsWatchdog = null;
+            }
+        }
+
+        function scheduleTtsWatchdog(text, voiceSettings) {
+            clearTtsWatchdog();
+            window.__ttsWatchdog = setTimeout(() => {
+                if (!sessionStorage.getItem(PENDING_TTS_KEY)) return;
+                sessionStorage.removeItem(PENDING_TTS_KEY);
+                setProspectThinking(false);
+                void speakBrowser(text, voiceSettings).then((ok) => {
+                    if (callActive) {
+                        setStatus(ok ? "À vous de parler" : "Pas de son — réessayez", "status-listening");
+                    }
+                });
+            }, 22000);
+        }
+
         function stashCallStateForAsync(pendingKey, payload) {
             sessionStorage.setItem(pendingKey, JSON.stringify(payload));
             sessionStorage.setItem(CALL_STASH_KEY, JSON.stringify({
@@ -5718,6 +5743,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 gender: (prospectPersona && prospectPersona.gender) || "female",
                 tone: settings.tone || "calm"
             });
+            scheduleTtsWatchdog(text, settings);
             return true;
         }
 
@@ -5828,6 +5854,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             setProspectThinking(false);
             unlockAudioPlayback();
+            clearTtsWatchdog();
 
             if (!result.ok) {
                 sessionStorage.removeItem(PENDING_TTS_KEY);
@@ -6383,6 +6410,38 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return ensureReplyVariety(reply);
         }
 
+        async function recoverProspectAfterLlmError(err) {
+            setProspectThinking(false);
+            const msg = (err && err.message) || String(err || "Erreur OpenRouter");
+            const lowCredit = isPromptTokenLimitError(msg) || /can only afford|crédit openrouter|402|quota|rate limit|429/i.test(msg);
+            try {
+                const reply = finalizeProspectReply(fallbackProspectReply());
+                chatTurns.push({ role: "assistant", content: reply });
+                addLogMessage("Prospect", reply, "prospect-msg");
+                updateLiveStats();
+                await speakProspect(reply);
+                setStatus(
+                    lowCredit
+                        ? "Appel en cours (mode secours — crédit OpenRouter bas)"
+                        : "Appel en cours (réponse de secours — API indisponible)",
+                    "status-listening"
+                );
+                if (lowCredit) {
+                    console.warn("OpenRouter crédit/quota:", msg);
+                } else {
+                    console.warn("OpenRouter erreur, fallback local:", msg);
+                }
+                return true;
+            } catch (fallbackErr) {
+                setStatus("À vous de parler — réessayez", "status-listening");
+                alert(
+                    "Erreur OpenRouter :\n" + msg
+                    + "\n\nNote : les modèles « gratuits » (:free) nécessitent un petit crédit (~1$).\n\nVérifiez :\n• openrouter.ai/settings/credits\n• Clé sk-or-v1-... sur openrouter.ai/keys\n• Modèle Nemotron 3 Super (gratuit)"
+                );
+                return false;
+            }
+        }
+
         async function sendAgentMessage(userText) {
             const apiKey = getApiKey();
             const keyErr = validateApiKey(apiKey);
@@ -6409,6 +6468,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 const reply = "Au revoir.";
                 chatTurns.push({ role: "assistant", content: reply });
                 addLogMessage("Prospect", reply, "prospect-msg");
+                setProspectThinking(false);
                 await speakProspect(reply);
                 setStatus("Prospect a raccroché — cliquez Raccrocher pour l'évaluation", "status-listening");
                 return;
@@ -6420,20 +6480,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 chatTurns.push({ role: "assistant", content: reply });
                 addLogMessage("Prospect", reply, "prospect-msg");
                 updateLiveStats();
+                setProspectThinking(false);
                 await speakProspect(reply);
             } catch (e) {
                 chatTurns.pop();
-                const creditErr = isPromptTokenLimitError(e.message) || /can only afford|crédit openrouter|402/i.test(e.message);
-                if (creditErr) {
-                    const reply = finalizeProspectReply(fallbackProspectReply());
-                    chatTurns.push({ role: "assistant", content: reply });
-                    addLogMessage("Prospect", reply, "prospect-msg");
-                    await speakProspect(reply);
-                    setStatus("Appel en cours (mode secours — crédit OpenRouter bas)", "status-listening");
-                    return;
-                }
-                alert("Erreur OpenRouter :\n" + e.message + "\n\nNote : les modèles « gratuits » OpenRouter (:free) nécessitent quand même un petit crédit sur le compte (~1$).\n\nVérifiez :\n• openrouter.ai/settings/credits\n• Clé sk-or-v1-... sur openrouter.ai/keys\n• Modèle Nemotron 3 Super (gratuit) dans la liste");
-                setStatus("Erreur API", "status-idle");
+                await recoverProspectAfterLlmError(e);
             }
         }
 

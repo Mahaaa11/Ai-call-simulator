@@ -28,11 +28,15 @@ def _ensure_frontend_dir(target: Path) -> None:
 _ensure_frontend_dir(_FRONTEND_V1)
 _ensure_frontend_dir(_FRONTEND_V2)
 
-# Sync v2 component from source HTML at import (Streamlit Cloud may not rewrite at runtime).
+# Sync component HTML from source at import (Streamlit Cloud may not rewrite at runtime).
 try:
     from ui.simulator_host import _sync_component_index
 
-    _prospect_html = Path(__file__).resolve().parents[2] / "web" / "simulation_prospect.html"
+    _root = Path(__file__).resolve().parents[2]
+    _v1_html = _root / "web" / "simulation.html"
+    _prospect_html = _root / "web" / "simulation_prospect.html"
+    if _v1_html.exists():
+        _sync_component_index(_v1_html, _FRONTEND_V1)
     if _prospect_html.exists():
         _sync_component_index(_prospect_html, _FRONTEND_V2)
 except Exception:
