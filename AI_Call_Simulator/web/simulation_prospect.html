@@ -1295,7 +1295,7 @@
                     <div class="agent-avatar" aria-hidden="true">👩‍💼</div>
                     <div class="agent-brand">
                         <strong>Émilie</strong>
-                        <span>Génie Énergie · Home Serve</span>
+                        <span>Ogenies</span>
                     </div>
                     <div class="video-vignette"></div>
                     <div class="live-caption agent" id="liveCaption" aria-live="polite"></div>
@@ -1314,7 +1314,7 @@
                     <p class="hint" id="speechPreview" style="min-height:20px;color:#7dffe8;font-weight:600;"></p>
                 </div>
                 <button type="button" id="talkBtn" disabled>🎤 Parler en tant que prospect</button>
-                <p class="hint" style="text-align:center;">Micro : parlez puis recliquez Envoyer, ou tapez ci-dessous.</p>
+                <p class="hint" style="text-align:center;">Micro : parlez puis recliquez Envoyer. <strong>Conseil :</strong> si la transcription est incorrecte, corrigez dans le champ texte avant d'envoyer.</p>
                 <label for="textInput">Votre réplique prospect</label>
                 <div class="text-row">
                     <input type="text" id="textInput" placeholder="Ex : Ça ne m'intéresse pas…" disabled>
@@ -1458,12 +1458,12 @@
 
         function buildAgentOpening(level) {
             if (level === "debutant") {
-                return "Bonjour, je suis Émilie de Génie Énergie, partenaire Home Serve. Je vous appelle suite à une étude sur les augmentations de factures d'électricité — vous avez une petite minute ?";
+                return "Bonjour, je suis Émilie d'Ogenies. Je vous appelle suite à une étude sur les augmentations de factures d'électricité — vous avez une petite minute ?";
             }
             if (level === "intermediaire") {
-                return "Bonjour, Émilie de Génie Énergie, partenaire Home Serve. Appel court pour vérifier si vous payez le bon tarif sur votre électricité — vous avez deux minutes ?";
+                return "Bonjour, Émilie d'Ogenies. Appel court pour vérifier si vous payez le bon tarif sur votre électricité — vous avez deux minutes ?";
             }
-            return "Bonjour, Émilie, Génie Énergie Home Serve. Étude nationale sur les hausses de factures énergie — je serai brève, promis.";
+            return "Bonjour, Émilie d'Ogenies. Étude nationale sur les hausses de factures énergie — je serai brève, promis.";
         }
 
         function getAgentAntiRepeatContext() {
@@ -1490,12 +1490,12 @@
             try { localStorage.setItem(COACHING_KEY, JSON.stringify(tips.slice(0, 4))); } catch (_) {}
         }
 
-        const AGENT_SCRIPT = `Tu es Émilie (ou Eugénie), conseillère commerciale Génie Énergie, partenaire Home Serve.
+        const AGENT_SCRIPT = `Tu es Émilie (ou Eugénie), conseillère commerciale Ogenies.
 CONTEXTE : Appel SORTANT énergie en France. Tu appelles le prospect pour une étude / vérification tarifaire électricité (et gaz si pertinent).
 MISSION : Tu es l'AGENT COMMERCIAL uniquement. Ne joue JAMAIS le prospect. Ne dis jamais « en tant que prospect ».
 
 STRUCTURE D'APPEL :
-1. Accroche : te présenter, Home Serve / Génie Énergie, objet = vérification augmentations (pas vente forcée)
+1. Accroche : te présenter, Ogenies, objet = vérification augmentations (pas vente forcée)
 2. Découverte : fournisseur actuel, ancienneté, montant facture — POSE DES QUESTIONS, n'invente pas les réponses du prospect
 3. Comparatif : indépendant, gratuit, sans engagement, 14 jours rétractation
 4. Proposition : tarif compétitif si économies possibles (adapte le montant à ce que le prospect a dit)
@@ -1755,9 +1755,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             if (p.length >= 12 && a.includes(p)) return true;
             const aWords = a.split(" ").filter(w => w.length > 3);
             const pWords = p.split(" ").filter(w => w.length > 3);
-            if (aWords.length < 4 || pWords.length < 3) return false;
+            if (aWords.length < 5 || pWords.length < 4) return false;
             const shared = aWords.filter(w => pWords.includes(w)).length;
-            return shared >= Math.ceil(aWords.length * 0.85);
+            return shared >= Math.ceil(aWords.length * 0.92);
         }
 
         function isAgentMetaLeak(reply) {
@@ -1809,42 +1809,87 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return text.slice(0, 500);
         }
 
+        function lastAgentReply() {
+            const turns = chatTurns.filter(t => t.role === "assistant");
+            return turns.length ? turns[turns.length - 1].content : "";
+        }
+
+        function agentAlreadySaid(text) {
+            const needle = normalizeReply(text);
+            if (!needle || needle.length < 12) return false;
+            return chatTurns.filter(t => t.role === "assistant").some(t => {
+                const n = normalizeReply(t.content);
+                return n === needle || (n.includes(needle) && needle.length > 20);
+            });
+        }
+
         function getAgentFallbackReply(prospectText) {
             const t = (prospectText || "").toLowerCase();
 
             if (prospectMentionedBill()) {
-                return "Merci pour ces informations. Je peux lancer une vérification gratuite et sans engagement pour voir si vous pouviez payer moins — ça vous intéresse ?";
+                return "Merci, c'est noté. Avec ces informations je peux lancer une vérification gratuite et sans engagement pour voir si vous pourriez payer moins — est-ce que ça vous convient ?";
             }
             if (prospectMentionedSupplier() || /\b(edf|engie|total|vattenfall|ekwateur)\b/i.test(t)) {
-                return "Parfait, merci. Depuis combien de temps êtes-vous chez eux, et à peu près combien payez-vous par mois sur votre facture d'électricité ?";
+                const msg = "Parfait, merci. Depuis combien de temps êtes-vous chez eux, et à peu près combien payez-vous par mois sur votre facture d'électricité ?";
+                return agentAlreadySaid(msg) ? "D'accord. Et le montant mensuel de votre facture, à peu près, c'est combien ?" : msg;
+            }
+            if (/pourquoi.*(demand|question|info|numéro|donn|dire|mention)|c'est quoi l'intérêt|droit.*savoir/i.test(t)) {
+                return "Bonne question : c'est uniquement pour comparer votre tarif actuel au marché et voir si vous payez trop cher — rien n'est obligatoire. On peut rester sur le fournisseur seulement si vous préférez.";
             }
             if (/qui (êtes|etes)|vous êtes qui|d'?où.*nom|comment.*nom|comment.*numéro|comment.*données|rgpd|données|protég/i.test(t)) {
-                return "Je comprends tout à fait. Je suis Émilie, conseillère Génie Énergie, partenaire Home Serve. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures d'électricité, sans engagement. Puis-je vous expliquer en deux minutes ?";
+                return "Je comprends. Je suis Émilie, conseillère Ogenies. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures, sans engagement.";
             }
             if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
-                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas pour vous vendre quelque chose de force, c'est gratuit et sans engagement. Vous avez une minute ?";
+                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas une vente forcée, c'est gratuit et sans engagement.";
             }
-            if (/intéressé|intéresse pas|pas intéress|ça m'intéresse pas/i.test(t)) {
-                return "Je comprends tout à fait. Ce n'est pas une vente forcée, juste une vérification rapide de votre facture d'électricité. Une seule question : chez quel fournisseur êtes-vous actuellement ?";
+            if (/intéresse pas|pas intéress|accroch|arrête|raccroch|répète|même question|encore la même/i.test(t)) {
+                const msg = "Vous avez raison, je vais être directe : soit on regarde en deux minutes si vous pouvez économiser, soit je vous laisse tranquille — qu'est-ce que vous préférez ?";
+                return agentAlreadySaid(msg) ? "Compris. Je ne vous dérange pas plus longtemps — bonne journée à vous." : msg;
             }
-            if (/pas le temps|pas le temps|occupé|pressé|faites vite/i.test(t)) {
-                return "Je comprends, je serai très brève. Juste une question : chez quel fournisseur êtes-vous pour l'électricité ? Dix secondes suffisent.";
+            if (/veux pas dire|pas envie|donner.*info|pas vous donner|confidentiel|secret/i.test(t)) {
+                return "Je respecte ça. Sans ces infos je ne peux pas chiffrer d'économies — je peux vous envoyer un lien par mail pour le faire quand vous voulez, ou on s'arrête là si vous préférez.";
+            }
+            if (/pas le temps|occupé|pressé|faites vite/i.test(t)) {
+                return "Je comprends, je serai très brève. Juste une question : chez quel fournisseur êtes-vous pour l'électricité ?";
             }
             if (/fournisseur|changer|satisfait/i.test(t)) {
-                return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive. Chez quel fournisseur êtes-vous aujourd'hui ?";
+                return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive — chez quel fournisseur êtes-vous aujourd'hui ?";
             }
-            if (chatTurns.filter(x => x.role === "assistant").length >= 2) {
-                return "Pour avancer : chez quel fournisseur êtes-vous actuellement pour l'électricité, et à peu près combien payez-vous par mois ?";
+            if (/^oui|^ok|^d'accord|^allez|^vas|^sky|^bonjour/i.test(t.trim()) && t.length < 40) {
+                return "Super, merci. Chez quel fournisseur êtes-vous actuellement pour l'électricité ?";
             }
-            return "Je comprends. Je suis Émilie de Génie Énergie — appel court pour vérifier si vous payez le bon tarif électricité, sans engagement. Puis-je vous poser une question rapide ?";
+            const generic = "Pour avancer : chez quel fournisseur êtes-vous actuellement pour l'électricité, et à peu près combien payez-vous par mois ?";
+            if (agentAlreadySaid(generic)) {
+                return "Je reformule autrement : sans engagement, je peux vérifier si votre contrat électricité est encore au bon prix — voulez-vous qu'on regarde ou pas du tout ?";
+            }
+            return generic;
+        }
+
+        function ensureAgentReplyAddressesProspect(reply, prospectText) {
+            let out = (reply || "").trim();
+            const t = (prospectText || "").toLowerCase();
+            if (!out) return getAgentFallbackReply(prospectText);
+
+            if (prospectMentionedBill() && !/merci|comparatif|vérification|économ|€|euro|noté/i.test(out)) {
+                return getAgentFallbackReply(prospectText);
+            }
+            if (/intéresse pas|répète|même question|veux pas dire|pourquoi.*demand/i.test(t)
+                && /pour avancer|chez quel fournisseur|combien payez/i.test(out)
+                && agentAlreadySaid(out.slice(0, 40))) {
+                return getAgentFallbackReply(prospectText);
+            }
+            if (out.length < 25 && !/\?/.test(out)) {
+                return getAgentFallbackReply(prospectText);
+            }
+            return out;
         }
 
         function finalizeAgentReply(raw, prospectText) {
             let reply = cleanAgentReply(raw);
-            if (!reply || reply.length < 8 || isAgentMetaLeak(reply) || isAgentEcho(reply, prospectText)) {
+            if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
                 reply = getAgentFallbackReply(prospectText);
             }
-            return reply;
+            return ensureAgentReplyAddressesProspect(reply, prospectText);
         }
 
         function buildAgentTurnMessages() {
@@ -1873,7 +1918,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         function scoreBenchmarkAgentReply(reply, prospectText) {
             const t = (reply || "").trim();
             if (!t) return { score: 0, french: false, noEcho: false, inRole: false };
-            const french = !isAgentMetaLeak(t) && (/(je|vous|comprends|d'accord|bonjour|émilie|genie)/i.test(t));
+            const french = !isAgentMetaLeak(t) && (/\b(je|vous|comprends|d'accord|bonjour|émilie|ogenies)\b/i.test(t));
             const noEcho = !isAgentEcho(t, prospectText);
             const inRole = !isAgentMetaLeak(t);
             let score = 0;
@@ -1976,7 +2021,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                     "HTTP-Referer": location.origin,
                     "X-Title": "AI Call Simulator v2"
                 },
-                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.55, frequency_penalty: 0.1, presence_penalty: 0.05 })
+                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.68, frequency_penalty: 0.25, presence_penalty: 0.15 })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
@@ -1989,10 +2034,15 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const models = [getModel(), ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== getModel())];
             const turnMessages = buildAgentTurnMessages();
             const prospectLine = lastProspectText();
+            const recentTranscript = chatTurns.slice(-8).map(t =>
+                (t.role === "assistant" ? "AGENT" : "PROSPECT") + ": " + t.content
+            ).join("\n");
             const turnHint = prospectLine
-                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 180) + " »"
+                ? "\n\nTRANSCRIPTION RÉCENTE :\n" + recentTranscript.slice(-900)
+                    + "\n\nDERNIÈRE RÉPLIQUE PROSPECT (à traiter en priorité) : « " + prospectLine.slice(0, 220) + " »"
                     + "\nÉTAPE SUIVANTE : " + getDiscoveryStageHint()
-                    + "\nRéponds UNIQUEMENT en tant qu'Émilie l'agent commercial (français oral). Ne répète pas le prospect. Fais avancer l'appel."
+                    + "\nIMPORTANT : réponds DIRECTEMENT à ce que vient de dire le prospect. Ne répète JAMAIS une question déjà posée. Varie tes formulations."
+                    + "\nRéponds UNIQUEMENT en tant qu'Émilie l'agent Ogenies (français oral, 2-4 phrases)."
                 : "";
             const plans = [
                 { system: systemPromptText + getAgentAntiRepeatContext() + turnHint + (extra || ""), maxTokens: 280 },
@@ -2005,9 +2055,19 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                     const messages = [{ role: "system", content: plan.system }, ...turnMessages];
                     try {
                         const raw = await callOpenRouter(messages, apiKey, model, plan.maxTokens);
-                        const reply = finalizeAgentReply(raw, prospectLine);
-                        if (reply && !isAgentMetaLeak(reply) && !isAgentEcho(reply, prospectLine)) return reply;
-                        lastErr = new Error("Réponse IA invalide (écho ou méta)");
+                        let reply = cleanAgentReply(raw);
+                        if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
+                            lastErr = new Error("Réponse IA invalide (vide ou méta)");
+                            continue;
+                        }
+                        if (isAgentEcho(reply, prospectLine)) {
+                            reply = ensureAgentReplyAddressesProspect(reply, prospectLine);
+                            if (isAgentEcho(reply, prospectLine)) {
+                                lastErr = new Error("Réponse IA en écho");
+                                continue;
+                            }
+                        }
+                        return ensureAgentReplyAddressesProspect(reply, prospectLine);
                     } catch (e) {
                         lastErr = e;
                         console.warn("Agent LLM retry", model, e.message);
@@ -2281,27 +2341,49 @@ ${transcript.slice(0, 2500)}`;
             <div class="eval-section"><h4>🎯 Techniques observées</h4><ul>${(data.techniques_observees||[]).map(x=>"<li>"+x+"</li>").join("")}</ul></div>`;
         }
 
+        async function runHangupEvaluation(apiKey) {
+            setStatus("Analyse de l'agent IA…", "status-thinking");
+            stopBtn.disabled = true;
+            talkBtn.disabled = true;
+            sendTextBtn.disabled = true;
+            textInput.disabled = true;
+            try {
+                const ev = await evaluateAgent(apiKey);
+                saveCoachingTips(ev);
+                evalContent.innerHTML = renderEval(ev);
+                evalDiv.style.display = "block";
+                syncStreamlitFrameHeight(1400);
+                try { evalDiv.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (_) {}
+                if (lastConversationId) await updateEvalInDb(lastConversationId, ev);
+            } catch (e) {
+                alert("Analyse impossible : " + (e.message || e));
+            } finally {
+                resetUi();
+            }
+        }
+
         async function resumePendingEval() {
             const raw = sessionStorage.getItem(PENDING_EVAL_KEY);
             if (!raw) return;
+            if (window.__evalResumeInProgress) return;
+
             const result = getCfg().lastSaveResult;
             if (!result?.ok || !result.conversation_id) {
-                sessionStorage.removeItem(PENDING_EVAL_KEY);
                 return;
             }
-            const pending = JSON.parse(raw);
-            sessionStorage.removeItem(PENDING_EVAL_KEY);
-            chatTurns = pending.chatTurns || [];
-            callStartedAt = pending.callStartedAt;
-            lastConversationId = result.conversation_id;
-            setStatus("Analyse de l'agent IA…", "status-thinking");
-            const ev = await evaluateAgent(pending.apiKey);
-            saveCoachingTips(ev);
-            evalContent.innerHTML = renderEval(ev);
-            evalDiv.style.display = "block";
-            await updateEvalInDb(result.conversation_id, ev);
-            document.getElementById("dbStatus").innerHTML = "✅ Session #" + result.conversation_id + " enregistrée";
-            resetUi();
+
+            window.__evalResumeInProgress = true;
+            try {
+                const pending = JSON.parse(raw);
+                sessionStorage.removeItem(PENDING_EVAL_KEY);
+                chatTurns = pending.chatTurns || [];
+                callStartedAt = pending.callStartedAt;
+                lastConversationId = result.conversation_id;
+                await runHangupEvaluation(pending.apiKey);
+                document.getElementById("dbStatus").innerHTML = "✅ Session #" + result.conversation_id + " enregistrée";
+            } finally {
+                window.__evalResumeInProgress = false;
+            }
         }
 
         function showSaveResult() {
@@ -2314,6 +2396,9 @@ ${transcript.slice(0, 2500)}`;
                     ? "✅ Évaluation enregistrée — #" + d.conversation_id
                     : "✅ Appel #" + d.conversation_id + " enregistré";
                 el.style.color = "#16a34a";
+            } else if (d.error) {
+                el.innerHTML = "⚠️ Sauvegarde : " + d.error;
+                el.style.color = "#d97706";
             }
         }
 
@@ -2333,7 +2418,8 @@ ${transcript.slice(0, 2500)}`;
         startBtn.addEventListener("click", async () => {
             try {
             const apiKey = getApiKey();
-            if (!apiKey) return alert("Clé OpenRouter requise.");
+            const keyErr = validateApiKey(apiKey);
+            if (keyErr) return alert(keyErr);
             callScenario = createCallScenario();
             systemPromptText = buildSystemPrompt();
             const opening = buildAgentOpening(getLevel());
@@ -2395,22 +2481,51 @@ ${transcript.slice(0, 2500)}`;
         });
 
         stopBtn.addEventListener("click", async () => {
-            if (synth.speaking) synth.cancel();
+            if (!callActive) return;
+            if (isListening) {
+                try { recognition.stop(); } catch (_) {}
+                isListening = false;
+                recordTimer.textContent = "";
+                talkBtn.textContent = "🎤 Parler en tant que prospect";
+                talkBtn.style.background = "";
+            }
+            if (synth && synth.speaking) synth.cancel();
+            callActive = false;
+            stopBtn.disabled = true;
+            talkBtn.disabled = true;
+            sendTextBtn.disabled = true;
+            textInput.disabled = true;
+            setStatus("Fin de l'appel…", "status-thinking");
+
             const apiKey = getApiKey();
+            const keyErr = validateApiKey(apiKey);
+            if (keyErr) {
+                alert(keyErr);
+                resetUi();
+                return;
+            }
+            if (!chatTurns.length) {
+                resetUi();
+                return;
+            }
+
             if (useStreamlitSave()) {
                 stashPendingEval(apiKey);
                 setStatus("Enregistrement…", "status-thinking");
-                await saveToDb(null);
+                pushToStreamlit({ action: "save", payload: buildPayload(null) });
+                document.getElementById("dbStatus").innerHTML = "⏳ Enregistrement…";
+                setTimeout(async () => {
+                    if (sessionStorage.getItem(PENDING_EVAL_KEY)) {
+                        sessionStorage.removeItem(PENDING_EVAL_KEY);
+                        document.getElementById("dbStatus").innerHTML = "⚠️ Sauvegarde lente — analyse locale…";
+                        await runHangupEvaluation(apiKey);
+                    }
+                }, 12000);
                 return;
             }
+
             await saveToDb(null);
-            setStatus("Analyse de l'agent IA…", "status-thinking");
-            const ev = await evaluateAgent(apiKey);
-            saveCoachingTips(ev);
-            evalContent.innerHTML = renderEval(ev);
-            evalDiv.style.display = "block";
-            if (lastConversationId) await updateEvalInDb(lastConversationId, ev);
-            resetUi();
+            await runHangupEvaluation(apiKey);
         });
 
         function applyHostedConfig() {
@@ -2438,7 +2553,7 @@ ${transcript.slice(0, 2500)}`;
         function initMicStatus() {
             if (!micStatus) return;
             if (speechRecAvailable) {
-                micStatus.textContent = "✅ Micro Chrome disponible — ou utilisez le champ texte";
+                micStatus.textContent = "✅ Micro disponible — vérifiez la transcription avant d'envoyer, ou tapez votre réplique";
                 micStatus.style.color = "#16a34a";
             } else {
                 micStatus.textContent = "⚠️ Micro indisponible ici — utilisez Chrome ou tapez votre réplique";
