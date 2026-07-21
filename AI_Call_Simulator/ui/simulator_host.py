@@ -25,9 +25,11 @@ if str(WEB_DIR) not in sys.path:
 from mysql_store import (
     apply_mysql_env_from_mapping,
     check_mysql_connection,
+    list_conversations,
     save_conversation,
     update_conversation_evaluation,
 )
+from ui.agent_session import get_agent_name, require_agent_login
 
 _STREAMLIT_BOOT = """
 <script src="streamlit-component-lib.js"></script>
@@ -277,6 +279,9 @@ def _build_streamlit_config(
     }
     if extra_config:
         config.update(extra_config)
+    agent_name = get_agent_name()
+    if agent_name:
+        config["agentName"] = agent_name
     api_url = _get_secret_or_env("CONVERSATION_API_URL")
 
     if mysql_configured:
@@ -307,6 +312,11 @@ def _payload_key(payload: dict) -> str:
 
 
 def _process_bridge_payload(payload: dict) -> bool:
+    agent_name = get_agent_name()
+    if agent_name and isinstance(payload, dict):
+        if not str(payload.get("agent_name") or "").strip():
+            payload = dict(payload)
+            payload["agent_name"] = agent_name
     key = _payload_key(payload)
     if st.session_state.get("last_save_key") == key:
         return False
@@ -490,6 +500,8 @@ def run_simulator(
         layout="wide",
         initial_sidebar_state="collapsed",
     )
+
+    require_agent_login(compact=True)
 
     api_key = _get_openrouter_api_key()
     if not api_key:

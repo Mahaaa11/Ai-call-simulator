@@ -3357,6 +3357,25 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return el ? el.value.trim() : "";
         }
 
+        function getAgentName() {
+            const cfg = getSimulatorConfig();
+            const fromHost = (cfg.agentName || "").trim();
+            if (fromHost) return fromHost;
+            return getExamAgentName();
+        }
+
+        function applyHostedAgentName() {
+            const cfg = getSimulatorConfig();
+            const name = (cfg.agentName || "").trim();
+            if (!name) return;
+            const el = document.getElementById("examAgentName");
+            if (el) {
+                el.value = name;
+                el.readOnly = true;
+                el.title = "Nom défini à la connexion Streamlit";
+            }
+        }
+
         function isExamCallActive() {
             return !!(examCallContext || pendingExamStepIndex != null || (prospectPersona && prospectPersona.examStepId));
         }
@@ -3367,7 +3386,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const passScore = campaign?.passScore || 70;
             const score = Number(evaluation.score_total);
             evaluation.exam_meta = {
-                agent_name: getExamAgentName(),
+                agent_name: getAgentName(),
                 campaign_id: examCallContext?.campaignId || campaign?.id || "certif_vente_20260717",
                 passed: Number.isFinite(score) && score >= passScore,
                 pass_score: passScore,
@@ -3391,7 +3410,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             };
             if (isExamCallActive()) {
                 payload.training_mode = "exam_certif";
-                payload.agent_name = getExamAgentName() || null;
+                payload.agent_name = getAgentName() || null;
                 payload.exam_campaign_id = examCallContext?.campaignId || getActiveExamCampaign()?.id || null;
             } else {
                 const trainingScenario = getSelectedTrainingScenario();
@@ -3399,6 +3418,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     payload.training_mode = "scenario_certif";
                     payload.training_scenario_id = trainingScenario.id;
                 }
+                const agentName = getAgentName();
+                if (agentName) payload.agent_name = agentName;
             }
             return payload;
         }
@@ -3410,7 +3431,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 callStartedAt: callStartedAt,
                 persona: prospectPersona,
                 level: getLevel(),
-                agent_name: getExamAgentName(),
+                agent_name: getAgentName(),
                 exam_campaign_id: examCallContext?.campaignId || getActiveExamCampaign()?.id || null,
                 stashed_at: Date.now()
             }));
@@ -7291,6 +7312,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 
         function onStreamlitConfigApplied() {
             applyHostedConfig();
+            applyHostedAgentName();
             showLastSaveResult();
             checkDbServer();
             checkTtsServer();

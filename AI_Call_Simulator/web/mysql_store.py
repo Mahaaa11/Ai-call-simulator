@@ -388,6 +388,53 @@ def get_conversation_messages(conversation_id: int) -> list[dict]:
         conn.close()
 
 
+def list_conversations_for_agent(agent_name: str, *, limit: int = 100) -> list[dict]:
+    name = (agent_name or "").strip()
+    if not name:
+        return []
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, agent_name, profile_key, level_key, training_mode, model,
+                       prospect_first_name, prospect_last_name,
+                       score_total, score_level, created_at
+                FROM conversations
+                WHERE LOWER(agent_name) LIKE LOWER(%s)
+                ORDER BY id DESC
+                LIMIT %s
+                """,
+                (f"%{name}%", limit),
+            )
+            return list(cur.fetchall())
+    finally:
+        conn.close()
+
+
+def count_conversations_for_agent(agent_name: str) -> int:
+    name = (agent_name or "").strip()
+    if not name:
+        return 0
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM conversations
+                WHERE LOWER(agent_name) LIKE LOWER(%s)
+                """,
+                (f"%{name}%",),
+            )
+            row = cur.fetchone()
+            return int(row["total"] if isinstance(row, dict) else row[0])
+    finally:
+        conn.close()
+
+
 def list_conversations_by_agent_names(
     names: list[str],
     *,
