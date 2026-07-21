@@ -18,6 +18,7 @@ if str(WEB_DIR) not in sys.path:
 
 from mysql_store import (
     apply_mysql_env_from_mapping,
+    count_conversations,
     get_conversation,
     get_conversation_messages,
     list_conversations,
@@ -78,22 +79,53 @@ if not _mysql_from_secrets():
 db_name = os.getenv("MYSQL_DATABASE", "test")
 st.info(f"Base active : **{db_name}**")
 
+display_limit = st.number_input(
+    "Nombre de conversations à afficher (plus récentes en premier)",
+    min_value=10,
+    max_value=500,
+    value=100,
+    step=10,
+)
+
 try:
-    rows = list_conversations(limit=100)
+    total = count_conversations()
+    rows = list_conversations(limit=int(display_limit))
 except Exception as exc:
     st.error(f"Impossible de lire TiDB : {exc}")
     st.stop()
 
-if not rows:
+if total == 0:
     st.warning("Aucune conversation enregistrée.")
     st.stop()
 
-st.success(f"**{len(rows)}** conversation(s) trouvée(s)")
+shown = len(rows)
+if shown >= total:
+    st.success(f"**{total}** conversation(s) au total")
+else:
+    st.success(
+        f"**{total}** conversation(s) au total — "
+        f"**{shown}** plus récente(s) affichée(s) ci-dessous"
+    )
+
+agent_filter = st.text_input(
+    "Filtrer par nom d'agent (optionnel)",
+    placeholder="Ex : Alex, Hamza, Isaac, Marc",
+).strip()
+
+filtered_rows = rows
+if agent_filter:
+    needle = agent_filter.lower()
+    filtered_rows = [
+        r for r in rows
+        if needle in str(r.get("agent_name") or "").lower()
+    ]
+    st.caption(f"{len(filtered_rows)} résultat(s) pour « {agent_filter} » sur les {shown} affichées")
 
 table_rows = []
-for r in rows:
+for r in filtered_rows:
     table_rows.append({
         "ID": r["id"],
+        "Agent": r.get("agent_name") or "—",
         "Date": _fmt_dt(r.get("created_at")),
         "Profil": r.get("profile_key"),
         "Niveau": r.get("level_key"),
@@ -102,9 +134,13 @@ for r in rows:
         "Niveau éval": r.get("score_level") or "—",
     })
 
+if not table_rows:
+    st.warning("Aucune conversation ne correspond au filtre.")
+    st.stop()
+
 st.dataframe(table_rows, use_container_width=True, hide_index=True)
 
-ids = [int(r["id"]) for r in rows]
+ids = [int(r["id"]) for r in filtered_rows]
 default_id = ids[0]
 selected = st.selectbox("Voir la transcription de l'appel", ids, index=0, format_func=lambda x: f"Conversation #{x}")
 
@@ -120,9 +156,10 @@ if not conv:
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Score", conv.get("score_total") if conv.get("score_total") is not None else "—")
-c2.metric("Profil", conv.get("profile_key") or "—")
-c3.metric("Niveau", conv.get("level_key") or "—")
-c4.metric("Mode", conv.get("training_mode") or "train_agent")
+c2.metric("Agent", conv.get("agent_name") or "—")
+c3.metric("Profil", conv.get("profile_key") or "—")
+c4.metric("Niveau", conv.get("level_key") or "—")
+st.caption(f"Mode : {conv.get('training_mode') or 'train_agent'}")
 
 st.markdown(f"**Créée le :** {_fmt_dt(conv.get('created_at'))}")
 

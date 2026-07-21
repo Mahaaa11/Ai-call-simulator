@@ -283,6 +283,18 @@ def check_mysql_connection() -> tuple[bool, str]:
         return False, str(exc)
 
 
+def count_conversations() -> int:
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS total FROM conversations")
+            row = cur.fetchone()
+            return int(row["total"] if isinstance(row, dict) else row[0])
+    finally:
+        conn.close()
+
+
 def list_conversations(limit: int = 50) -> list[dict]:
     ensure_schema()
     conn = get_connection()
@@ -290,7 +302,7 @@ def list_conversations(limit: int = 50) -> list[dict]:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, profile_key, level_key, training_mode, model,
+                SELECT id, agent_name, profile_key, level_key, training_mode, model,
                        prospect_first_name, prospect_last_name,
                        score_total, score_level, created_at
                 FROM conversations
@@ -374,3 +386,40 @@ def get_conversation_messages(conversation_id: int) -> list[dict]:
             return list(cur.fetchall())
     finally:
         conn.close()
+
+
+def list_conversations_by_agent_names(
+    names: list[str],
+    *,
+    limit_per_agent: int = 5,
+) -> dict[str, list[dict]]:
+    """Return the most recent conversations for each requested agent name."""
+    cleaned = [n.strip() for n in names if n and n.strip()]
+    if not cleaned:
+        return {}
+
+    ensure_schema()
+    conn = get_connection()
+    result: dict[str, list[dict]] = {}
+    try:
+        with conn.cursor() as cur:
+            for name in cleaned:
+                cur.execute(
+                    """
+                    SELECT id, agent_name, profile_key, level_key, training_mode, model,
+                           prospect_first_name, prospect_last_name,
+                           score_total, score_level, evaluation_json,
+                           started_at, ended_at, created_at
+                    FROM conversations
+                    WHERE LOWER(agent_name) LIKE LOWER(%s)
+                    ORDER BY id DESC
+                    LIMIT %s
+                    """,
+                    (f"%{name}%", limit_per_agent),
+                )
+                rows = list(cur.fetchall())
+                if rows:
+                    result[name] = rows
+    finally:
+        conn.close()
+    return result
