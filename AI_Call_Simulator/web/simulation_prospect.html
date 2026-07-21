@@ -1314,7 +1314,7 @@
                     <p class="hint" id="speechPreview" style="min-height:20px;color:#7dffe8;font-weight:600;"></p>
                 </div>
                 <button type="button" id="talkBtn" disabled>🎤 Parler en tant que prospect</button>
-                <p class="hint" style="text-align:center;">Micro : parlez puis recliquez Envoyer. <strong>Conseil :</strong> si la transcription est incorrecte, corrigez dans le champ texte avant d'envoyer.</p>
+                <p class="hint" style="text-align:center;">Micro : parlez puis recliquez Envoyer. <strong>Corrigez la transcription</strong> dans le champ avant d'envoyer.</p>
                 <label for="textInput">Votre réplique prospect</label>
                 <div class="text-row">
                     <input type="text" id="textInput" placeholder="Ex : Ça ne m'intéresse pas…" disabled>
@@ -1527,6 +1527,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         let callStartedAt = null;
         let isListening = false;
         let speechTranscript = "";
+        let lastRecognitionResults = null;
         let lastConversationId = null;
         let frenchVoice = null;
         const PENDING_EVAL_KEY = "simulator_pending_eval_v2";
@@ -1909,8 +1910,40 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             statusText.className = "status-badge " + cls;
         }
 
+        function escapeHtml(text) {
+            return String(text ?? "")
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function buildSpeechTranscriptFromResults(results) {
+            if (!results || !results.length) return "";
+            const finals = [];
+            let interim = "";
+            for (let i = 0; i < results.length; i++) {
+                const piece = (results[i][0] && results[i][0].transcript) ? results[i][0].transcript.trim() : "";
+                if (!piece) continue;
+                if (results[i].isFinal) finals.push(piece);
+                else interim = piece;
+            }
+            return (finals.join(" ") + (interim ? " " + interim : "")).replace(/\s+/g, " ").trim();
+        }
+
+        function stageSpeechTranscriptForReview(text) {
+            const cleaned = (text || "").replace(/\s+/g, " ").trim();
+            if (!cleaned) return false;
+            if (textInput) {
+                textInput.value = cleaned;
+                textInput.focus();
+                try { textInput.setSelectionRange(cleaned.length, cleaned.length); } catch (_) {}
+            }
+            updateSpeechPreview("");
+            setStatus("Vérifiez la transcription puis cliquez Envoyer", "status-listening");
+            return true;
+        }
+
         function addLog(who, text, cls) {
-            logDiv.insertAdjacentHTML("beforeend", "<div class=\"" + cls + "\"><strong>" + who + " :</strong> " + text + "</div>");
+            logDiv.insertAdjacentHTML("beforeend", "<div class=\"" + cls + "\"><strong>" + escapeHtml(who) + " :</strong> " + escapeHtml(text) + "</div>");
             logDiv.scrollTop = logDiv.scrollHeight;
         }
 
@@ -2106,25 +2139,14 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         function startSpeechListen() {
             if (!recognition) throw new Error("Micro non disponible — utilisez Chrome ou le champ texte");
             speechTranscript = "";
+            lastRecognitionResults = null;
             updateSpeechPreview("");
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.onresult = (e) => {
-                let finalText = "";
-                for (let i = 0; i < e.results.length; i++) {
-                    if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
-                }
-                finalText = finalText.trim();
-                if (finalText) {
-                    speechTranscript = finalText;
-                    updateSpeechPreview(finalText);
-                    return;
-                }
-                const last = e.results[e.results.length - 1];
-                if (last && last[0]) {
-                    speechTranscript = last[0].transcript.trim();
-                    updateSpeechPreview(speechTranscript);
-                }
+                lastRecognitionResults = e.results;
+                speechTranscript = buildSpeechTranscriptFromResults(e.results);
+                if (speechTranscript) updateSpeechPreview(speechTranscript);
             };
             recognition.onerror = (e) => {
                 if (e.error === "aborted") return;
@@ -2151,8 +2173,8 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             recognition.start();
             isListening = true;
             setStatus("🎤 Parlez maintenant…", "status-listening");
-            recordTimer.textContent = "Enregistrement — cliquez Envoyer quand vous avez fini";
-            talkBtn.textContent = "⏹ Envoyer ma réplique";
+            recordTimer.textContent = "Enregistrement — cliquez Arrêter quand vous avez fini";
+            talkBtn.textContent = "⏹ Arrêter — vérifier la transcription";
             talkBtn.style.background = "#dc2626";
         }
 
@@ -2166,6 +2188,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                     recordTimer.textContent = "";
                     talkBtn.textContent = "🎤 Parler en tant que prospect";
                     talkBtn.style.background = "";
+                    if (lastRecognitionResults) {
+                        speechTranscript = buildSpeechTranscriptFromResults(lastRecognitionResults);
+                    }
                     const text = speechTranscript.trim();
                     updateSpeechPreview("");
                     if (text) resolve(text);
@@ -2461,7 +2486,9 @@ ${transcript.slice(0, 2500)}`;
                     startSpeechListen();
                 } else {
                     const userText = await stopSpeechListen();
-                    await sendProspectMessage(userText);
+                    if (!stageSpeechTranscriptForReview(userText)) {
+                        setStatus("Réessayez ou tapez votre réplique", "status-listening");
+                    }
                 }
             } catch (e) {
                 alert(e.message);

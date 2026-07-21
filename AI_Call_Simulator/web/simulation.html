@@ -1287,7 +1287,8 @@
                     <div id="recordTimer"></div>
                 </div>
                 <button type="button" id="talkBtn" disabled>🎤 Cliquer pour parler</button>
-                <p class="hint" style="text-align:center;">Parlez puis recliquez pour envoyer, ou tapez ci-dessous.</p>
+                <p class="hint" style="text-align:center;">Parlez puis recliquez pour arrêter. <strong>Vérifiez la transcription</strong> dans le champ ci-dessous avant d'envoyer.</p>
+                <p class="hint" id="speechPreview" style="min-height:20px;color:var(--lc-teal);font-weight:600;text-align:center;"></p>
                 <label for="textInput">Votre réplique</label>
                 <div class="text-row">
                     <input type="text" id="textInput" placeholder="Ex : Bonjour, je suis…" disabled>
@@ -3069,6 +3070,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         let callActive = false;
         let isListening = false;
         let speechTranscript = "";
+        let lastRecognitionResults = null;
         let prospectPersona = {
             firstName: "Jean", lastName: "Dupont",
             supplier: "EDF", yearsAtSupplier: "plusieurs années",
@@ -5250,7 +5252,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function addLogMessage(sender, text, className) {
             logDiv.insertAdjacentHTML('beforeend',
-                `<div class="${className}"><strong>${sender} :</strong> ${text}</div>`);
+                `<div class="${className}"><strong>${escapeHtml(sender)} :</strong> ${escapeHtml(text)}</div>`);
             logDiv.scrollTop = logDiv.scrollHeight;
             updateLiveCaption(sender, text);
             syncStreamlitFrameHeight();
@@ -6491,21 +6493,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function startSpeechListen() {
             if (!recognition) throw new Error("Micro non disponible — utilisez Chrome ou le champ texte");
             speechTranscript = "";
+            lastRecognitionResults = null;
+            updateSpeechPreview("");
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.onresult = (e) => {
-                let finalText = "";
-                for (let i = 0; i < e.results.length; i++) {
-                    if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
-                }
-                finalText = finalText.trim();
-                if (finalText) {
-                    speechTranscript = finalText;
-                } else {
-                    const last = e.results[e.results.length - 1];
-                    if (last && last[0]) speechTranscript = last[0].transcript.trim();
-                }
+                lastRecognitionResults = e.results;
+                speechTranscript = buildSpeechTranscriptFromResults(e.results);
                 if (isListening && speechTranscript) {
+                    updateSpeechPreview(speechTranscript);
                     updateLiveCaption("Vous", speechTranscript, "listening");
                 }
             };
@@ -6547,7 +6543,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     recordTimer.textContent = "";
                     talkBtn.textContent = "🎤 Cliquer pour parler";
                     talkBtn.style.background = "";
+                    if (lastRecognitionResults) {
+                        speechTranscript = buildSpeechTranscriptFromResults(lastRecognitionResults);
+                    }
                     const text = speechTranscript.trim();
+                    updateSpeechPreview("");
                     if (text) resolve(text);
                     else reject(new Error("Aucune voix détectée — parlez plus fort ou tapez votre réplique"));
                 };
@@ -6560,14 +6560,46 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             });
         }
 
-        function getAgentMessages() {
-            return chatTurns.filter(t => t.role === "user").map(t => t.content);
-        }
-
         function escapeHtml(text) {
             return String(text ?? "")
                 .replace(/&/g, "&amp;").replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function buildSpeechTranscriptFromResults(results) {
+            if (!results || !results.length) return "";
+            const finals = [];
+            let interim = "";
+            for (let i = 0; i < results.length; i++) {
+                const piece = (results[i][0] && results[i][0].transcript) ? results[i][0].transcript.trim() : "";
+                if (!piece) continue;
+                if (results[i].isFinal) finals.push(piece);
+                else interim = piece;
+            }
+            return (finals.join(" ") + (interim ? " " + interim : "")).replace(/\s+/g, " ").trim();
+        }
+
+        function updateSpeechPreview(text) {
+            const el = document.getElementById("speechPreview");
+            if (!el) return;
+            el.textContent = text ? ("🎙️ « " + text + " »") : "";
+        }
+
+        function stageSpeechTranscriptForReview(text) {
+            const cleaned = (text || "").replace(/\s+/g, " ").trim();
+            if (!cleaned) return false;
+            if (textInput) {
+                textInput.value = cleaned;
+                textInput.focus();
+                try { textInput.setSelectionRange(cleaned.length, cleaned.length); } catch (_) {}
+            }
+            updateSpeechPreview("");
+            setStatus("Vérifiez la transcription puis cliquez Envoyer", "status-listening");
+            return true;
+        }
+
+        function getAgentMessages() {
+            return chatTurns.filter(t => t.role === "user").map(t => t.content);
         }
 
         function clampScore(value, max) {
@@ -7157,7 +7189,9 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
                     startSpeechListen();
                 } else {
                     const userText = await stopSpeechListen();
-                    await sendAgentMessage(userText);
+                    if (!stageSpeechTranscriptForReview(userText)) {
+                        setStatus("Réessayez ou tapez votre réplique", "status-listening");
+                    }
                 }
             } catch (e) {
                 alert(e.message);
