@@ -1768,24 +1768,41 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return chatTurns.some(t => t.role === "assistant" && /\b(facture|montant|combien payez|€|euro)\b/i.test(t.content));
         }
 
+        function prospectTextNorm(text) {
+            return normalizeReply(text);
+        }
+
+        function prospectRefuses(text) {
+            const t = prospectTextNorm(text);
+            return /interesse pas|pas interesse|ca m interesse pas|m interesse pas/i.test(t)
+                || /arret\w*\s*(de\s+)?m?\s*appel/i.test(t)
+                || /appelez plus|ne m appelez|stoppez|stop /i.test(t)
+                || /laissez moi|laisse moi|je vais rien|raccroch/i.test(t)
+                || /comprends pas.*interesse|pourquoi vous m appelez/i.test(t);
+        }
+
         function prospectIsHostile(text) {
-            const t = (text || "").toLowerCase();
-            return /arnaque|escroc|fraude|voleur|pipeau|harcelement|harcèlement|milliers d'appel|spam|insupportable|plainte|avocat|bloctel/i.test(t)
-                || /laissez.?moi tranquille|laisse moi tranquille|laissez-moi tranquille|arrêtez.*appel|arretez.*appel|raccroch|je vais rien|dégage|degage|fermez.?la|taisez/i.test(t);
+            const t = prospectTextNorm(text);
+            return prospectRefuses(text)
+                || /arnaque|escroc|fraude|voleur|pipeau|harcelement|milliers d appel|spam|insupportable|plainte|avocat|bloctel|arnaqueur/i.test(t)
+                || /foutez moi la paix|taisez|degage|fermez la/i.test(t);
         }
 
         function prospectWantsToLeave(text) {
-            const t = (text || "").toLowerCase();
-            return /laissez.?moi|laisse moi|laissez-moi|je vais rien|raccroch|arrêtez.*appel|arretez.*appel|ne m'appelez plus|perdez.*temps|foutez.?moi la paix|taisez/i.test(t);
+            const t = prospectTextNorm(text);
+            return /laissez moi|laisse moi|je vais rien|raccroch/i.test(t)
+                || /arret\w*\s*(de\s+)?m?\s*appel/i.test(t)
+                || /appelez plus|ne m appelez|perdez.*temps|foutez moi la paix|taisez/i.test(t)
+                || (/interesse pas|pas interesse/i.test(t) && /arret\w*|appelez|comprends pas/i.test(t));
         }
 
         function prospectAccusesScam(text) {
-            const t = (text || "").toLowerCase();
-            return /arnaque|escroc|fraude|voleur|pipeau|milliers d'appel|spam|arnaqueur/i.test(t);
+            const t = prospectTextNorm(text);
+            return /arnaque|escroc|fraude|voleur|pipeau|milliers d appel|spam|arnaqueur/i.test(t);
         }
 
         function isAgentIgnoringObjection(reply, prospectText) {
-            if (!prospectIsHostile(prospectText)) return false;
+            if (!prospectRefuses(prospectText) && !prospectIsHostile(prospectText)) return false;
             const r = (reply || "").toLowerCase();
             return /pour avancer|chez quel fournisseur|combien payez|depuis combien|montant mensuel|facture d'électricité|point de livraison|pdl/i.test(r);
         }
@@ -1895,64 +1912,71 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         function countProspectObjections() {
             return prospectUserTurns().filter(t =>
-                prospectIsHostile(t) || /intéresse pas|pas intéress|occupé|pressé|rgpd|numéro|données|fournisseur|changer|iban|confiance/i.test(t)
+                prospectRefuses(t) || prospectIsHostile(t) || /occupe|presse|rgpd|numero|donnees|fournisseur|changer|iban|confiance/i.test(prospectTextNorm(t))
             ).length;
         }
 
         function agentOfferedLeaveChoice() {
-            return chatTurns.some(t => t.role === "assistant" && /laisse tranquille|qu'est-ce que vous préférez|soit on regarde/i.test(t.content));
+            return chatTurns.some(t => t.role === "assistant" && /on regarde en deux minutes|qu est-ce que vous preferez|laisse tranquille|soit on regarde/i.test(prospectTextNorm(t.content)));
         }
 
         function resolveRuleBasedAgentReply(prospectText) {
             const raw = (prospectText || "").trim();
-            const t = normalizeReply(raw);
+            const t = prospectTextNorm(raw);
             if (!t) return null;
             const objectionCount = countProspectObjections();
+            const refusesNow = prospectRefuses(raw);
             const hostileNow = prospectIsHostile(raw);
 
-            if (prospectWantsToLeave(raw) || (hostileNow && objectionCount >= 2)) {
+            if (prospectWantsToLeave(raw) || (refusesNow && objectionCount >= 2)) {
                 return "Compris, je m'excuse pour le dérangement. Je vous laisse tranquille — bonne journée à vous.";
             }
             if (prospectAccusesScam(raw)) {
-                if (agentOfferedLeaveChoice()) {
+                if (agentOfferedLeaveChoice() || objectionCount >= 2) {
                     return "Je comprends votre méfiance. Je ne vous dérange pas plus — bonne journée à vous.";
                 }
                 return "Je comprends tout à fait, beaucoup d'appels sont abusifs en ce moment. Ogenies est un comparateur indépendant : c'est gratuit, sans engagement, et on ne demande aucun paiement au téléphone. Si vous préférez, je vous laisse tranquille.";
             }
-            if (hostileNow) {
+            if (hostileNow && !refusesNow) {
                 return "Je comprends que ces appels soient agaçants. Je m'excuse pour le dérangement — bonne journée à vous.";
             }
-            if (/intéresse pas|pas intéress|accroch|arrêtez d'appel|arretez d'appel/i.test(t)) {
-                if (agentOfferedLeaveChoice() || objectionCount >= 2) {
+            if (/interesse pas|pas interesse|ca m interesse pas|m interesse pas/i.test(t)) {
+                if (agentOfferedLeaveChoice() || objectionCount >= 2 || /arret\w*\s*(de\s+)?m?\s*appel|appelez|comprends pas/i.test(t)) {
                     return "Compris. Je ne vous dérange pas plus — bonne journée à vous.";
                 }
                 return "Je comprends. Ce n'est pas une vente forcée : on vérifie simplement si vous payez le bon tarif, gratuitement et sans engagement. Vous préférez qu'on regarde en deux minutes ou que je vous laisse tranquille ?";
             }
-            if (/raccroch|répète|même question|encore la même|harcelement|harcèlement|milliers d'appel/i.test(t)) {
+            if (/arret\w*\s*(de\s+)?m?\s*appel|appelez plus|ne m appelez/i.test(t)) {
+                if (agentOfferedLeaveChoice() || objectionCount >= 2) {
+                    return "Compris, je m'excuse. Je vous laisse tranquille — bonne journée.";
+                }
+                return "Je comprends tout à fait. Ce n'est pas une vente forcée — juste une vérification gratuite de votre tarif. Vous préférez que je vous laisse tranquille ?";
+            }
+            if (/raccroch|repète|meme question|encore la meme|harcelement|milliers d appel/i.test(t)) {
                 return "Compris, je m'excuse. Je vous laisse tranquille — bonne journée.";
             }
-            if (/pourquoi.*(demand|question|info|numéro|donn|dire|mention)|c'est quoi l'intérêt|droit.*savoir/i.test(t)) {
+            if (/pourquoi.*(demand|question|info|numero|donn|dire|mention)|c est quoi l interet|droit.*savoir/i.test(t)) {
                 return "Bonne question : c'est uniquement pour comparer votre tarif au marché et voir si vous payez trop cher — rien n'est obligatoire.";
             }
-            if (/qui (êtes|etes)|vous êtes qui|d'?où.*nom|comment.*nom|comment.*numéro|comment.*données|rgpd|données|protég/i.test(t)) {
+            if (/qui (etes|êtes)|vous etes qui|d ou.*nom|comment.*nom|comment.*numero|comment.*donnees|rgpd|donnees|proteg/i.test(t)) {
                 return "Je suis Émilie, conseillère Ogenies. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures, sans engagement.";
             }
-            if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
+            if (/pourquoi.*appel|pourquoi vous m appelez|c est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
                 return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas une vente forcée, c'est gratuit et sans engagement.";
             }
             if (/veux pas dire|pas envie.*donner|pas vous donner|confidentiel|secret/i.test(t)) {
                 return "Je respecte ça. Sans ces infos je ne peux pas chiffrer d'économies — je peux vous envoyer un lien par mail, ou on s'arrête là si vous préférez.";
             }
-            if (/pas le temps|occupé|pressé|faites vite|faites court/i.test(t)) {
+            if (/pas le temps|occupe|presse|faites vite|faites court/i.test(t)) {
                 return "Je serai très brève. Chez quel fournisseur êtes-vous pour l'électricité ?";
             }
-            if (/ne veux pas changer|pas envie de chang|satisfait|fournisseur|changer de fourn/i.test(t)) {
+            if (/ne veux pas changer|pas envie de chang|satisfait|changer de fourn/i.test(t)) {
                 return "Je comprends, on ne vous oblige à rien. On vérifie juste si votre offre actuelle est encore compétitive — chez quel fournisseur êtes-vous aujourd'hui ?";
             }
-            if (/iban|rib|coordonnées banc|compte banc/i.test(t)) {
+            if (/iban|rib|coordonnees banc|compte banc/i.test(t)) {
                 return "Le RIB sert uniquement au mandat SEPA si vous acceptez une offre — rétractation 14 jours, aucun prélèvement sans votre accord explicite.";
             }
-            if (/gratuit|sans engagement|14 jours|rétractation|comparatif/i.test(t) && /\?/.test(raw)) {
+            if (/gratuit|sans engagement|14 jours|retractation|comparatif/i.test(t) && /\?/.test(raw)) {
                 return "Oui, le comparatif est gratuit et sans engagement, avec 14 jours de rétractation. On ne change rien sans votre accord.";
             }
             if (prospectMentionedBill()) {
@@ -1962,15 +1986,19 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 const msg = "Parfait, merci. Depuis combien de temps êtes-vous chez eux, et à peu près combien payez-vous par mois sur votre facture d'électricité ?";
                 return agentAlreadySaid(msg) ? "D'accord. Et le montant mensuel de votre facture, à peu près, c'est combien ?" : msg;
             }
-            if (/^oui|^ok|^d'accord|^allez|^vas-y|^bonjour/i.test(t) && t.length < 40) {
+            if (/^oui|^ok|^d accord|^allez|^vas y|^bonjour/i.test(t) && t.length < 40) {
                 return "Super, merci. Chez quel fournisseur êtes-vous actuellement pour l'électricité ?";
             }
             return null;
         }
 
         function getAgentFallbackReply(prospectText) {
-            return resolveRuleBasedAgentReply(prospectText)
-                || "D'accord. Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
+            const ruled = resolveRuleBasedAgentReply(prospectText);
+            if (ruled) return ruled;
+            if (prospectRefuses(prospectText) || countProspectObjections() > 0) {
+                return "Compris. Je ne vous dérange pas plus — bonne journée à vous.";
+            }
+            return "D'accord. Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
         }
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
