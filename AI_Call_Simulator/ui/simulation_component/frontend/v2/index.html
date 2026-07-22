@@ -1556,12 +1556,13 @@ GESTION OBJECTIONS — réponds directement au téléphone en français (empathi
 - Ne veut pas changer : précise qu'on ne force rien, on vérifie le juste prix.
 - D'où mon numéro : appels non nominatifs, étude tarifaire, données protégées RGPD.
 - IBAN : mandat SEPA, rétractation 14 jours, uniquement si accord.
-- Arnaque / escroc / fraude : RECONNAIS la méfiance, rassure (comparateur indépendant, gratuit, sans engagement, aucun paiement au téléphone). INTERDIT de demander fournisseur ou facture tant que cette objection n'est pas apaisée.
-- « Laissez-moi tranquille » / raccroche / milliers d'appels : EXCUSE-TOI, respecte le refus, souhaite bonne journée. INTERDIT « Pour avancer » et INTERDIT questions découverte.
+- Arnaque / escroc / fraude : RECONNAIS la méfiance, rassure (comparateur indépendant, gratuit, sans engagement, aucun paiement). Reformule la valeur. Ne demande PAS fournisseur/facture tant que la méfiance n'est pas levée.
+- « Arrêtez de m'appeler » / pas intéressé : TRAITE l'objection (empathie + valeur + comparatif gratuit). Insiste 2 à 3 fois avec des formulations différentes avant d'envisager une clôture.
+- Clôture polie (« bonne journée ») : UNIQUEMENT après 3 refus ou si le prospect dit clairement qu'il raccroche après tes tentatives.
 
 RÈGLE PRIORITÉ OBJECTION :
-- Si le prospect accuse d'arnaque OU demande à être laissé tranquille, tu NE poses PAS de question sur le fournisseur ou la facture.
-- Tu réponds d'abord à ce qu'il vient de dire, avec empathie. La découverte attend.
+- Quand le prospect objecte, tu TRAITES l'objection d'abord (empathie + argument), tu ne passes PAS directement à « chez quel fournisseur ».
+- Tu ne dis PAS « je vous laisse tranquille » dès la première objection — tu défends l'intérêt de la vérification gratuite.
 
 RÈGLES FORMAT (OBLIGATOIRE) :
 - UNIQUEMENT les paroles orales d'Émilie au téléphone, en FRANÇAIS.
@@ -1850,16 +1851,83 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return /pour avancer|chez quel fournisseur|combien payez|depuis combien|montant mensuel|facture d'électricité|point de livraison|pdl/i.test(r);
         }
 
+        function countAgentObjectionResponses() {
+            return chatTurns.filter(t => t.role === "assistant" && /comprends|pas une vente|gratuit|sans engagement|comparateur|verif|deux minutes|oblige/i.test(prospectTextNorm(t.content))).length;
+        }
+
+        function shouldCloseAfterObjections() {
+            const objCount = countProspectObjections();
+            const attempts = countAgentObjectionResponses();
+            const level = getLevel();
+            const minObj = level === "avance" ? 4 : level === "intermediaire" ? 3 : 3;
+            return objCount >= minObj && attempts >= 2;
+        }
+
+        function prospectExplicitHangUp(text) {
+            const t = prospectTextNorm(text);
+            return /je raccroch|raccroche maintenant|j raccroch|je quitte|je pose/i.test(t);
+        }
+
+        function pickUnusedReply(candidates) {
+            for (const msg of candidates) {
+                if (!agentAlreadySaid(msg)) return msg;
+            }
+            return candidates[candidates.length - 1];
+        }
+
+        function getObjectionHandlingReply(prospectText) {
+            const t = prospectTextNorm(prospectText);
+            const attempts = countAgentObjectionResponses();
+
+            if (shouldCloseAfterObjections() || (prospectExplicitHangUp(prospectText) && attempts >= 1)) {
+                return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
+            }
+
+            if (prospectAccusesScam(prospectText)) {
+                return pickUnusedReply([
+                    "Je comprends tout à fait votre méfiance, il y a beaucoup d'appels abusifs. Ogenies est un comparateur indépendant : c'est gratuit, sans engagement, et on ne demande aucun paiement au téléphone.",
+                    "Je vous assure, ce n'est pas une arnaque : on vérifie simplement si votre tarif électricité est encore compétitif. Gratuit, sans engagement, vous décidez ensuite.",
+                    "Votre méfiance est légitime. Nous sommes un comparateur agréé — la vérification ne vous engage à rien et ne coûte rien."
+                ]);
+            }
+
+            if (/arret\w*\s*(de\s+)?m?\s*appel|appelez plus|ne m appelez|milliers d appel|harcelement/i.test(t)) {
+                return pickUnusedReply([
+                    "Je comprends, vous recevez beaucoup d'appels. Je serai très brève : c'est une vérification gratuite de votre tarif électricité, sans engagement — deux minutes, c'est possible ?",
+                    "Je vous entends. Ce n'est pas pour vous vendre quelque chose : on compare les tarifs du marché pour voir si vous payez trop cher. Rien n'est obligatoire.",
+                    "Tout à fait, je serai rapide. L'objectif c'est juste de vérifier si votre facture est au bon prix — gratuit et sans engagement."
+                ]);
+            }
+
+            if (/interesse pas|pas interesse|ca m interesse pas|m interesse pas/i.test(t)) {
+                return pickUnusedReply([
+                    "Je comprends. Ce n'est pas une vente forcée : on vérifie simplement si vous payez le bon tarif, gratuitement et sans engagement. Vous m'accordez deux minutes ?",
+                    "Je vous assure, on ne change rien sans votre accord. C'est une simple vérification — beaucoup de clients découvrent qu'ils payaient trop cher sans le savoir.",
+                    "D'accord. Juste pour info : la vérification est gratuite et sans engagement. Si votre tarif actuel est déjà le meilleur, on vous le dit — ça vaut le coup de regarder ?"
+                ]);
+            }
+
+            if (/laissez moi|laisse moi|foutez moi la paix|taisez|degage/i.test(t)) {
+                return pickUnusedReply([
+                    "Je comprends votre agacement. Promis, deux minutes maximum pour voir si vous pourriez économiser sur votre électricité — gratuit et sans engagement.",
+                    "Je m'excuse pour le dérangement. Avant de vous laisser, est-ce que je peux juste vous expliquer en une minute de quoi il s'agit ? C'est une vérification tarifaire, pas une vente."
+                ]);
+            }
+
+            if (/raccroch|repète|meme question|encore la meme/i.test(t)) {
+                return pickUnusedReply([
+                    "Vous avez raison, je vais être directe : soit on regarde en deux minutes si vous pouvez économiser, soit je vous rappelle un autre moment — qu'est-ce que vous préférez ?",
+                    "Compris. Je reformule autrement : gratuit, sans engagement, on vérifie si vous payez le juste prix. On tente les deux minutes ?"
+                ]);
+            }
+
+            return null;
+        }
+
         function getDiscoveryStageHint() {
             const last = lastProspectText();
-            if (prospectWantsToLeave(last)) {
-                return "REFUS EXPLICITE : excuse-toi brièvement et souhaite bonne journée. Ne pose AUCUNE question découverte.";
-            }
-            if (prospectAccusesScam(last)) {
-                return "OBJECTION ARNAQUE : reconnais la méfiance, rassure (comparateur indépendant, gratuit, sans engagement, aucun paiement). Ne demande PAS fournisseur ni facture.";
-            }
-            if (prospectIsHostile(last)) {
-                return "PROSPECT HOSTILE : empathie d'abord, pas de question découverte tant qu'il est agacé.";
+            if (prospectRefuses(last) || prospectIsHostile(last)) {
+                return "TRAITE l'objection : empathie + valeur (gratuit, sans engagement, comparateur). Ne demande PAS fournisseur/facture tant que le prospect n'est pas apaisé. Ne dis pas « je vous laisse tranquille » tout de suite.";
             }
             if (prospectMentionedBill()) {
                 return "Le prospect a donné un fournisseur et un montant : propose le comparatif gratuit et sans engagement.";
@@ -1967,37 +2035,10 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const raw = (prospectText || "").trim();
             const t = prospectTextNorm(raw);
             if (!t) return null;
-            const objectionCount = countProspectObjections();
-            const refusesNow = prospectRefuses(raw);
-            const hostileNow = prospectIsHostile(raw);
 
-            if (prospectWantsToLeave(raw) || (refusesNow && objectionCount >= 2)) {
-                return "Compris, je m'excuse pour le dérangement. Je vous laisse tranquille — bonne journée à vous.";
-            }
-            if (prospectAccusesScam(raw)) {
-                if (agentOfferedLeaveChoice() || objectionCount >= 2) {
-                    return "Je comprends votre méfiance. Je ne vous dérange pas plus — bonne journée à vous.";
-                }
-                return "Je comprends tout à fait, beaucoup d'appels sont abusifs en ce moment. Ogenies est un comparateur indépendant : c'est gratuit, sans engagement, et on ne demande aucun paiement au téléphone. Si vous préférez, je vous laisse tranquille.";
-            }
-            if (hostileNow && !refusesNow) {
-                return "Je comprends que ces appels soient agaçants. Je m'excuse pour le dérangement — bonne journée à vous.";
-            }
-            if (/interesse pas|pas interesse|ca m interesse pas|m interesse pas/i.test(t)) {
-                if (agentOfferedLeaveChoice() || objectionCount >= 2 || /arret\w*\s*(de\s+)?m?\s*appel|appelez|comprends pas/i.test(t)) {
-                    return "Compris. Je ne vous dérange pas plus — bonne journée à vous.";
-                }
-                return "Je comprends. Ce n'est pas une vente forcée : on vérifie simplement si vous payez le bon tarif, gratuitement et sans engagement. Vous préférez qu'on regarde en deux minutes ou que je vous laisse tranquille ?";
-            }
-            if (/arret\w*\s*(de\s+)?m?\s*appel|appelez plus|ne m appelez/i.test(t)) {
-                if (agentOfferedLeaveChoice() || objectionCount >= 2) {
-                    return "Compris, je m'excuse. Je vous laisse tranquille — bonne journée.";
-                }
-                return "Je comprends tout à fait. Ce n'est pas une vente forcée — juste une vérification gratuite de votre tarif. Vous préférez que je vous laisse tranquille ?";
-            }
-            if (/raccroch|repète|meme question|encore la meme|harcelement|milliers d appel/i.test(t)) {
-                return "Compris, je m'excuse. Je vous laisse tranquille — bonne journée.";
-            }
+            const objectionReply = getObjectionHandlingReply(raw);
+            if (objectionReply) return objectionReply;
+
             if (/pourquoi.*(demand|question|info|numero|donn|dire|mention)|c est quoi l interet|droit.*savoir/i.test(t)) {
                 return "Bonne question : c'est uniquement pour comparer votre tarif au marché et voir si vous payez trop cher — rien n'est obligatoire.";
             }
@@ -2038,9 +2079,8 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         function getAgentFallbackReply(prospectText) {
             const ruled = resolveRuleBasedAgentReply(prospectText);
             if (ruled) return ruled;
-            if (prospectRefuses(prospectText) || countProspectObjections() > 0) {
-                return "Compris. Je ne vous dérange pas plus — bonne journée à vous.";
-            }
+            const objectionReply = getObjectionHandlingReply(prospectText);
+            if (objectionReply) return objectionReply;
             return "D'accord. Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
         }
 
