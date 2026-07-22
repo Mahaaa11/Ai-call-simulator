@@ -1353,6 +1353,7 @@
 
     </div>
 
+    <script src="assets/agent_call_structure.js"></script>
     <script>
     (function () {
         const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
@@ -1684,10 +1685,39 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         document.getElementById("levelSelect").addEventListener("change", updateHints);
         updateHints();
 
+        function formatRealAgentCallStructureBlock() {
+            const data = window.AGENT_CALL_STRUCTURE;
+            if (!data || !data.structure || !Array.isArray(data.structure.phases)) return "";
+
+            const calls = (data.calls || []).map(function (c) {
+                const short = String(c.id || "").split("_AGT_")[0].replace(/_/g, " ").trim();
+                const min = Math.round((c.duration_sec || 0) / 60);
+                return "- " + short + " (~" + min + " min, " + (c.agent_turn_count || "?") + " répliques agent)";
+            }).join("\n");
+
+            const phases = data.structure.phases.map(function (phase) {
+                const examples = (phase.examples || []).slice(0, 4)
+                    .map(function (ex) { return '  • "' + String(ex).replace(/"/g, "'") + '"'; })
+                    .join("\n");
+                return phase.label + " :\n" + examples;
+            }).join("\n\n");
+
+            return "\n\nSTRUCTURE D'APPEL RÉEL (transcriptions ABDELLI, ADEMARD, AHMED — enregistrements Ogenies) :"
+                + "\nAppels analysés :\n" + calls
+                + "\n\nProgression à suivre (accroche → découverte → comparatif → argumentation → closing / objections) :"
+                + "\n" + phases
+                + "\n\nConsignes style réel :"
+                + "\n- Inspire-toi du ton, du rythme et des formulations de ces appels, sans copier mot pour mot."
+                + "\n- Pose des questions en découverte ; n'invente jamais les réponses du prospect."
+                + "\n- Avance vers le comparatif et la proposition seulement quand la découverte le permet."
+                + "\n- Gère les objections avec empathie puis relance vers la vérification tarifaire.";
+        }
+
         function buildSystemPrompt() {
             const p = PROFILES[getProfile()];
             const s = callScenario;
             return AGENT_SCRIPT
+                + formatRealAgentCallStructureBlock()
                 + "\n\nPROFIL DU PROSPECT (joué par l'humain) : " + p.label
                 + "\n" + p.agentContext
                 + "\nNIVEAU DE RÉSISTANCE : " + getLevel()
