@@ -1776,12 +1776,12 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         function prospectWantsToLeave(text) {
             const t = (text || "").toLowerCase();
-            return /laissez.?moi tranquille|laisse moi tranquille|laissez-moi tranquille|je vais rien|raccroch|arrêtez.*appel|arretez.*appel|ne m'appelez plus|perdez.*temps/i.test(t);
+            return /laissez.?moi|laisse moi|laissez-moi|je vais rien|raccroch|arrêtez.*appel|arretez.*appel|ne m'appelez plus|perdez.*temps|foutez.?moi la paix|taisez/i.test(t);
         }
 
         function prospectAccusesScam(text) {
             const t = (text || "").toLowerCase();
-            return /arnaque|escroc|fraude|voleur|pill|milliers d'appel|spam/i.test(t);
+            return /arnaque|escroc|fraude|voleur|pipeau|milliers d'appel|spam|arnaqueur/i.test(t);
         }
 
         function isAgentIgnoringObjection(reply, prospectText) {
@@ -1893,82 +1893,94 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             });
         }
 
-        function getAgentFallbackReply(prospectText) {
-            const t = (prospectText || "").toLowerCase();
+        function countProspectObjections() {
+            return prospectUserTurns().filter(t =>
+                prospectIsHostile(t) || /intéresse pas|pas intéress|occupé|pressé|rgpd|numéro|données|fournisseur|changer|iban|confiance/i.test(t)
+            ).length;
+        }
 
+        function agentOfferedLeaveChoice() {
+            return chatTurns.some(t => t.role === "assistant" && /laisse tranquille|qu'est-ce que vous préférez|soit on regarde/i.test(t.content));
+        }
+
+        function resolveRuleBasedAgentReply(prospectText) {
+            const raw = (prospectText || "").trim();
+            const t = normalizeReply(raw);
+            if (!t) return null;
+            const objectionCount = countProspectObjections();
+            const hostileNow = prospectIsHostile(raw);
+
+            if (prospectWantsToLeave(raw) || (hostileNow && objectionCount >= 2)) {
+                return "Compris, je m'excuse pour le dérangement. Je vous laisse tranquille — bonne journée à vous.";
+            }
+            if (prospectAccusesScam(raw)) {
+                if (agentOfferedLeaveChoice()) {
+                    return "Je comprends votre méfiance. Je ne vous dérange pas plus — bonne journée à vous.";
+                }
+                return "Je comprends tout à fait, beaucoup d'appels sont abusifs en ce moment. Ogenies est un comparateur indépendant : c'est gratuit, sans engagement, et on ne demande aucun paiement au téléphone. Si vous préférez, je vous laisse tranquille.";
+            }
+            if (hostileNow) {
+                return "Je comprends que ces appels soient agaçants. Je m'excuse pour le dérangement — bonne journée à vous.";
+            }
+            if (/intéresse pas|pas intéress|accroch|arrêtez d'appel|arretez d'appel/i.test(t)) {
+                if (agentOfferedLeaveChoice() || objectionCount >= 2) {
+                    return "Compris. Je ne vous dérange pas plus — bonne journée à vous.";
+                }
+                return "Je comprends. Ce n'est pas une vente forcée : on vérifie simplement si vous payez le bon tarif, gratuitement et sans engagement. Vous préférez qu'on regarde en deux minutes ou que je vous laisse tranquille ?";
+            }
+            if (/raccroch|répète|même question|encore la même|harcelement|harcèlement|milliers d'appel/i.test(t)) {
+                return "Compris, je m'excuse. Je vous laisse tranquille — bonne journée.";
+            }
+            if (/pourquoi.*(demand|question|info|numéro|donn|dire|mention)|c'est quoi l'intérêt|droit.*savoir/i.test(t)) {
+                return "Bonne question : c'est uniquement pour comparer votre tarif au marché et voir si vous payez trop cher — rien n'est obligatoire.";
+            }
+            if (/qui (êtes|etes)|vous êtes qui|d'?où.*nom|comment.*nom|comment.*numéro|comment.*données|rgpd|données|protég/i.test(t)) {
+                return "Je suis Émilie, conseillère Ogenies. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures, sans engagement.";
+            }
+            if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
+                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas une vente forcée, c'est gratuit et sans engagement.";
+            }
+            if (/veux pas dire|pas envie.*donner|pas vous donner|confidentiel|secret/i.test(t)) {
+                return "Je respecte ça. Sans ces infos je ne peux pas chiffrer d'économies — je peux vous envoyer un lien par mail, ou on s'arrête là si vous préférez.";
+            }
+            if (/pas le temps|occupé|pressé|faites vite|faites court/i.test(t)) {
+                return "Je serai très brève. Chez quel fournisseur êtes-vous pour l'électricité ?";
+            }
+            if (/ne veux pas changer|pas envie de chang|satisfait|fournisseur|changer de fourn/i.test(t)) {
+                return "Je comprends, on ne vous oblige à rien. On vérifie juste si votre offre actuelle est encore compétitive — chez quel fournisseur êtes-vous aujourd'hui ?";
+            }
+            if (/iban|rib|coordonnées banc|compte banc/i.test(t)) {
+                return "Le RIB sert uniquement au mandat SEPA si vous acceptez une offre — rétractation 14 jours, aucun prélèvement sans votre accord explicite.";
+            }
+            if (/gratuit|sans engagement|14 jours|rétractation|comparatif/i.test(t) && /\?/.test(raw)) {
+                return "Oui, le comparatif est gratuit et sans engagement, avec 14 jours de rétractation. On ne change rien sans votre accord.";
+            }
             if (prospectMentionedBill()) {
-                return "Merci, c'est noté. Avec ces informations je peux lancer une vérification gratuite et sans engagement pour voir si vous pourriez payer moins — est-ce que ça vous convient ?";
+                return "Merci, c'est noté. Je peux lancer une vérification gratuite et sans engagement pour voir si vous pourriez payer moins — est-ce que ça vous convient ?";
             }
             if (prospectMentionedSupplier() || /\b(edf|engie|total|vattenfall|ekwateur)\b/i.test(t)) {
                 const msg = "Parfait, merci. Depuis combien de temps êtes-vous chez eux, et à peu près combien payez-vous par mois sur votre facture d'électricité ?";
                 return agentAlreadySaid(msg) ? "D'accord. Et le montant mensuel de votre facture, à peu près, c'est combien ?" : msg;
             }
-            if (/pourquoi.*(demand|question|info|numéro|donn|dire|mention)|c'est quoi l'intérêt|droit.*savoir/i.test(t)) {
-                return "Bonne question : c'est uniquement pour comparer votre tarif actuel au marché et voir si vous payez trop cher — rien n'est obligatoire. On peut rester sur le fournisseur seulement si vous préférez.";
-            }
-            if (/qui (êtes|etes)|vous êtes qui|d'?où.*nom|comment.*nom|comment.*numéro|comment.*données|rgpd|données|protég/i.test(t)) {
-                return "Je comprends. Je suis Émilie, conseillère Ogenies. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures, sans engagement.";
-            }
-            if (/pourquoi.*appel|pourquoi vous m'appelez|c'est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
-                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas une vente forcée, c'est gratuit et sans engagement.";
-            }
-            if (/intéresse pas|pas intéress|accroch|arrête|raccroch|répète|même question|encore la même/i.test(t)) {
-                const msg = "Vous avez raison, je vais être directe : soit on regarde en deux minutes si vous pouvez économiser, soit je vous laisse tranquille — qu'est-ce que vous préférez ?";
-                return agentAlreadySaid(msg) ? "Compris. Je ne vous dérange pas plus longtemps — bonne journée à vous." : msg;
-            }
-            if (prospectWantsToLeave(t) || prospectWantsToLeave(prospectText)) {
-                return "Compris, je m'excuse pour le dérangement. Je vous laisse tranquille — bonne journée à vous.";
-            }
-            if (prospectAccusesScam(t) || prospectAccusesScam(prospectText)) {
-                const msg = "Je comprends tout à fait votre méfiance, il y a beaucoup d'appels abusifs en ce moment. Ogenies est un comparateur indépendant : la vérification est gratuite, sans engagement, et on ne demande aucun paiement au téléphone. Si vous préférez, je vous laisse tranquille.";
-                return agentAlreadySaid(msg) ? "D'accord, je ne vous dérange pas plus. Bonne journée à vous." : msg;
-            }
-            if (prospectIsHostile(t) || prospectIsHostile(prospectText)) {
-                return "Je comprends que ces appels soient agaçants. Je m'excuse pour le dérangement — je vous souhaite une bonne journée.";
-            }
-            if (/veux pas dire|pas envie|donner.*info|pas vous donner|confidentiel|secret/i.test(t)) {
-                return "Je respecte ça. Sans ces infos je ne peux pas chiffrer d'économies — je peux vous envoyer un lien par mail pour le faire quand vous voulez, ou on s'arrête là si vous préférez.";
-            }
-            if (/pas le temps|occupé|pressé|faites vite/i.test(t)) {
-                return "Je comprends, je serai très brève. Juste une question : chez quel fournisseur êtes-vous pour l'électricité ?";
-            }
-            if (/fournisseur|changer|satisfait/i.test(t)) {
-                return "Je comprends, on ne vous oblige à rien. On vérifie simplement si votre offre actuelle est encore compétitive — chez quel fournisseur êtes-vous aujourd'hui ?";
-            }
-            if (/^oui|^ok|^d'accord|^allez|^vas|^sky|^bonjour/i.test(t.trim()) && t.length < 40) {
+            if (/^oui|^ok|^d'accord|^allez|^vas-y|^bonjour/i.test(t) && t.length < 40) {
                 return "Super, merci. Chez quel fournisseur êtes-vous actuellement pour l'électricité ?";
             }
-            const generic = "Pour avancer : chez quel fournisseur êtes-vous actuellement pour l'électricité, et à peu près combien payez-vous par mois ?";
-            if (agentAlreadySaid(generic)) {
-                return "Je reformule autrement : sans engagement, je peux vérifier si votre contrat électricité est encore au bon prix — voulez-vous qu'on regarde ou pas du tout ?";
-            }
-            return generic;
+            return null;
+        }
+
+        function getAgentFallbackReply(prospectText) {
+            return resolveRuleBasedAgentReply(prospectText)
+                || "D'accord. Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
         }
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
-            let out = (reply || "").trim();
-            const t = (prospectText || "").toLowerCase();
+            const out = (reply || "").trim();
             if (!out) return getAgentFallbackReply(prospectText);
-
             if (isAgentIgnoringObjection(out, prospectText)) {
                 return getAgentFallbackReply(prospectText);
             }
-
-            if (prospectMentionedBill() && !/merci|comparatif|vérification|économ|€|euro|noté/i.test(out)) {
-                return getAgentFallbackReply(prospectText);
-            }
-            if ((/intéresse pas|répète|même question|veux pas dire|pourquoi.*demand|arnaque|escroc|fraude|laissez.*tranquille|laisse moi|raccroch|milliers d'appel/i.test(t))
-                && /pour avancer|chez quel fournisseur|combien payez/i.test(out)) {
-                return getAgentFallbackReply(prospectText);
-            }
-            if (/intéresse pas|répète|même question|veux pas dire|pourquoi.*demand/i.test(t)
-                && /pour avancer|chez quel fournisseur|combien payez/i.test(out)
-                && agentAlreadySaid(out.slice(0, 40))) {
-                return getAgentFallbackReply(prospectText);
-            }
-            if (out.length < 25 && !/\?/.test(out)) {
-                return getAgentFallbackReply(prospectText);
-            }
+            const ruled = resolveRuleBasedAgentReply(prospectText);
+            if (ruled && isAgentIgnoringObjection(out, prospectText)) return ruled;
             return out;
         }
 
@@ -2190,57 +2202,38 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         }
 
         async function callAgentLLM(apiKey, extra) {
+            const prospectLine = lastProspectText();
+
+            const ruled = resolveRuleBasedAgentReply(prospectLine);
+            if (ruled) return ruled;
+
             const model = getModel();
             const turnMessages = buildAgentTurnMessages();
-            const prospectLine = lastProspectText();
-            const recentTranscript = chatTurns.slice(-6).map(t =>
-                (t.role === "assistant" ? "AGENT" : "PROSPECT") + ": " + t.content
-            ).join("\n");
             const turnHint = prospectLine
                 ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
-                    + (prospectIsHostile(prospectLine)
-                        ? "\n⚠️ OBJECTION PRIORITAIRE — réponds à l'accusation ou au refus AVANT toute question découverte. Interdit « Pour avancer »."
-                        : "")
                     + "\nÉTAPE : " + getDiscoveryStageHint()
-                    + "\nRéponds DIRECTEMENT en tant qu'Émilie (français oral, 2-3 phrases). Ne répète pas mot pour mot le prospect."
+                    + "\nRéponds en français oral comme Émilie (2-3 phrases). Réponds au prospect, ne répète pas ses mots."
                 : "";
-            const plans = [
-                { system: systemPromptText + getAgentAntiRepeatContext() + turnHint + (extra || ""), maxTokens: 200 },
-                { system: systemPromptText.split("\n").slice(0, 22).join("\n") + turnHint, maxTokens: 160 }
-            ];
-            const models = [model, ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== model).slice(0, 1)];
-            let lastErr = null;
-            for (const currentModel of models) {
-                for (const plan of plans) {
-                    const messages = [{ role: "system", content: plan.system }, ...turnMessages];
-                    try {
-                        const raw = await callOpenRouter(messages, apiKey, currentModel, plan.maxTokens);
-                        let reply = cleanAgentReply(raw);
-                        if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
-                            lastErr = new Error("Réponse IA invalide");
-                            continue;
-                        }
-                        if (isAgentEcho(reply, prospectLine)) {
-                            reply = ensureAgentReplyAddressesProspect(reply, prospectLine);
-                            if (isAgentEcho(reply, prospectLine)) {
-                                lastErr = new Error("Réponse IA en écho");
-                                continue;
-                            }
-                        }
-                        if (isAgentIgnoringObjection(reply, prospectLine)) {
-                            lastErr = new Error("Réponse ignore objection");
-                            continue;
-                        }
-                        return ensureAgentReplyAddressesProspect(reply, prospectLine);
-                    } catch (e) {
-                        lastErr = e;
-                        if (/rate limit|429|503|too many requests/i.test(e.message || "")) break;
-                    }
+            const compactSystem = systemPromptText.split("\n").slice(0, 28).join("\n") + turnHint + (extra || "");
+            const messages = [{ role: "system", content: compactSystem }, ...turnMessages];
+
+            try {
+                const raw = await callOpenRouter(messages, apiKey, model, 200);
+                let reply = cleanAgentReply(raw);
+                if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
+                    return getAgentFallbackReply(prospectLine);
                 }
+                if (isAgentEcho(reply, prospectLine)) {
+                    return getAgentFallbackReply(prospectLine);
+                }
+                if (isAgentIgnoringObjection(reply, prospectLine)) {
+                    return getAgentFallbackReply(prospectLine);
+                }
+                return reply;
+            } catch (e) {
+                console.warn("Agent LLM:", model, e.message);
+                return getAgentFallbackReply(prospectLine);
             }
-            const fallback = getAgentFallbackReply(lastProspectText());
-            if (fallback) return fallback;
-            throw lastErr || new Error("Erreur OpenRouter");
         }
 
         function cleanSpeech(t) {
