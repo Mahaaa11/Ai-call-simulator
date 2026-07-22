@@ -1513,6 +1513,12 @@ GESTION OBJECTIONS — réponds directement au téléphone en français (empathi
 - Ne veut pas changer : précise qu'on ne force rien, on vérifie le juste prix.
 - D'où mon numéro : appels non nominatifs, étude tarifaire, données protégées RGPD.
 - IBAN : mandat SEPA, rétractation 14 jours, uniquement si accord.
+- Arnaque / escroc / fraude : RECONNAIS la méfiance, rassure (comparateur indépendant, gratuit, sans engagement, aucun paiement au téléphone). INTERDIT de demander fournisseur ou facture tant que cette objection n'est pas apaisée.
+- « Laissez-moi tranquille » / raccroche / milliers d'appels : EXCUSE-TOI, respecte le refus, souhaite bonne journée. INTERDIT « Pour avancer » et INTERDIT questions découverte.
+
+RÈGLE PRIORITÉ OBJECTION :
+- Si le prospect accuse d'arnaque OU demande à être laissé tranquille, tu NE poses PAS de question sur le fournisseur ou la facture.
+- Tu réponds d'abord à ce qu'il vient de dire, avec empathie. La découverte attend.
 
 RÈGLES FORMAT (OBLIGATOIRE) :
 - UNIQUEMENT les paroles orales d'Émilie au téléphone, en FRANÇAIS.
@@ -1762,7 +1768,39 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return chatTurns.some(t => t.role === "assistant" && /\b(facture|montant|combien payez|€|euro)\b/i.test(t.content));
         }
 
+        function prospectIsHostile(text) {
+            const t = (text || "").toLowerCase();
+            return /arnaque|escroc|fraude|voleur|pipeau|harcelement|harcèlement|milliers d'appel|spam|insupportable|plainte|avocat|bloctel/i.test(t)
+                || /laissez.?moi tranquille|laisse moi tranquille|laissez-moi tranquille|arrêtez.*appel|arretez.*appel|raccroch|je vais rien|dégage|degage|fermez.?la|taisez/i.test(t);
+        }
+
+        function prospectWantsToLeave(text) {
+            const t = (text || "").toLowerCase();
+            return /laissez.?moi tranquille|laisse moi tranquille|laissez-moi tranquille|je vais rien|raccroch|arrêtez.*appel|arretez.*appel|ne m'appelez plus|perdez.*temps/i.test(t);
+        }
+
+        function prospectAccusesScam(text) {
+            const t = (text || "").toLowerCase();
+            return /arnaque|escroc|fraude|voleur|pill|milliers d'appel|spam/i.test(t);
+        }
+
+        function isAgentIgnoringObjection(reply, prospectText) {
+            if (!prospectIsHostile(prospectText)) return false;
+            const r = (reply || "").toLowerCase();
+            return /pour avancer|chez quel fournisseur|combien payez|depuis combien|montant mensuel|facture d'électricité|point de livraison|pdl/i.test(r);
+        }
+
         function getDiscoveryStageHint() {
+            const last = lastProspectText();
+            if (prospectWantsToLeave(last)) {
+                return "REFUS EXPLICITE : excuse-toi brièvement et souhaite bonne journée. Ne pose AUCUNE question découverte.";
+            }
+            if (prospectAccusesScam(last)) {
+                return "OBJECTION ARNAQUE : reconnais la méfiance, rassure (comparateur indépendant, gratuit, sans engagement, aucun paiement). Ne demande PAS fournisseur ni facture.";
+            }
+            if (prospectIsHostile(last)) {
+                return "PROSPECT HOSTILE : empathie d'abord, pas de question découverte tant qu'il est agacé.";
+            }
             if (prospectMentionedBill()) {
                 return "Le prospect a donné un fournisseur et un montant : propose le comparatif gratuit et sans engagement.";
             }
@@ -1878,6 +1916,16 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 const msg = "Vous avez raison, je vais être directe : soit on regarde en deux minutes si vous pouvez économiser, soit je vous laisse tranquille — qu'est-ce que vous préférez ?";
                 return agentAlreadySaid(msg) ? "Compris. Je ne vous dérange pas plus longtemps — bonne journée à vous." : msg;
             }
+            if (prospectWantsToLeave(t) || prospectWantsToLeave(prospectText)) {
+                return "Compris, je m'excuse pour le dérangement. Je vous laisse tranquille — bonne journée à vous.";
+            }
+            if (prospectAccusesScam(t) || prospectAccusesScam(prospectText)) {
+                const msg = "Je comprends tout à fait votre méfiance, il y a beaucoup d'appels abusifs en ce moment. Ogenies est un comparateur indépendant : la vérification est gratuite, sans engagement, et on ne demande aucun paiement au téléphone. Si vous préférez, je vous laisse tranquille.";
+                return agentAlreadySaid(msg) ? "D'accord, je ne vous dérange pas plus. Bonne journée à vous." : msg;
+            }
+            if (prospectIsHostile(t) || prospectIsHostile(prospectText)) {
+                return "Je comprends que ces appels soient agaçants. Je m'excuse pour le dérangement — je vous souhaite une bonne journée.";
+            }
             if (/veux pas dire|pas envie|donner.*info|pas vous donner|confidentiel|secret/i.test(t)) {
                 return "Je respecte ça. Sans ces infos je ne peux pas chiffrer d'économies — je peux vous envoyer un lien par mail pour le faire quand vous voulez, ou on s'arrête là si vous préférez.";
             }
@@ -1902,7 +1950,15 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const t = (prospectText || "").toLowerCase();
             if (!out) return getAgentFallbackReply(prospectText);
 
+            if (isAgentIgnoringObjection(out, prospectText)) {
+                return getAgentFallbackReply(prospectText);
+            }
+
             if (prospectMentionedBill() && !/merci|comparatif|vérification|économ|€|euro|noté/i.test(out)) {
+                return getAgentFallbackReply(prospectText);
+            }
+            if ((/intéresse pas|répète|même question|veux pas dire|pourquoi.*demand|arnaque|escroc|fraude|laissez.*tranquille|laisse moi|raccroch|milliers d'appel/i.test(t))
+                && /pour avancer|chez quel fournisseur|combien payez/i.test(out)) {
                 return getAgentFallbackReply(prospectText);
             }
             if (/intéresse pas|répète|même question|veux pas dire|pourquoi.*demand/i.test(t)
@@ -2142,6 +2198,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             ).join("\n");
             const turnHint = prospectLine
                 ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
+                    + (prospectIsHostile(prospectLine)
+                        ? "\n⚠️ OBJECTION PRIORITAIRE — réponds à l'accusation ou au refus AVANT toute question découverte. Interdit « Pour avancer »."
+                        : "")
                     + "\nÉTAPE : " + getDiscoveryStageHint()
                     + "\nRéponds DIRECTEMENT en tant qu'Émilie (français oral, 2-3 phrases). Ne répète pas mot pour mot le prospect."
                 : "";
@@ -2167,6 +2226,10 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                                 lastErr = new Error("Réponse IA en écho");
                                 continue;
                             }
+                        }
+                        if (isAgentIgnoringObjection(reply, prospectLine)) {
+                            lastErr = new Error("Réponse ignore objection");
+                            continue;
                         }
                         return ensureAgentReplyAddressesProspect(reply, prospectLine);
                     } catch (e) {
