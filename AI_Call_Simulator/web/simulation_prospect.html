@@ -1543,6 +1543,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 recognition.lang = "fr-FR";
+                recognition.maxAlternatives = 3;
                 speechRecAvailable = true;
             }
         } catch (_) {
@@ -1696,7 +1697,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             }).join("\n");
 
             const phases = data.structure.phases.map(function (phase) {
-                const examples = (phase.examples || []).slice(0, 4)
+                const examples = (phase.examples || []).slice(0, 2)
                     .map(function (ex) { return '  • "' + String(ex).replace(/"/g, "'") + '"'; })
                     .join("\n");
                 return phase.label + " :\n" + examples;
@@ -1946,12 +1947,51 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
+        function normalizeProspectTranscript(text) {
+            let t = String(text || "").replace(/\s+/g, " ").trim();
+            if (!t) return "";
+            const fixes = [
+                [/\bau génie\b/gi, "Ogenies"],
+                [/\bogini\b/gi, "Ogenies"],
+                [/\bogenie\b/gi, "Ogenies"],
+                [/\belectricite\b/gi, "électricité"],
+                [/\bfacture d electricite\b/gi, "facture d'électricité"],
+                [/\bkilowatt heure\b/gi, "kilowatt-heure"],
+                [/\bk w h\b/gi, "kWh"],
+                [/\bengie\b/gi, "Engie"],
+                [/\bedf\b/gi, "EDF"],
+                [/\btotal energie\b/gi, "TotalEnergies"]
+            ];
+            fixes.forEach(([pattern, replacement]) => { t = t.replace(pattern, replacement); });
+            return t.replace(/\s+/g, " ").trim();
+        }
+
+        function pickBestSpeechAlternative(result) {
+            if (!result || !result.length) return "";
+            let best = "";
+            let bestScore = -1;
+            for (let i = 0; i < result.length; i++) {
+                const alt = result[i];
+                const text = (alt && alt.transcript) ? alt.transcript.trim() : "";
+                if (!text) continue;
+                let score = Number(alt.confidence || 0);
+                if (/[àâäéèêëïîôùûüç]/i.test(text)) score += 0.15;
+                if (/\b(je|vous|non|oui|madame|monsieur|électricité|facture|intéress)\b/i.test(text)) score += 0.1;
+                if (/[a-zA-Z]{15,}/.test(text.replace(/\s+/g, ""))) score -= 0.2;
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = text;
+                }
+            }
+            return best || ((result[0] && result[0].transcript) ? result[0].transcript.trim() : "");
+        }
+
         function buildSpeechTranscriptFromResults(results) {
             if (!results || !results.length) return "";
             const finals = [];
             let interim = "";
             for (let i = 0; i < results.length; i++) {
-                const piece = (results[i][0] && results[i][0].transcript) ? results[i][0].transcript.trim() : "";
+                const piece = pickBestSpeechAlternative(results[i]);
                 if (!piece) continue;
                 if (results[i].isFinal) finals.push(piece);
                 else interim = piece;
@@ -1960,7 +2000,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         }
 
         function stageSpeechTranscriptForReview(text) {
-            const cleaned = (text || "").replace(/\s+/g, " ").trim();
+            const cleaned = normalizeProspectTranscript(text);
             if (!cleaned) return false;
             if (textInput) {
                 textInput.value = cleaned;
@@ -2094,33 +2134,31 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         }
 
         async function callAgentLLM(apiKey, extra) {
-            const models = [getModel(), ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== getModel())];
+            const model = getModel();
             const turnMessages = buildAgentTurnMessages();
             const prospectLine = lastProspectText();
-            const recentTranscript = chatTurns.slice(-8).map(t =>
+            const recentTranscript = chatTurns.slice(-6).map(t =>
                 (t.role === "assistant" ? "AGENT" : "PROSPECT") + ": " + t.content
             ).join("\n");
             const turnHint = prospectLine
-                ? "\n\nTRANSCRIPTION RÉCENTE :\n" + recentTranscript.slice(-900)
-                    + "\n\nDERNIÈRE RÉPLIQUE PROSPECT (à traiter en priorité) : « " + prospectLine.slice(0, 220) + " »"
-                    + "\nÉTAPE SUIVANTE : " + getDiscoveryStageHint()
-                    + "\nIMPORTANT : réponds DIRECTEMENT à ce que vient de dire le prospect. Ne répète JAMAIS une question déjà posée. Varie tes formulations."
-                    + "\nRéponds UNIQUEMENT en tant qu'Émilie l'agent Ogenies (français oral, 2-4 phrases)."
+                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
+                    + "\nÉTAPE : " + getDiscoveryStageHint()
+                    + "\nRéponds DIRECTEMENT en tant qu'Émilie (français oral, 2-3 phrases). Ne répète pas mot pour mot le prospect."
                 : "";
             const plans = [
-                { system: systemPromptText + getAgentAntiRepeatContext() + turnHint + (extra || ""), maxTokens: 280 },
-                { system: systemPromptText + turnHint + (extra || ""), maxTokens: 220 },
-                { system: systemPromptText.split("\n").slice(0, 24).join("\n") + turnHint, maxTokens: 180 }
+                { system: systemPromptText + getAgentAntiRepeatContext() + turnHint + (extra || ""), maxTokens: 200 },
+                { system: systemPromptText.split("\n").slice(0, 22).join("\n") + turnHint, maxTokens: 160 }
             ];
+            const models = [model, ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== model).slice(0, 1)];
             let lastErr = null;
-            for (const model of models) {
+            for (const currentModel of models) {
                 for (const plan of plans) {
                     const messages = [{ role: "system", content: plan.system }, ...turnMessages];
                     try {
-                        const raw = await callOpenRouter(messages, apiKey, model, plan.maxTokens);
+                        const raw = await callOpenRouter(messages, apiKey, currentModel, plan.maxTokens);
                         let reply = cleanAgentReply(raw);
                         if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
-                            lastErr = new Error("Réponse IA invalide (vide ou méta)");
+                            lastErr = new Error("Réponse IA invalide");
                             continue;
                         }
                         if (isAgentEcho(reply, prospectLine)) {
@@ -2133,7 +2171,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                         return ensureAgentReplyAddressesProspect(reply, prospectLine);
                     } catch (e) {
                         lastErr = e;
-                        console.warn("Agent LLM retry", model, e.message);
+                        if (/rate limit|429|503|too many requests/i.test(e.message || "")) break;
                     }
                 }
             }
@@ -2266,7 +2304,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 const reply = await callAgentLLM(apiKey);
                 chatTurns.push({ role: "assistant", content: reply });
                 addLog("Agent IA", reply, "agent-msg");
-                await speakAgent(reply);
+                void speakAgent(reply);
                 updateLiveStats();
                 updateCallJourney();
                 setAgentVisual("listening");
@@ -2610,10 +2648,10 @@ ${transcript.slice(0, 2500)}`;
         function initMicStatus() {
             if (!micStatus) return;
             if (speechRecAvailable) {
-                micStatus.textContent = "✅ Micro disponible — vérifiez la transcription avant d'envoyer, ou tapez votre réplique";
+                micStatus.textContent = "✅ Micro Chrome — parlez distinctement, corrigez la transcription avant d'envoyer";
                 micStatus.style.color = "#16a34a";
             } else {
-                micStatus.textContent = "⚠️ Micro indisponible ici — utilisez Chrome ou tapez votre réplique";
+                micStatus.textContent = "⚠️ Micro Chrome indisponible — utilisez Google Chrome ou tapez votre réplique";
                 micStatus.style.color = "#d97706";
             }
         }
