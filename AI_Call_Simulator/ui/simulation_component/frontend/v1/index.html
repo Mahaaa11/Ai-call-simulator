@@ -3172,12 +3172,19 @@ Réponds UNIQUEMENT en JSON valide (sans markdown) :
   "recommandations": ["...", "..."]
 }
 
-RÈGLES : score_total = somme des scores ; chaque commentaire cite un moment CONCRET de l'agent ; varie les notes selon la qualité réelle.`;
+RÈGLES : score_total = somme des scores ; chaque commentaire cite un moment CONCRET de l'agent ; varie les notes selon la qualité réelle.
+
+RÈGLE CRITIQUE — Origine du numéro / RGPD :
+- Si le prospect demande « comment avez-vous mon numéro » / Bloctel : PÉNALISER FORTEMENT (-15 pts) si l'agent dit « base de données », « fichier clients », « notre base », « listing ».
+- INTERDIT de valoriser une mention de base de données — c'est une erreur commerciale et RGPD.
+- BONNE réponse : consentement, formulaire web, demande de comparatif, partenaire (Enedis/GRDF), coordonnées laissées volontairement, base légale / intérêt légitime.
+- Pénaliser aussi « je ne sais pas » / « numéro qui s'affiche » / « appels non nominatifs » sans explication claire.`;
 
         const COMPACT_EVAL_PROMPT = `Évalue UNIQUEMENT l'agent commercial (/100). Réponds en JSON valide SANS markdown.
 Grille: 1.Accroche/15 2.Découverte/20 3.Argumentation/20 4.Objections/15 5.Closing/15 6.Communication/10 7.Organisation/5
 Format: {"score_total":N,"niveau":"Excellent|Bon|À améliorer|Coaching nécessaire","sections":[{"name":"1. Accroche...","score":N,"max":15,"items":[{"name":"...","score":N,"max":N,"comment":"citation concrète agent"}]}],"points_forts":["","",""],"axes_amelioration":["","",""],"recommandations":["",""]}
-Commentaires = citations ou moments précis de l'agent. Pas de commentaire générique.`;
+Commentaires = citations ou moments précis de l'agent. Pas de commentaire générique.
+RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier clients » (-15 pts). Bon : consentement, formulaire, comparateur, partenaire. Pénaliser « je ne sais pas » / « numéro affiché » sans explication.`;
 
         const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
         const OPENROUTER_FALLBACK_MODELS = [
@@ -7166,6 +7173,14 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const prospectRepeatsHurry = (pFull.match(/pressé|faites vite/g) || []).length >= 3;
             const wrongEnergyPitch = /gaz/i.test(full) && /électricité seulement|électricité seule/i.test(pFull);
 
+            const prospectAskedNumber = /comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|pourquoi.*m'appelez|bloctel|eu mon num/i.test(pFull);
+            const badDatabaseReply = prospectAskedNumber && agentMsgs.some(m =>
+                /\b(base de donn|fichier client|notre base|listing|on a une base|database|fichier nominatif|base client)\b/i.test(m));
+            const evasiveNumberReply = prospectAskedNumber && !badDatabaseReply && agentMsgs.some(m =>
+                /\b(je n'en sais rien|je n'ai aucune idée|aucune idée|pas nominatif|numéro qui s'affiche|numero qui s'affiche|appels ne sont pas nominatifs|pote numéro)\b/i.test(m))
+                && !/\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|base légale|intérêt légitime|comparateur)\b/i.test(full);
+            const goodNumberReply = prospectAskedNumber && /\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|contacté|coordonnées|base légale|intérêt légitime|comparateur)\b/i.test(full);
+
             const scoreItems = (items, scores, comments) => items.map((def, i) => ({
                 name: def.name,
                 score: clampScore(scores[i] != null ? scores[i] : Math.floor(def.max * 0.5), def.max),
@@ -7205,9 +7220,15 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const objListenComment = refusalLoop
                 ? "N'a pas entendu : « envoyez par mail », « je ne donne rien par téléphone »."
                 : (pdlRefused ? "Refus données entendu partiellement." : "Écoute des objections correcte.");
-            const objRespComment = emailPivot
-                ? "Acceptation d'envoyer par mail."
-                : (wantsWrittenOffer ? "Client demande devis mail — agent demande quand même PDL/facture." : "Réponses aux objections perfectibles.");
+            const objRespComment = badDatabaseReply
+                ? "Erreur : mention « base de données » / fichier — interdit quand le prospect demande l'origine du numéro."
+                : (evasiveNumberReply
+                    ? "Réponse évasive sur l'origine du numéro (« je ne sais pas », « numéro affiché ») — manque consentement/formulaire/partenaire."
+                    : (goodNumberReply
+                        ? "Bonne explication sur l'origine du contact (consentement / cadre)."
+                        : (emailPivot
+                            ? "Acceptation d'envoyer par mail."
+                            : (wantsWrittenOffer ? "Client demande devis mail — agent demande quand même PDL/facture." : "Réponses aux objections perfectibles."))));
             const objTransformComment = callLost
                 ? "Aucun engagement — appel perdu malgré une ouverture initiale du prospect."
                 : (gotRappel ? "Rappel ou rendez-vous obtenu." : (hasIban ? "Vente conclue." : "Peu de transformation."));
@@ -7249,7 +7270,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 {
                     name: EVAL_GRID[3].section, max: 15,
                     items: scoreItems(EVAL_GRID[3].items,
-                        [refusalLoop ? 1 : (hasEmpathy ? 2 : 1), wantsWrittenOffer && !emailPivot ? 1 : (emailPivot ? 4 : 2), callLost ? 0 : 2, agentFrustration ? 0 : 1],
+                        [refusalLoop ? 1 : (hasEmpathy ? 2 : 1),
+                            badDatabaseReply ? 0 : (evasiveNumberReply ? 1 : (wantsWrittenOffer && !emailPivot ? 1 : (emailPivot ? 4 : 2))),
+                            callLost ? 0 : 2, agentFrustration ? 0 : 1],
                         [objListenComment, objRespComment, objTransformComment, objCalmComment])
                 },
                 {
@@ -7275,7 +7298,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 }
             ].map(sec => ({ ...sec, score: sec.items.reduce((s, i) => s + i.score, 0) }));
 
-            const scoreTotal = clampScore(sections.reduce((s, sec) => s + sec.score, 0), 100);
+            const scoreTotal = clampScore(sections.reduce((s, sec) => s + sec.score, 0)
+                - (badDatabaseReply ? 12 : 0) - (evasiveNumberReply ? 8 : 0)
+                + (goodNumberReply ? 3 : 0), 100);
             const pointsForts = [];
             if (hasDiscovery) pointsForts.push("Bon début de découverte : EDF, ~70€/mois, régularisation.");
             if (hasComparatif && !callLost) pointsForts.push("Comparatif et indépendance vis-à-vis du fournisseur bien expliqués.");
@@ -7288,6 +7313,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
 
             const axes = [];
+            if (badDatabaseReply) axes.push("Ne jamais dire « base de données » ou « fichier clients » — dire : consentement, formulaire comparateur, partenaire.");
+            if (evasiveNumberReply) axes.push("Origine du numéro : éviter « je ne sais pas » — expliquer le cadre légal (consentement, comparateur).");
             if (addressRefusedLoop) axes.push("Dès le refus adresse/PDL : proposer une offre écrite par email au lieu de répéter la même demande.");
             if (agentFrustration) axes.push("Ne jamais conclure par « si vous ne voulez pas faire des économies » — rester professionnel.");
             if (wrongEnergyPitch) axes.push("Adapter l'offre : électricité seulement = pas de tarif gaz.");
@@ -7296,6 +7323,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             while (axes.length < 3) axes.push("Reformuler le refus client avant de relancer.");
 
             const reco = [];
+            if (badDatabaseReply || evasiveNumberReply) reco.push("Script origine numéro : « Vous avez laissé vos coordonnées via notre comparateur / formulaire — jamais « base de données ». »");
             if (wantsWrittenOffer) reco.push("Script : « Je vous envoie la simulation par email — quelle adresse email ? » (sans demander l'adresse postale).");
             if (addressRefusedLoop) reco.push("Après 2 refus : « Pas de souci, je vous envoie une proposition écrite, vous décidez librement. »");
             reco.push("Valider : comparatif gratuit, sans engagement, 14 jours rétractation — puis proposer l'envoi écrit.");
@@ -7403,6 +7431,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                             role: "user",
                             content: "Profil prospect: " + getProfileKey() + " · Niveau: " + getLevel()
                                 + buildGuidedScenarioEvalContext()
+                                + "\n\nRÈGLE CRITIQUE : si le prospect demande l'origine du numéro, -15 pts si l'agent dit « base de données » / « fichier clients ». Jamais valoriser ça.\n"
                                 + "\n\nRÉPLIQUES AGENT:\n" + agentText.slice(0, 4500)
                                 + "\n\nCONTEXTE (extrait):\n" + ctx.slice(0, 2000)
                                 + "\n\n" + COMPACT_EVAL_PROMPT
@@ -7437,11 +7466,70 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return "\n\nCONTEXTE SCÉNARIO CERTIFICATION :\n"
                 + "- Scénario : " + step.label + "\n"
                 + "- Objectif agent : " + step.goal + "\n"
-                + "- Objections prospect : ~" + resistance + " (minimum " + step.minObjections + ")\n"
+                + "- Objections scénario traitées : ~" + countScenarioObjectionsUsed() + " / " + step.minObjections + "\n"
                 + "- Réponses agent traitées (reformulation + arguments) : ~" + handled + "\n"
                 + "- Prospect ouvert en fin d'appel : " + (yielded ? "OUI" : "NON") + "\n"
                 + "CRITÈRES PRIORITAIRES : reformulation des refus, arguments concrets (économies, comparatif gratuit, sans engagement), calme face au méfiant, relance closing.\n"
+                + "ORIGINE NUMÉRO : pénaliser FORT si l'agent dit « base de données » / « fichier clients » ; valoriser consentement/formulaire/partenaire.\n"
                 + "Note surtout la gestion des objections — ne pénalise pas un agent qui reformule bien même si le prospect met du temps à céder.";
+        }
+
+        function applyEvalComplianceAdjustments(evaluation) {
+            if (!evaluation) return evaluation;
+            const agentMsgs = getAgentMessages();
+            const prospectMsgs = chatTurns.filter(t => t.role === "assistant").map(t => t.content);
+            const pFull = prospectMsgs.join(" ").toLowerCase();
+            const full = agentMsgs.join(" ").toLowerCase();
+            const prospectAskedNumber = /comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|bloctel|eu mon num/i.test(pFull);
+            const badDatabaseReply = prospectAskedNumber && agentMsgs.some(m =>
+                /\b(base de donn|fichier client|notre base|listing|on a une base|database|fichier nominatif)\b/i.test(m));
+            const evasiveNumberReply = prospectAskedNumber && !badDatabaseReply && agentMsgs.some(m =>
+                /\b(je n'en sais rien|je n'ai aucune idée|aucune idée|pas nominatif|numéro qui s'affiche|appels ne sont pas nominatifs|pote numéro)\b/i.test(m))
+                && !/\b(consentement|formulaire|partenaire|enedis|grdf|base légale|comparateur)\b/i.test(full);
+
+            const out = Object.assign({}, evaluation);
+            let penalty = 0;
+            if (badDatabaseReply) penalty += 15;
+            else if (evasiveNumberReply) penalty += 8;
+
+            if (penalty > 0) {
+                out.score_total = clampScore((Number(out.score_total) || 0) - penalty, 100);
+                out.niveau = out.score_total >= 85 ? "Excellent" : out.score_total >= 70 ? "Bon" : out.score_total >= 50 ? "À améliorer" : "Coaching nécessaire";
+                out.axes_amelioration = Array.isArray(out.axes_amelioration) ? out.axes_amelioration.slice() : [];
+                const axis = badDatabaseReply
+                    ? "Ne jamais évoquer « base de données » quand le prospect demande l'origine du numéro."
+                    : "Origine du numéro : éviter « je ne sais pas » — expliquer consentement / formulaire / partenaire.";
+                if (!out.axes_amelioration.some(a => /base de donn|origine du num/i.test(a))) {
+                    out.axes_amelioration.unshift(axis);
+                }
+                out.axes_amelioration = out.axes_amelioration.slice(0, 3);
+                if (Array.isArray(out.sections)) {
+                    out.sections = out.sections.map(sec => {
+                        if (!/objection/i.test(sec.name || "")) return sec;
+                        const items = (sec.items || []).map(it => {
+                            if (/réponses adaptées/i.test(it.name || "")) {
+                                return Object.assign({}, it, {
+                                    score: badDatabaseReply ? 0 : Math.max(0, (it.score || 0) - 2),
+                                    comment: badDatabaseReply
+                                        ? "Erreur : « base de données » — réponse interdite sur l'origine du numéro."
+                                        : (it.comment || "Réponse évasive sur l'origine du numéro.")
+                                });
+                            }
+                            return it;
+                        });
+                        return Object.assign({}, sec, {
+                            items,
+                            score: items.reduce((s, i) => s + (i.score || 0), 0)
+                        });
+                    });
+                }
+            }
+            out._compliance_v2 = { badDatabaseReply, evasiveNumberReply, prospectAskedNumber };
+            return out;
+        }
+
+        function finalizeEvaluationPayload(evaluation) {
+            return applyEvalComplianceAdjustments(adjustEvaluationForGuidedScenario(evaluation));
         }
 
         function adjustEvaluationForGuidedScenario(evaluation) {
@@ -7460,6 +7548,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (hasEconomy) bonus += 3;
             if (hasComparatif) bonus += 2;
             if (handled >= Math.max(3, (step.minObjections || 5) - 2)) bonus += 8;
+            if (countScenarioObjectionsUsed() >= (step.minObjections || 5)) bonus += 3;
             if (yielded) bonus += 6;
             let penalty = 0;
             const agentQuit = /au revoir|bonne journée/i.test(lastAgentText()) && !yielded && handled >= 3;
@@ -7484,12 +7573,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         async function runEvaluation(apiKey) {
             try {
-                const parsed = adjustEvaluationForGuidedScenario(await callEvaluationLLM(apiKey));
+                const parsed = finalizeEvaluationPayload(await callEvaluationLLM(apiKey));
                 return { html: renderEvaluationReport(parsed, "llm"), evaluation: parsed, source: "llm" };
             } catch (e) {
                 console.warn("Eval IA fallback:", e.message);
             }
-            const fallback = adjustEvaluationForGuidedScenario(computeHeuristicEvaluation());
+            const fallback = finalizeEvaluationPayload(computeHeuristicEvaluation());
             return { html: renderEvaluationReport(fallback, "heuristic"), evaluation: fallback, source: "heuristic" };
         }
 
