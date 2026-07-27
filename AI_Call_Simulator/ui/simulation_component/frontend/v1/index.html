@@ -1208,7 +1208,7 @@
         <select id="trainingScenarioSelect">
             <option value="random">🎲 Aléatoire — profil et client variables</option>
             <option value="certif_fournisseur_mefiant" selected>🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
-            <option value="certif_engie_mefiant_agressif">🔥 Certification — Engie méfiant & agressif (Marc Dupont, Marseille)</option>
+            <option value="certif_engie_mefiant_agressif">🔥 Certification — Engie méfiant (Marc Dupont, Marseille)</option>
         </select>
         <p class="training-scenario-hint" id="trainingScenarioHint">Choisissez un scénario guidé ou laissez en aléatoire pour varier les profils.</p>
 
@@ -1764,16 +1764,16 @@
                 id: "certif_engie_20260727",
                 title: "Examen certification — Changement fournisseur Engie",
                 dateLabel: "27 juillet 2026",
-                instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant et agressif chez Engie · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur",
+                instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant chez Engie (ferme mais jouable) · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur",
                 passScore: 70,
                 steps: [
                     {
                         id: "examen_engie_mefiant_agressif",
-                        label: "Examen — Engie méfiant & agressif (changement fournisseur)",
+                        label: "Examen — Engie méfiant (changement fournisseur)",
                         profile: "mefiant_fournisseur",
                         level: "avance",
                         scenarioType: "standard",
-                        prospectTone: "agressif",
+                        prospectTone: "mefiant_ferme",
                         firstName: "Marc",
                         lastName: "Dupont",
                         supplier: "Engie",
@@ -1781,24 +1781,22 @@
                         offerTarget: 76,
                         yearsAtSupplier: "5 ans",
                         address: "24 boulevard Longchamp, 13001 Marseille",
-                        opening: "Oui ? Écoutez, je change pas de fournisseur — c'est pour quoi ?",
-                        brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule), même logement depuis 5 ans. Méfiant ET agressif dès le début : refuse tout changement, ton sec, menace de raccrocher. Cède à la fin seulement si l'agent traite ≥7 objections avec reformulation et arguments concrets (objectif : changement de fournisseur).",
-                        goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a été excellent.",
-                        minObjections: 7,
+                        opening: "Oui bonjour ? C'est pour quoi… je ne change pas de fournisseur en général.",
+                        brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule). Méfiant et ferme : ne veut pas changer, pose des objections sérieuses. Cède à la fin si l'agent reformule et répond avec des arguments concrets (objectif : changement de fournisseur).",
+                        goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a bien géré les objections.",
+                        minObjections: 5,
                         expectedOutcome: "changement_fournisseur",
                         objections: [
-                            "Je suis chez Engie et j'y reste, point final — je change pas.",
-                            "Vous croyez que je vais changer comme ça ? Arrêtez vos appels !",
-                            "Engie c'est solide — pourquoi je prendrais le risque ?",
-                            "C'est une arnaque votre comparatif, j'en ai marre de ces appels.",
-                            "Comment avez-vous eu mon numéro ? Je suis sur Bloctel !",
-                            "La dernière fois que j'ai changé c'était la galère, jamais plus.",
-                            "Votre offre cache sûrement des frais de résiliation Engie.",
-                            "Mon voisin a quitté Engie et il regrette — vous me prendrez pas.",
-                            "Pourquoi mon IBAN au téléphone ? Vous voulez me voler ?",
-                            "Allez droit au but, j'ai pas le temps pour votre baratin.",
-                            "Concrètement qu'est-ce que j'y gagne à quitter Engie maintenant ?",
-                            "Envoyez-moi par mail, je vous fais pas confiance au téléphone."
+                            "Je suis chez Engie, je ne veux pas changer de fournisseur.",
+                            "Engie me convient — pourquoi je prendrais le risque ?",
+                            "Comment avez-vous eu mon numéro ?",
+                            "La dernière fois que j'ai changé, c'était compliqué.",
+                            "Votre offre cache peut-être des frais de résiliation.",
+                            "Mon voisin a quitté Engie et il n'est pas content.",
+                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                            "Allez droit au but, j'ai pas le temps pour un long discours.",
+                            "Concrètement, qu'est-ce que j'y gagne à quitter Engie ?",
+                            "Envoyez-moi tout par mail, je préfère vérifier par écrit."
                         ]
                     }
                 ]
@@ -1839,12 +1837,12 @@
             },
             certif_engie_mefiant_agressif: {
                 id: "certif_engie_mefiant_agressif",
-                label: "Certification — Engie méfiant & agressif",
-                description: "Marc Dupont, 48 ans, Engie à Marseille (~92 €/mois) — refuse le changement dès le début, cède si l'agent traite bien les objections.",
+                label: "Certification — Engie méfiant (changement fournisseur)",
+                description: "Marc Dupont, 48 ans, Engie à Marseille (~92 €/mois) — méfiant et ferme, cède si l'agent traite bien les objections.",
                 profile: "mefiant_fournisseur",
                 level: "avance",
                 scenarioType: "standard",
-                prospectTone: "agressif",
+                prospectTone: "mefiant_ferme",
                 firstName: "Marc",
                 lastName: "Dupont",
                 supplier: "Engie",
@@ -1852,23 +1850,21 @@
                 offerTarget: 76,
                 yearsAtSupplier: "5 ans",
                 address: "24 boulevard Longchamp, 13001 Marseille",
-                opening: "Oui ? Écoutez, je change pas de fournisseur — c'est pour quoi ?",
-                goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA, puis conclure la vente si l'agent a été excellent.",
-                minObjections: 7,
+                opening: "Oui bonjour ? C'est pour quoi… je ne change pas de fournisseur en général.",
+                goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA, puis conclure la vente si l'agent a bien géré les objections.",
+                minObjections: 5,
                 expectedOutcome: "changement_fournisseur",
                 objections: [
-                    "Je suis chez Engie et j'y reste, point final — je change pas.",
-                    "Vous croyez que je vais changer comme ça ? Arrêtez vos appels !",
-                    "Engie c'est solide — pourquoi je prendrais le risque ?",
-                    "C'est une arnaque votre comparatif, j'en ai marre de ces appels.",
-                    "Comment avez-vous eu mon numéro ? Je suis sur Bloctel !",
-                    "La dernière fois que j'ai changé c'était la galère, jamais plus.",
-                    "Votre offre cache sûrement des frais de résiliation Engie.",
-                    "Mon voisin a quitté Engie et il regrette — vous me prendrez pas.",
-                    "Pourquoi mon IBAN au téléphone ? Vous voulez me voler ?",
-                    "Allez droit au but, j'ai pas le temps pour votre baratin.",
-                    "Concrètement qu'est-ce que j'y gagne à quitter Engie maintenant ?",
-                    "Envoyez-moi par mail, je vous fais pas confiance au téléphone."
+                    "Je suis chez Engie, je ne veux pas changer de fournisseur.",
+                    "Engie me convient — pourquoi je prendrais le risque ?",
+                    "Comment avez-vous eu mon numéro ?",
+                    "La dernière fois que j'ai changé, c'était compliqué.",
+                    "Votre offre cache peut-être des frais de résiliation.",
+                    "Mon voisin a quitté Engie et il n'est pas content.",
+                    "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                    "Allez droit au but, j'ai pas le temps pour un long discours.",
+                    "Concrètement, qu'est-ce que j'y gagne à quitter Engie ?",
+                    "Envoyez-moi tout par mail, je préfère vérifier par écrit."
                 ]
             }
         };
@@ -1991,6 +1987,7 @@
 
         function getProspectMood(profileKey, level) {
             const step = getFixedScenarioStep();
+            if (step?.prospectTone === "mefiant_ferme") return "tense";
             if (step?.prospectTone === "agressif") return "angry";
             if (profileKey === "agressif") return "angry";
             if (profileKey === "presse") return level === "debutant" ? "tense" : "angry";
@@ -2378,15 +2375,30 @@
         function buildScenarioBehaviorBlock(step) {
             if (!step) return "";
             const toneLine = step.prospectTone === "agressif"
-                ? "- TON : méfiant ET agressif dès le début — sec, impatient, menace parfois de raccrocher (« arrêtez », « arnaque », « je change pas »). Ne sois pas poli par politesse."
-                : "";
+                ? "- TON : méfiant ET agressif — sec, impatient. Pas d'insultes gratuites."
+                : (step.prospectTone === "mefiant_ferme"
+                    ? "- TON : méfiant et ferme, sceptique — pas agressif, pas insultant, pas de menaces de raccrocher. Tu testes l'agent avec des objections logiques sur le changement de fournisseur."
+                    : "");
             const yieldLine = step.expectedOutcome === "changement_fournisseur"
-                ? `- FIN ATTENDUE : CHANGEMENT DE FOURNISSEUR — après ${step.minObjections || 6}+ objections bien traitées (reformulation + arguments concrets), tu cèdes progressivement : « Bon… si c'est vraiment moins cher et sans galère avec ${step.supplier || "mon fournisseur"}, on peut avancer » puis « Quelle est la prochaine étape ? »`
+                ? `- FIN ATTENDUE : CHANGEMENT DE FOURNISSEUR — après ${step.minObjections || 5} objections bien traitées (reformulation + arguments concrets : économies, comparatif gratuit, sans engagement, résiliation), tu DOIS céder progressivement : « Bon… si c'est vraiment moins cher et sans galère avec ${step.supplier || "mon fournisseur"}, on peut avancer » puis « Quelle est la prochaine étape ? ». INTERDIT de refuser jusqu'au bout si l'agent a bien répondu.`
                 : "";
             const openingLine = step.opening
-                ? `- Première réplique (accroche) : « ${step.opening} » — tu refuses le changement dès le départ.`
+                ? `- Première réplique (accroche) : « ${step.opening} »`
                 : "";
-            return [toneLine, openingLine, yieldLine].filter(Boolean).join("\n");
+            const priorityLine = step.minObjections
+                ? `- PRIORITÉ SCÉNARIO : ce bloc prime sur « niveau avancé = refus total ». Tu es difficile mais jouable — tu finis par accepter le comparatif si l'agent est bon.`
+                : "";
+            return [priorityLine, toneLine, openingLine, yieldLine].filter(Boolean).join("\n");
+        }
+
+        function buildGuidedScenarioLevelBlock(step) {
+            if (!step) return "";
+            const min = step.minObjections || 5;
+            return `NIVEAU SCÉNARIO GUIDÉ — EXIGEANT MAIS JOUABLE (PRIORITAIRE) :
+- Minimum ${min} objections sur le changement de fournisseur avant d'envisager la proposition.
+- Ton ferme et sceptique, PAS agressif (pas de cris, pas de « raccrochez », pas d'insultes).
+- Ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets (économies chiffrées, comparatif gratuit, sans engagement, résiliation gérée).
+- Si l'agent a traité tes objections sérieusement → tu t'ouvres et tu acceptes le comparatif/changement en fin d'appel.`;
         }
 
         function buildTrainingScenarioPromptBlock(step) {
@@ -3681,6 +3693,45 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return chatTurns.filter(t => t.role === "assistant" && isHardObjection(t.content)).length;
         }
 
+        function countScenarioResistance() {
+            const step = getFixedScenarioStep();
+            if (!step) return countProspectResistance();
+            const resistancePattern = /changer|fournisseur|intéresse pas|tranquille|engie|edf|bloctel|iban|arnaque|mail|résiliation|voisin|galère|compliqu|baratin|confiance|perd.*temps|scripts?|reste chez|pas envie|hors de question/i;
+            return chatTurns.filter(t => t.role === "assistant" && (isHardObjection(t.content) || resistancePattern.test(t.content))).length;
+        }
+
+        function countAgentObjectionHandling() {
+            let count = 0;
+            for (let i = 1; i < chatTurns.length; i++) {
+                if (chatTurns[i].role !== "user") continue;
+                let prevProspect = null;
+                for (let j = i - 1; j >= 0; j--) {
+                    if (chatTurns[j].role === "assistant") { prevProspect = chatTurns[j].content; break; }
+                }
+                if (!prevProspect) continue;
+                const wasResistance = isHardObjection(prevProspect)
+                    || /changer|fournisseur|engie|intéresse pas|tranquille|mail|iban|résiliation|voisin|confiance|content|convient/i.test(prevProspect);
+                if (!wasResistance) continue;
+                const agentReply = chatTurns[i].content || "";
+                const reformulated = /\b(je comprends|je vous comprends|tout à fait|effectivement|normal que|rassure|logique|d'accord pour|c'est vrai que)\b/i.test(agentReply);
+                const concrete = /\b(comparatif|gratuit|sans engagement|économ|€|euro|résiliation|sepa|génie|genie|4[,.]8|moins cher|positionné|tarif|augmentation|20\s*€|libre depuis)\b/i.test(agentReply);
+                if ((reformulated && concrete) || (concrete && agentReply.length >= 70)) count++;
+            }
+            return count;
+        }
+
+        function agentHandledObjectionsWell() {
+            const step = getFixedScenarioStep();
+            if (!step?.minObjections) return false;
+            const min = step.minObjections;
+            return countScenarioResistance() >= min
+                && countAgentObjectionHandling() >= Math.max(3, min - 2);
+        }
+
+        function prospectYieldedInCall() {
+            return chatTurns.some(t => t.role === "assistant" && /on peut avancer|prochaine étape|d'accord.*comparatif|bon.*convaincu|je vous écoute|on regarde le comparatif|lance.*comparatif/i.test(t.content));
+        }
+
         function countProspectResistance() {
             const soft = /préfère d'abord|par écrit|par mail|e-mail|email|pourquoi vous|comment avez|sans engagement|garanti|bloqué|habitude|étudier|réfléchir|pas sûr|hésite|intéressant mais|avant de donner|tranquillement|recontacte|recontact/i;
             return chatTurns.filter(t =>
@@ -4213,7 +4264,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function agentAskedIdentity() {
             return agentAskedFirstName() || agentAskedLastName() ||
-                /\b(c'est quoi votre nom|quel est votre nom|votre nom et prénom)\b/i.test(lastAgentText());
+                /\b(c'est quoi votre nom|quel est votre nom|votre nom|donnez.*nom|nom et prénom|nom et prenom)\b/i.test(lastAgentText());
         }
 
         function prospectAlreadyAcceptedComparatif() {
@@ -4428,9 +4479,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function getScenarioObjectionReply() {
             const step = getFixedScenarioStep();
             if (!step?.objections?.length) return null;
-            const used = countProspectObjections();
+            if (agentHandledObjectionsWell()) return null;
+            const used = countScenarioResistance();
             const min = step.minObjections || 4;
-            if (used >= min && canCooperateNow(getProfileKey(), getLevel())) return null;
+            if (used >= min + 1) return null;
             const list = step.objections;
             for (let i = 0; i < list.length; i++) {
                 const line = list[(used + i) % list.length];
@@ -4442,16 +4494,20 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function getScenarioYieldReply() {
             const step = getFixedScenarioStep();
             if (!step || step.expectedOutcome !== "changement_fournisseur") return null;
-            if (!canCooperateNow(getProfileKey(), getLevel())) return null;
+            if (agentSaidGoodbye()) return null;
+            if (!agentHandledObjectionsWell() && !canCooperateNow(getProfileKey(), getLevel())) return null;
             const sup = step.supplier || personaSupplier();
             if (agentAskedIban() && !prospectAlreadyGaveIban()) {
                 return "Bon… d'accord. FR76 3000 6000 0112 3456 7890 123. Si c'est vraiment sans galère avec " + sup + ", on avance.";
             }
+            if (agentAskedIdentity() && !prospectPersona.gaveFirst) {
+                return prospectPersona.firstName + " " + prospectPersona.lastName + ". Bon… si le comparatif est gratuit et sans engagement, on peut regarder.";
+            }
             if (agentAskedClosing() || agentAskedOfferAcceptance() || agentPresentingOffer() || agentInOfferStage()) {
                 return "Bon… vous m'avez convaincu. Si c'est vraiment moins cher et sans prise de tête avec " + sup + ", on peut avancer. Quelle est la prochaine étape ?";
             }
-            if (agentAskedProposition() || agentMentionedProposition()) {
-                return "Hmm… bon, je vous écoute encore une fois. Mais concrètement, qu'est-ce que j'y gagne à quitter " + sup + " ?";
+            if (agentAskedProposition() || agentMentionedProposition() || countAgentTurns() >= 6) {
+                return "Hmm… bon, vous avez répondu à mes questions. Si c'est vraiment sans frais cachés et moins cher, on peut regarder le comparatif ensemble.";
             }
             return null;
         }
@@ -4462,8 +4518,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const scenarioMin = getScenarioMinObjections();
             const max = getMaxObjections(level);
             if (scenarioMin) {
-                if (agentAskedClosing()) return objections >= Math.max(1, scenarioMin - 1) || turns >= 8;
-                return objections >= scenarioMin && (agentAskedProposition() || agentMentionedProposition() || agentAnsweredProspectQuestion() || turns >= 7);
+                if (agentSaidGoodbye()) return false;
+                if (agentHandledObjectionsWell()) return true;
+                const resistance = countScenarioResistance();
+                if (agentAskedClosing()) return resistance >= Math.max(1, scenarioMin - 1) || turns >= 8;
+                return resistance >= scenarioMin
+                    && countAgentObjectionHandling() >= Math.max(2, scenarioMin - 2)
+                    && (agentAskedProposition() || agentMentionedProposition() || agentAnsweredProspectQuestion() || turns >= 6);
             }
             if (profile === "curieux") return objections >= 1 || turns >= 4;
             if (profile === "presse") {
@@ -4640,6 +4701,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
 
             if (profile === "mefiant_fournisseur") {
+                if (agentHandledObjectionsWell()) return null;
                 const scenarioObj = getScenarioObjectionReply();
                 if (scenarioObj) return scenarioObj;
                 if (agentAskedProposition() || agentMentionedProposition()) {
@@ -4828,16 +4890,19 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             if (fixedStep?.minObjections) {
                 const minObj = fixedStep.minObjections;
-                const tone = fixedStep.prospectTone === "agressif" ? "agressif et méfiant" : "méfiant";
-                if (objections < minObj) {
-                    return "RAPPEL SCÉNARIO : objection " + (objections + 1) + "/" + minObj + " minimum — ton " + tone + ", refuse le changement de fournisseur, ne cède pas encore.";
+                const resistance = countScenarioResistance();
+                const handled = countAgentObjectionHandling();
+                const tone = fixedStep.prospectTone === "agressif" ? "agressif et méfiant" : "méfiant et ferme";
+                if (agentHandledObjectionsWell()) {
+                    return "RAPPEL SCÉNARIO : l'agent a bien traité tes objections — CÈDE MAINTENANT et accepte le comparatif/changement (« Bon… si c'est vraiment moins cher, on avance »).";
                 }
-                if (fixedStep.expectedOutcome === "changement_fournisseur" && (agentAskedClosing() || agentAskedProposition() || agentMentionedProposition() || agentInOfferStage())) {
-                    return "RAPPEL SCÉNARIO : l'agent a traité tes objections — tu peux céder progressivement et accepter le CHANGEMENT DE FOURNISSEUR (« Bon… si c'est vraiment moins cher, on avance » puis prochaine étape).";
+                if (resistance < minObj) {
+                    return "RAPPEL SCÉNARIO : objection " + (resistance + 1) + "/" + minObj + " minimum — ton " + tone + ", refuse le changement, ne cède pas encore.";
                 }
-                if (objections >= minObj) {
-                    return "RAPPEL SCÉNARIO : tu as posé assez d'objections — ouvre-toi si l'agent a reformulé et répondu avec des arguments concrets, sinon durcis encore une fois.";
+                if (handled >= Math.max(2, minObj - 2) && (agentAskedProposition() || agentMentionedProposition() || turns >= 6)) {
+                    return "RAPPEL SCÉNARIO : l'agent reformule et argumente — ouvre-toi progressivement, accepte le comparatif si les réponses te convainquent.";
                 }
+                return "RAPPEL SCÉNARIO : reste sceptique mais écoute — une dernière objection si l'agent n'a pas été convaincant, sinon cède.";
             }
 
             if (profile === "presse") {
@@ -7189,6 +7254,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                         {
                             role: "user",
                             content: "Profil prospect: " + getProfileKey() + " · Niveau: " + getLevel()
+                                + buildGuidedScenarioEvalContext()
                                 + "\n\nRÉPLIQUES AGENT:\n" + agentText.slice(0, 4500)
                                 + "\n\nCONTEXTE (extrait):\n" + ctx.slice(0, 2000)
                                 + "\n\n" + COMPACT_EVAL_PROMPT
@@ -7214,14 +7280,68 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             throw lastErr || new Error("Évaluation IA indisponible");
         }
 
+        function buildGuidedScenarioEvalContext() {
+            const step = getFixedScenarioStep();
+            if (!step) return "";
+            const handled = countAgentObjectionHandling();
+            const resistance = countScenarioResistance();
+            const yielded = prospectYieldedInCall();
+            return "\n\nCONTEXTE SCÉNARIO CERTIFICATION :\n"
+                + "- Scénario : " + step.label + "\n"
+                + "- Objectif agent : " + step.goal + "\n"
+                + "- Objections prospect : ~" + resistance + " (minimum " + step.minObjections + ")\n"
+                + "- Réponses agent traitées (reformulation + arguments) : ~" + handled + "\n"
+                + "- Prospect ouvert en fin d'appel : " + (yielded ? "OUI" : "NON") + "\n"
+                + "CRITÈRES PRIORITAIRES : reformulation des refus, arguments concrets (économies, comparatif gratuit, sans engagement), calme face au méfiant, relance closing.\n"
+                + "Note surtout la gestion des objections — ne pénalise pas un agent qui reformule bien même si le prospect met du temps à céder.";
+        }
+
+        function adjustEvaluationForGuidedScenario(evaluation) {
+            const step = getFixedScenarioStep();
+            if (!step || !evaluation) return evaluation;
+            const out = Object.assign({}, evaluation);
+            const handled = countAgentObjectionHandling();
+            const resistance = countScenarioResistance();
+            const yielded = prospectYieldedInCall();
+            const agentText = getAgentMessages().join(" ");
+            const reformulated = /\b(je comprends|je vous comprends)\b/i.test(agentText);
+            const hasEconomy = /\b20\s*€|économ|moins cher|\d+\s*€/i.test(agentText);
+            const hasComparatif = /comparatif/i.test(agentText);
+            let bonus = 0;
+            if (reformulated) bonus += 4;
+            if (hasEconomy) bonus += 3;
+            if (hasComparatif) bonus += 2;
+            if (handled >= Math.max(3, (step.minObjections || 5) - 2)) bonus += 8;
+            if (yielded) bonus += 6;
+            let penalty = 0;
+            const agentQuit = /au revoir|bonne journée/i.test(lastAgentText()) && !yielded && handled >= 3;
+            if (agentQuit) penalty += 4;
+            out.score_total = clampScore((Number(out.score_total) || 0) + bonus - penalty, 100);
+            out.niveau = out.score_total >= 85 ? "Excellent" : out.score_total >= 70 ? "Bon" : out.score_total >= 50 ? "À améliorer" : "Coaching nécessaire";
+            out.points_forts = Array.isArray(out.points_forts) ? out.points_forts.slice() : [];
+            if (reformulated && handled >= 3 && !out.points_forts.some(p => /reformul/i.test(p))) {
+                out.points_forts.unshift("Reformulation et écoute face aux objections du prospect méfiant.");
+            }
+            if (hasEconomy && !out.points_forts.some(p => /économ|chiffr/i.test(p))) {
+                out.points_forts.unshift("Arguments chiffrés (économies) pour convaincre le prospect.");
+            }
+            out.points_forts = out.points_forts.slice(0, 3);
+            out.axes_amelioration = Array.isArray(out.axes_amelioration) ? out.axes_amelioration.slice() : [];
+            if (agentQuit && !yielded) {
+                out.axes_amelioration.unshift("Ne pas abandonner trop tôt — relancer le comparatif après avoir traité les objections.");
+            }
+            out.axes_amelioration = out.axes_amelioration.slice(0, 3);
+            return out;
+        }
+
         async function runEvaluation(apiKey) {
             try {
-                const parsed = await callEvaluationLLM(apiKey);
+                const parsed = adjustEvaluationForGuidedScenario(await callEvaluationLLM(apiKey));
                 return { html: renderEvaluationReport(parsed, "llm"), evaluation: parsed, source: "llm" };
             } catch (e) {
                 console.warn("Eval IA fallback:", e.message);
             }
-            const fallback = computeHeuristicEvaluation();
+            const fallback = adjustEvaluationForGuidedScenario(computeHeuristicEvaluation());
             return { html: renderEvaluationReport(fallback, "heuristic"), evaluation: fallback, source: "heuristic" };
         }
 
@@ -7332,8 +7452,11 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 if (calib) calib.checked = true;
             }
 
+            const guidedStep = examCtx?.step || trainingScenario;
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
-            const levelBlock = profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant;
+            const levelBlock = guidedStep?.minObjections
+                ? buildGuidedScenarioLevelBlock(guidedStep)
+                : (profileLevelBlock || LEVEL_PROMPTS[level] || LEVEL_PROMPTS.debutant);
 
             const persona = createProspectPersona(profileKey);
             prospectPersona = persona;
