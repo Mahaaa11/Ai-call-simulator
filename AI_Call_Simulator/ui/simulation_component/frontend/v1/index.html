@@ -1208,6 +1208,7 @@
         <select id="trainingScenarioSelect">
             <option value="random">🎲 Aléatoire — profil et client variables</option>
             <option value="certif_fournisseur_mefiant" selected>🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
+            <option value="certif_engie_mefiant_agressif">🔥 Certification — Engie méfiant & agressif (Marc Dupont, Marseille)</option>
         </select>
         <p class="training-scenario-hint" id="trainingScenarioHint">Choisissez un scénario guidé ou laissez en aléatoire pour varier les profils.</p>
 
@@ -1759,8 +1760,49 @@
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
         const V1_EXAM_PROGRESS_KEY = "simulator_v1_exam_progress";
         const EXAM_CAMPAIGNS = {
-            // Examen certification du 17/07/2026 — terminé.
-            // Pour un prochain examen : ajouter "YYYY-MM-DD": { id, title, steps, ... }
+            "2026-07-27": {
+                id: "certif_engie_20260727",
+                title: "Examen certification — Changement fournisseur Engie",
+                dateLabel: "27 juillet 2026",
+                instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant et agressif chez Engie · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur",
+                passScore: 70,
+                steps: [
+                    {
+                        id: "examen_engie_mefiant_agressif",
+                        label: "Examen — Engie méfiant & agressif (changement fournisseur)",
+                        profile: "mefiant_fournisseur",
+                        level: "avance",
+                        scenarioType: "standard",
+                        prospectTone: "agressif",
+                        firstName: "Marc",
+                        lastName: "Dupont",
+                        supplier: "Engie",
+                        billAmount: 92,
+                        offerTarget: 76,
+                        yearsAtSupplier: "5 ans",
+                        address: "24 boulevard Longchamp, 13001 Marseille",
+                        opening: "Oui ? Écoutez, je change pas de fournisseur — c'est pour quoi ?",
+                        brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule), même logement depuis 5 ans. Méfiant ET agressif dès le début : refuse tout changement, ton sec, menace de raccrocher. Cède à la fin seulement si l'agent traite ≥7 objections avec reformulation et arguments concrets (objectif : changement de fournisseur).",
+                        goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a été excellent.",
+                        minObjections: 7,
+                        expectedOutcome: "changement_fournisseur",
+                        objections: [
+                            "Je suis chez Engie et j'y reste, point final — je change pas.",
+                            "Vous croyez que je vais changer comme ça ? Arrêtez vos appels !",
+                            "Engie c'est solide — pourquoi je prendrais le risque ?",
+                            "C'est une arnaque votre comparatif, j'en ai marre de ces appels.",
+                            "Comment avez-vous eu mon numéro ? Je suis sur Bloctel !",
+                            "La dernière fois que j'ai changé c'était la galère, jamais plus.",
+                            "Votre offre cache sûrement des frais de résiliation Engie.",
+                            "Mon voisin a quitté Engie et il regrette — vous me prendrez pas.",
+                            "Pourquoi mon IBAN au téléphone ? Vous voulez me voler ?",
+                            "Allez droit au but, j'ai pas le temps pour votre baratin.",
+                            "Concrètement qu'est-ce que j'y gagne à quitter Engie maintenant ?",
+                            "Envoyez-moi par mail, je vous fais pas confiance au téléphone."
+                        ]
+                    }
+                ]
+            }
         };
         const TRAINING_SCENARIOS = {
             certif_fournisseur_mefiant: {
@@ -1793,6 +1835,40 @@
                     "Concrètement, qu'est-ce que j'y gagne à changer maintenant ?",
                     "Envoyez-moi tout par mail, je n'ai pas le temps là.",
                     "Je vais réfléchir, rappelez-moi plus tard."
+                ]
+            },
+            certif_engie_mefiant_agressif: {
+                id: "certif_engie_mefiant_agressif",
+                label: "Certification — Engie méfiant & agressif",
+                description: "Marc Dupont, 48 ans, Engie à Marseille (~92 €/mois) — refuse le changement dès le début, cède si l'agent traite bien les objections.",
+                profile: "mefiant_fournisseur",
+                level: "avance",
+                scenarioType: "standard",
+                prospectTone: "agressif",
+                firstName: "Marc",
+                lastName: "Dupont",
+                supplier: "Engie",
+                billAmount: 92,
+                offerTarget: 76,
+                yearsAtSupplier: "5 ans",
+                address: "24 boulevard Longchamp, 13001 Marseille",
+                opening: "Oui ? Écoutez, je change pas de fournisseur — c'est pour quoi ?",
+                goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA, puis conclure la vente si l'agent a été excellent.",
+                minObjections: 7,
+                expectedOutcome: "changement_fournisseur",
+                objections: [
+                    "Je suis chez Engie et j'y reste, point final — je change pas.",
+                    "Vous croyez que je vais changer comme ça ? Arrêtez vos appels !",
+                    "Engie c'est solide — pourquoi je prendrais le risque ?",
+                    "C'est une arnaque votre comparatif, j'en ai marre de ces appels.",
+                    "Comment avez-vous eu mon numéro ? Je suis sur Bloctel !",
+                    "La dernière fois que j'ai changé c'était la galère, jamais plus.",
+                    "Votre offre cache sûrement des frais de résiliation Engie.",
+                    "Mon voisin a quitté Engie et il regrette — vous me prendrez pas.",
+                    "Pourquoi mon IBAN au téléphone ? Vous voulez me voler ?",
+                    "Allez droit au but, j'ai pas le temps pour votre baratin.",
+                    "Concrètement qu'est-ce que j'y gagne à quitter Engie maintenant ?",
+                    "Envoyez-moi par mail, je vous fais pas confiance au téléphone."
                 ]
             }
         };
@@ -1914,6 +1990,8 @@
         }
 
         function getProspectMood(profileKey, level) {
+            const step = getFixedScenarioStep();
+            if (step?.prospectTone === "agressif") return "angry";
             if (profileKey === "agressif") return "angry";
             if (profileKey === "presse") return level === "debutant" ? "tense" : "angry";
             if (profileKey === "mefiant_rgpd" && level !== "debutant") return "tense";
@@ -2292,14 +2370,34 @@
             return getSelectedTrainingScenario();
         }
 
+        function getScenarioMinObjections() {
+            const step = getFixedScenarioStep();
+            return step?.minObjections || null;
+        }
+
+        function buildScenarioBehaviorBlock(step) {
+            if (!step) return "";
+            const toneLine = step.prospectTone === "agressif"
+                ? "- TON : méfiant ET agressif dès le début — sec, impatient, menace parfois de raccrocher (« arrêtez », « arnaque », « je change pas »). Ne sois pas poli par politesse."
+                : "";
+            const yieldLine = step.expectedOutcome === "changement_fournisseur"
+                ? `- FIN ATTENDUE : CHANGEMENT DE FOURNISSEUR — après ${step.minObjections || 6}+ objections bien traitées (reformulation + arguments concrets), tu cèdes progressivement : « Bon… si c'est vraiment moins cher et sans galère avec ${step.supplier || "mon fournisseur"}, on peut avancer » puis « Quelle est la prochaine étape ? »`
+                : "";
+            const openingLine = step.opening
+                ? `- Première réplique (accroche) : « ${step.opening} » — tu refuses le changement dès le départ.`
+                : "";
+            return [toneLine, openingLine, yieldLine].filter(Boolean).join("\n");
+        }
+
         function buildTrainingScenarioPromptBlock(step) {
             if (!step) return "";
             const objList = (step.objections || []).map(o => "- " + o).join("\n");
+            const behavior = buildScenarioBehaviorBlock(step);
             return `
 
 MODE ENTRAÎNEMENT — ${step.label.toUpperCase()}
 Objectif : ${step.goal}
-- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+${behavior ? behavior + "\n" : ""}- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
 - Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
 - Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
 ${objList}
@@ -2352,11 +2450,12 @@ ${objList}
             const n = ctx.stepIdx + 1;
             const total = ctx.campaign.steps.length;
             const objList = (step.objections || []).map(o => "- " + o).join("\n");
+            const behavior = buildScenarioBehaviorBlock(step);
             return `
 
 MODE EXAMEN — ${step.label.toUpperCase()} (${n}/${total})
 Objectif formateur : ${step.goal}
-- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+${behavior ? behavior + "\n" : ""}- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
 - Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
 - Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
 ${objList}
@@ -3400,6 +3499,25 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return el ? el.value.trim() : "";
         }
 
+        function getAgentName() {
+            const cfg = getSimulatorConfig();
+            const fromHost = (cfg.agentName || "").trim();
+            if (fromHost) return fromHost;
+            return getExamAgentName();
+        }
+
+        function applyHostedAgentName() {
+            const cfg = getSimulatorConfig();
+            const name = (cfg.agentName || "").trim();
+            if (!name) return;
+            const el = document.getElementById("examAgentName");
+            if (el) {
+                el.value = name;
+                el.readOnly = true;
+                el.title = "Nom défini à la connexion Streamlit";
+            }
+        }
+
         function isExamCallActive() {
             return !!(examCallContext || pendingExamStepIndex != null || (prospectPersona && prospectPersona.examStepId));
         }
@@ -3410,7 +3528,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const passScore = campaign?.passScore || 70;
             const score = Number(evaluation.score_total);
             evaluation.exam_meta = {
-                agent_name: getExamAgentName(),
+                agent_name: getAgentName(),
                 campaign_id: examCallContext?.campaignId || campaign?.id || "certif_vente_20260717",
                 passed: Number.isFinite(score) && score >= passScore,
                 pass_score: passScore,
@@ -3434,7 +3552,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             };
             if (isExamCallActive()) {
                 payload.training_mode = "exam_certif";
-                payload.agent_name = getExamAgentName() || null;
+                payload.agent_name = getAgentName() || null;
                 payload.exam_campaign_id = examCallContext?.campaignId || getActiveExamCampaign()?.id || null;
             } else {
                 const trainingScenario = getSelectedTrainingScenario();
@@ -3442,6 +3560,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     payload.training_mode = "scenario_certif";
                     payload.training_scenario_id = trainingScenario.id;
                 }
+                const agentName = getAgentName();
+                if (agentName) payload.agent_name = agentName;
             }
             return payload;
         }
@@ -3453,7 +3573,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 callStartedAt: callStartedAt,
                 persona: prospectPersona,
                 level: getLevel(),
-                agent_name: getExamAgentName(),
+                agent_name: getAgentName(),
                 exam_campaign_id: examCallContext?.campaignId || getActiveExamCampaign()?.id || null,
                 stashed_at: Date.now()
             }));
@@ -3894,6 +4014,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return "Bon, si c'est vraiment 60 euros, continuez, mais je ne signe rien tout de suite.";
             }
             if (profile === "mefiant_rgpd" || profile === "mefiant_fournisseur") {
+                const yieldReply = getScenarioYieldReply();
+                if (yieldReply) return yieldReply;
                 return "D'accord, mais j'ai besoin de comprendre les conditions avant de m'engager.";
             }
             if (profile === "curieux") {
@@ -4298,13 +4420,51 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function getMaxObjections(level) {
+            const scenarioMin = getScenarioMinObjections();
+            if (scenarioMin) return scenarioMin;
             return { debutant: 1, intermediaire: 4, avance: 6 }[level] || 2;
+        }
+
+        function getScenarioObjectionReply() {
+            const step = getFixedScenarioStep();
+            if (!step?.objections?.length) return null;
+            const used = countProspectObjections();
+            const min = step.minObjections || 4;
+            if (used >= min && canCooperateNow(getProfileKey(), getLevel())) return null;
+            const list = step.objections;
+            for (let i = 0; i < list.length; i++) {
+                const line = list[(used + i) % list.length];
+                if (!prospectAlreadySaidLine(line) && !isRepeatOfRecentProspectReply(line)) return line;
+            }
+            return pickNextUnusedLine(list) || list[used % list.length];
+        }
+
+        function getScenarioYieldReply() {
+            const step = getFixedScenarioStep();
+            if (!step || step.expectedOutcome !== "changement_fournisseur") return null;
+            if (!canCooperateNow(getProfileKey(), getLevel())) return null;
+            const sup = step.supplier || personaSupplier();
+            if (agentAskedIban() && !prospectAlreadyGaveIban()) {
+                return "Bon… d'accord. FR76 3000 6000 0112 3456 7890 123. Si c'est vraiment sans galère avec " + sup + ", on avance.";
+            }
+            if (agentAskedClosing() || agentAskedOfferAcceptance() || agentPresentingOffer() || agentInOfferStage()) {
+                return "Bon… vous m'avez convaincu. Si c'est vraiment moins cher et sans prise de tête avec " + sup + ", on peut avancer. Quelle est la prochaine étape ?";
+            }
+            if (agentAskedProposition() || agentMentionedProposition()) {
+                return "Hmm… bon, je vous écoute encore une fois. Mais concrètement, qu'est-ce que j'y gagne à quitter " + sup + " ?";
+            }
+            return null;
         }
 
         function canCooperateNow(profile, level) {
             const turns = countAgentTurns();
             const objections = countProspectObjections();
+            const scenarioMin = getScenarioMinObjections();
             const max = getMaxObjections(level);
+            if (scenarioMin) {
+                if (agentAskedClosing()) return objections >= Math.max(1, scenarioMin - 1) || turns >= 8;
+                return objections >= scenarioMin && (agentAskedProposition() || agentMentionedProposition() || agentAnsweredProspectQuestion() || turns >= 7);
+            }
             if (profile === "curieux") return objections >= 1 || turns >= 4;
             if (profile === "presse") {
                 if (agentAnsweredProspectQuestion()) return true;
@@ -4480,11 +4640,13 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
 
             if (profile === "mefiant_fournisseur") {
+                const scenarioObj = getScenarioObjectionReply();
+                if (scenarioObj) return scenarioObj;
                 if (agentAskedProposition() || agentMentionedProposition()) {
-                    return findUnusedFallback(list, l => /changer|satisfait|engagement|comparateur|problèmes|service client|mère|edf|fournisseur/i.test(l), list[0]);
+                    return findUnusedFallback(list, l => /changer|satisfait|engagement|comparateur|problèmes|service client|mère|edf|engie|fournisseur/i.test(l), list[0]);
                 }
                 if (agentIsCommercialPitch()) {
-                    return findUnusedFallback(list, l => /changer|satisfait|confiance|engagement|voisin|frais de résiliation/i.test(l), list[0]);
+                    return findUnusedFallback(list, l => /changer|satisfait|confiance|engagement|voisin|frais de résiliation|engie|edf/i.test(l), list[0]);
                 }
             }
 
@@ -4571,6 +4733,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             const factual = tryFactualAnswer(profile, level);
             if (factual) return factual;
+
+            const scenarioYield = getScenarioYieldReply();
+            if (scenarioYield && !isSameAsLastProspectReply(scenarioYield)) return scenarioYield;
 
             if (profile === "presse" && isPastDataCollectionStage()) {
                 const sales = getPresseSalesStageReply(level);
@@ -4659,6 +4824,21 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const turns = countAgentTurns();
             const objections = countProspectObjections();
             const profile = getProfileKey();
+            const fixedStep = getFixedScenarioStep();
+
+            if (fixedStep?.minObjections) {
+                const minObj = fixedStep.minObjections;
+                const tone = fixedStep.prospectTone === "agressif" ? "agressif et méfiant" : "méfiant";
+                if (objections < minObj) {
+                    return "RAPPEL SCÉNARIO : objection " + (objections + 1) + "/" + minObj + " minimum — ton " + tone + ", refuse le changement de fournisseur, ne cède pas encore.";
+                }
+                if (fixedStep.expectedOutcome === "changement_fournisseur" && (agentAskedClosing() || agentAskedProposition() || agentMentionedProposition() || agentInOfferStage())) {
+                    return "RAPPEL SCÉNARIO : l'agent a traité tes objections — tu peux céder progressivement et accepter le CHANGEMENT DE FOURNISSEUR (« Bon… si c'est vraiment moins cher, on avance » puis prochaine étape).";
+                }
+                if (objections >= minObj) {
+                    return "RAPPEL SCÉNARIO : tu as posé assez d'objections — ouvre-toi si l'agent a reformulé et répondu avec des arguments concrets, sinon durcis encore une fois.";
+                }
+            }
 
             if (profile === "presse") {
                 const list = getProfileFallbacks();
@@ -7334,6 +7514,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 
         function onStreamlitConfigApplied() {
             applyHostedConfig();
+            applyHostedAgentName();
             showLastSaveResult();
             checkDbServer();
             checkTtsServer();
