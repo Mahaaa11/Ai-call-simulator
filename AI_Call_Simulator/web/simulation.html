@@ -2329,6 +2329,63 @@
             return step?.minObjections || null;
         }
 
+        function isGuidedScenarioActive() {
+            return !!getScenarioMinObjections();
+        }
+
+        function getScenarioObjectionMarkers() {
+            const step = getFixedScenarioStep();
+            if (!step?.objections?.length) return [];
+            return step.objections.map(o => {
+                if (/comment avez/i.test(o)) return /comment avez|eu mon num/i;
+                if (/frais de résiliation|résiliation/i.test(o)) return /frais de résiliation|résiliation/i;
+                if (/compliqu|galère/i.test(o)) return /compliqu|galère|dernière fois/i;
+                if (/voisin/i.test(o)) return /voisin/i;
+                if (/iban|sepa/i.test(o)) return /iban|sepa/i;
+                if (/mail|écrit/i.test(o)) return /envoyez|par mail|par écrit/i;
+                if (/concrètement|gagne/i.test(o)) return /concrètement|qu'est-ce que j'y gagne|gagne à quitter/i;
+                if (/convient|risque/i.test(o)) return /convient|risque|pourquoi je prendrais/i;
+                if (/changer de fournisseur|change pas/i.test(o)) return /ne veux pas changer|change pas|changer de fournisseur|reste chez/i;
+                if (/temps|droit au but|discours/i.test(o)) return /pas le temps|droit au but|long discours|baratin/i;
+                if (/harcel|arrêtez.*appel/i.test(o)) return /harcel|arrêtez.*appel|m'appeler/i;
+                if (/confiance|comparatif/i.test(o)) return /pas confiance|comparatif.*confiance/i;
+                return new RegExp(o.slice(0, 28).replace(/[?.!,'"]/g, "").trim(), "i");
+            });
+        }
+
+        function countScenarioObjectionsUsed() {
+            const markers = getScenarioObjectionMarkers();
+            if (!markers.length) return countScenarioResistance();
+            let count = 0;
+            for (const m of markers) {
+                if (chatTurns.some(t => t.role === "assistant" && m.test(t.content))) count++;
+            }
+            return count;
+        }
+
+        function getNextScenarioObjection() {
+            const step = getFixedScenarioStep();
+            if (!step?.objections?.length) return null;
+            const markers = getScenarioObjectionMarkers();
+            for (let i = 0; i < step.objections.length; i++) {
+                const marker = markers[i];
+                const line = step.objections[i];
+                const already = marker
+                    ? chatTurns.some(t => t.role === "assistant" && marker.test(t.content))
+                    : prospectAlreadySaidLine(line);
+                if (!already) return line;
+            }
+            return null;
+        }
+
+        function getCalibrationFallbackList(level) {
+            if (isGuidedScenarioActive()) {
+                const step = getFixedScenarioStep();
+                return step?.objections || [];
+            }
+            return getProfileFallbacks(level);
+        }
+
         function buildScenarioBehaviorBlock(step) {
             if (!step) return "";
             const toneLine = step.prospectTone === "agressif"
@@ -3681,7 +3738,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const step = getFixedScenarioStep();
             if (!step?.minObjections) return false;
             const min = step.minObjections;
-            return countScenarioResistance() >= min
+            return countScenarioObjectionsUsed() >= min
                 && countAgentObjectionHandling() >= Math.max(3, min - 2);
         }
 
@@ -4220,6 +4277,10 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function agentAskedIdentity() {
+            if ((agentAskedPostalAddress() || agentAskedPdl()) && !agentAskedFirstName() && !agentAskedLastName()
+                && !/\bnom et prénom|nom et prenom|donnez.*nom|quel est votre nom|c'est quoi votre nom\b/i.test(lastAgentText())) {
+                return false;
+            }
             return agentAskedFirstName() || agentAskedLastName() ||
                 /\b(c'est quoi votre nom|quel est votre nom|votre nom|donnez.*nom|nom et prénom|nom et prenom)\b/i.test(lastAgentText());
         }
@@ -4230,13 +4291,34 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function getIdentityReply() {
-            if (agentAskedLastName() || (prospectPersona.gaveFirst && /\bnom\b/i.test(lastAgentText()))) {
+            if ((agentAskedPostalAddress() || agentAskedPdl()) && !agentAskedFirstName() && !agentAskedLastName()) {
+                const addrReply = getGuidedScenarioAddressReply();
+                if (addrReply) return addrReply;
+            }
+            if (prospectPersona.gaveFirst && prospectPersona.gaveLast && !agentAskedFirstName() && !agentAskedLastName()) {
+                return null;
+            }
+            if (agentAskedLastName()) {
                 return prospectPersona.lastName + ".";
             }
-            if (/\bnom et prénom|nom et votre prénom\b/i.test(lastAgentText())) {
+            if (/\bnom et prénom|nom et votre prénom|nom et prenom\b/i.test(lastAgentText())) {
                 return "Je m'appelle " + prospectPersona.firstName + " " + prospectPersona.lastName + ".";
             }
             return "Je m'appelle " + prospectPersona.firstName + ".";
+        }
+
+        function getGuidedScenarioAddressReply() {
+            if (!isGuidedScenarioActive()) return null;
+            const min = getScenarioMinObjections() || 5;
+            const ready = agentHandledObjectionsWell()
+                || (countScenarioObjectionsUsed() >= min && countAgentObjectionHandling() >= Math.max(2, min - 2));
+            if (!ready) {
+                if (countScenarioObjectionsUsed() < min) return getNextScenarioObjection();
+                return "Avant de donner mon adresse, je veux être sûr que c'est gratuit et sans engagement.";
+            }
+            if (agentAskedPdl()) return prospectPersona.pdl + ".";
+            if (agentAskedPostalAddress() || agentAskedPdl()) return prospectPersona.address + ".";
+            return null;
         }
 
         function syncPersonaFromReply(reply) {
@@ -4437,23 +4519,23 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             const step = getFixedScenarioStep();
             if (!step?.objections?.length) return null;
             if (agentHandledObjectionsWell()) return null;
-            const used = countScenarioResistance();
+            const used = countScenarioObjectionsUsed();
             const min = step.minObjections || 4;
-            if (used >= min + 1) return null;
-            const list = step.objections;
-            for (let i = 0; i < list.length; i++) {
-                const line = list[(used + i) % list.length];
-                if (!prospectAlreadySaidLine(line) && !isRepeatOfRecentProspectReply(line)) return line;
-            }
-            return pickNextUnusedLine(list) || list[used % list.length];
+            if (used >= min) return null;
+            return getNextScenarioObjection();
         }
 
         function getScenarioYieldReply() {
             const step = getFixedScenarioStep();
             if (!step || step.expectedOutcome !== "changement_fournisseur") return null;
             if (agentSaidGoodbye()) return null;
-            if (!agentHandledObjectionsWell() && !canCooperateNow(getProfileKey(), getLevel())) return null;
+            const min = step.minObjections || 5;
+            const ready = agentHandledObjectionsWell()
+                || (countScenarioObjectionsUsed() >= min && countAgentObjectionHandling() >= Math.max(2, min - 2));
+            if (!ready && !canCooperateNow(getProfileKey(), getLevel())) return null;
             const sup = step.supplier || personaSupplier();
+            const addrReply = getGuidedScenarioAddressReply();
+            if (addrReply && (agentAskedPostalAddress() || agentAskedPdl())) return addrReply;
             if (agentAskedIban() && !prospectAlreadyGaveIban()) {
                 return "Bon… d'accord. FR76 3000 6000 0112 3456 7890 123. Si c'est vraiment sans galère avec " + sup + ", on avance.";
             }
@@ -4462,6 +4544,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
             if (agentAskedClosing() || agentAskedOfferAcceptance() || agentPresentingOffer() || agentInOfferStage()) {
                 return "Bon… vous m'avez convaincu. Si c'est vraiment moins cher et sans prise de tête avec " + sup + ", on peut avancer. Quelle est la prochaine étape ?";
+            }
+            if (agentAskedPostalAddress() || agentAskedPdl()) {
+                return prospectPersona.address + ". On peut lancer le comparatif.";
             }
             if (agentAskedProposition() || agentMentionedProposition() || countAgentTurns() >= 6) {
                 return "Hmm… bon, vous avez répondu à mes questions. Si c'est vraiment sans frais cachés et moins cher, on peut regarder le comparatif ensemble.";
@@ -4477,9 +4562,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (scenarioMin) {
                 if (agentSaidGoodbye()) return false;
                 if (agentHandledObjectionsWell()) return true;
-                const resistance = countScenarioResistance();
-                if (agentAskedClosing()) return resistance >= Math.max(1, scenarioMin - 1) || turns >= 8;
-                return resistance >= scenarioMin
+                const used = countScenarioObjectionsUsed();
+                if (agentAskedClosing()) return used >= Math.max(1, scenarioMin - 1) || turns >= 8;
+                return used >= scenarioMin
                     && countAgentObjectionHandling() >= Math.max(2, scenarioMin - 2)
                     && (agentAskedProposition() || agentMentionedProposition() || agentAnsweredProspectQuestion() || turns >= 6);
             }
@@ -4628,6 +4713,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
 
             if (canCooperateNow(profile, level)) {
+                if (isGuidedScenarioActive()) return null;
                 if (agentAskedClosing() || (agentAskedProposition() && !agentAskedIban())) {
                     return closing;
                 }
@@ -4659,6 +4745,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             if (profile === "mefiant_fournisseur") {
                 if (agentHandledObjectionsWell()) return null;
+                if (isGuidedScenarioActive()) {
+                    return getScenarioObjectionReply();
+                }
                 const scenarioObj = getScenarioObjectionReply();
                 if (scenarioObj) return scenarioObj;
                 if (agentAskedProposition() || agentMentionedProposition()) {
@@ -4729,6 +4818,9 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
 
             if (agentIsCommercialPitch()) {
+                if (isGuidedScenarioActive() && profile === "mefiant_fournisseur") {
+                    return getScenarioObjectionReply();
+                }
                 return findUnusedFallback(list, l => /intéresse pas|pressé|changer|données/i.test(l), list[0]);
             }
             return null;
@@ -4736,16 +4828,31 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
         function applyContextualCalibration(reply, profile) {
             const level = getLevel();
-            const list = getProfileFallbacks(level);
+            const list = getCalibrationFallbackList(level);
 
             if (agentSaidGoodbye()) return "Au revoir.";
+
+            if (isGuidedScenarioActive()) {
+                const earlyYield = getScenarioYieldReply();
+                if (earlyYield && !isSameAsLastProspectReply(earlyYield)) return earlyYield;
+                const addrEarly = getGuidedScenarioAddressReply();
+                if (addrEarly && (agentAskedPostalAddress() || agentAskedPdl()) && !isSameAsLastProspectReply(addrEarly)) return addrEarly;
+            }
 
             if (agentAskedIdentity()) {
                 if (profile === "mefiant_rgpd" && level === "avance" && !canCooperateNow(profile, level)) {
                     return findUnusedFallback(list, l => /données|nom tant/i.test(l), "Je ne donne pas mon nom tant que ce n'est pas clair.");
                 }
-                if (/vérification|comparatif|on peut faire/i.test(reply) || isBadProspectReply(reply)) {
-                    return getIdentityReply();
+                const identity = getIdentityReply();
+                if (identity && (/vérification|comparatif|on peut faire/i.test(reply) || isBadProspectReply(reply))) {
+                    return identity;
+                }
+                if (identity && (agentAskedFirstName() || agentAskedLastName() || /\bnom et prénom|donnez.*nom/i.test(lastAgentText()))) {
+                    return identity;
+                }
+                if (!identity && (agentAskedPostalAddress() || agentAskedPdl())) {
+                    const addrReply = getGuidedScenarioAddressReply();
+                    if (addrReply) return addrReply;
                 }
                 return reply;
             }
@@ -4773,9 +4880,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (contextual) {
                 const llmUsable = isUsableLlmReply(reply);
                 if (isRepeatOfRecentProspectReply(contextual) || prospectAlreadySaidLine(contextual)) {
+                    const yieldOnRepeat = getScenarioYieldReply();
+                    if (yieldOnRepeat && !isSameAsLastProspectReply(yieldOnRepeat)) return yieldOnRepeat;
                     const alt = pickNextUnusedLine(list);
                     if (alt && !isRepeatOfRecentProspectReply(alt)) return alt;
                     if (llmUsable && !isRepeatOfRecentProspectReply(reply)) return reply;
+                    if (isGuidedScenarioActive()) return getScenarioYieldReply() || reply;
                     return ensureReplyVariety(contextual);
                 }
                 const mustObject = isBadProspectReply(reply) ||
@@ -4786,9 +4896,12 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                     if (!prospectAlreadySaidLine(contextual) && !isRepeatOfRecentProspectReply(contextual)) {
                         return contextual;
                     }
+                    const yieldOnRepeat = getScenarioYieldReply();
+                    if (yieldOnRepeat && !isSameAsLastProspectReply(yieldOnRepeat)) return yieldOnRepeat;
                     const alt = pickNextUnusedLine(list);
                     if (alt && !isRepeatOfRecentProspectReply(alt)) return alt;
                     if (llmUsable && !isRepeatOfRecentProspectReply(reply)) return reply;
+                    if (isGuidedScenarioActive()) return getScenarioYieldReply() || reply;
                     return ensureReplyVariety(contextual);
                 }
                 if (llmMissesContext) return contextual;
@@ -4811,8 +4924,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             }
 
             if (isRepeatOfRecentProspectReply(reply)) {
+                const yieldOnRepeat = getScenarioYieldReply();
+                if (yieldOnRepeat && !isSameAsLastProspectReply(yieldOnRepeat)) return yieldOnRepeat;
                 const alt = pickNextUnusedLine(list);
                 if (alt) return alt;
+            }
+
+            if (isGuidedScenarioActive() && isUsableLlmReply(reply)) {
+                const genericEdf = /\bedf c'est|je ne changerai jamais|panne une fois|arrêtez avec vos comparatifs|ma mère est chez edf\b/i.test(reply);
+                if (genericEdf) {
+                    const yieldFix = getScenarioYieldReply() || getNextScenarioObjection();
+                    if (yieldFix) return yieldFix;
+                }
             }
 
             return reply;
@@ -4847,19 +4970,19 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 
             if (fixedStep?.minObjections) {
                 const minObj = fixedStep.minObjections;
-                const resistance = countScenarioResistance();
+                const used = countScenarioObjectionsUsed();
                 const handled = countAgentObjectionHandling();
                 const tone = fixedStep.prospectTone === "agressif" ? "agressif et méfiant" : "méfiant et ferme";
                 if (agentHandledObjectionsWell()) {
-                    return "RAPPEL SCÉNARIO : l'agent a bien traité tes objections — CÈDE MAINTENANT et accepte le comparatif/changement (« Bon… si c'est vraiment moins cher, on avance »).";
+                    return "RAPPEL SCÉNARIO : l'agent a bien traité tes objections — CÈDE MAINTENANT (accepte comparatif/adresse, ne répète plus d'objections déjà dites).";
                 }
-                if (resistance < minObj) {
-                    return "RAPPEL SCÉNARIO : objection " + (resistance + 1) + "/" + minObj + " minimum — ton " + tone + ", refuse le changement, ne cède pas encore.";
+                if (used < minObj) {
+                    return "RAPPEL SCÉNARIO : objection " + (used + 1) + "/" + minObj + " — ton " + tone + ", utilise une NOUVELLE objection du scénario (pas EDF si tu es chez Engie, ne répète pas).";
                 }
-                if (handled >= Math.max(2, minObj - 2) && (agentAskedProposition() || agentMentionedProposition() || turns >= 6)) {
-                    return "RAPPEL SCÉNARIO : l'agent reformule et argumente — ouvre-toi progressivement, accepte le comparatif si les réponses te convainquent.";
+                if (handled >= Math.max(2, minObj - 2) && (agentAskedProposition() || agentMentionedProposition() || turns >= 6 || agentAskedPostalAddress() || agentAskedPdl())) {
+                    return "RAPPEL SCÉNARIO : l'agent a reformulé et argumenté — ouvre-toi, donne ton adresse si demandée, accepte le comparatif.";
                 }
-                return "RAPPEL SCÉNARIO : reste sceptique mais écoute — une dernière objection si l'agent n'a pas été convaincant, sinon cède.";
+                return "RAPPEL SCÉNARIO : ne répète pas une objection déjà dite — cède si l'agent a été convaincant.";
             }
 
             if (profile === "presse") {
@@ -6414,14 +6537,23 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         }
 
         function fallbackProspectReply() {
-            if (agentAskedIdentity()) return getIdentityReply();
+            if (isGuidedScenarioActive()) {
+                const yieldReply = getScenarioYieldReply();
+                if (yieldReply) return yieldReply;
+                const nextObj = getScenarioObjectionReply();
+                if (nextObj) return nextObj;
+            }
+            if (agentAskedIdentity()) {
+                const identity = getIdentityReply();
+                if (identity) return identity;
+            }
             const profile = getProfileKey();
             const level = getLevel();
             const contextual = getContextualObjection(profile, level);
             if (contextual && !isRepeatOfRecentProspectReply(contextual)) return contextual;
             const factual = tryFactualAnswer(profile, level);
             if (factual && !isRepeatOfRecentProspectReply(factual)) return factual;
-            const list = getProfileFallbacks(level);
+            const list = getCalibrationFallbackList(level);
             return pickNextUnusedLine(list) || ensureReplyVariety("Je vous écoute, mais je ne suis pas convaincu.");
         }
 
@@ -6523,11 +6655,23 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
         function getRealisticProspectFallback() {
             const profile = getProfileKey();
             const level = getLevel();
+            const sup = personaSupplier();
+            if (isGuidedScenarioActive()) {
+                const yieldReply = getScenarioYieldReply();
+                if (yieldReply) return yieldReply;
+                const addrReply = getGuidedScenarioAddressReply();
+                if (addrReply) return addrReply;
+                const nextObj = getScenarioObjectionReply();
+                if (nextObj) return nextObj;
+            }
             const t = lastAgentText().toLowerCase();
-            const sec = profile === "agressif" && level !== "debutant";
+            const sec = profile === "agressif" && level !== "debutant" && !isGuidedScenarioActive();
             const mefiant = profile === "mefiant_rgpd" || profile === "mefiant_fournisseur";
 
-            if (agentAskedIdentity()) return getIdentityReply();
+            if (agentAskedIdentity()) {
+                const identity = getIdentityReply();
+                if (identity) return identity;
+            }
             if (agentInOfferStage()) {
                 const offer = getOfferStageReply();
                 if (offer) return offer;
@@ -6535,12 +6679,16 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (agentAskedPdl()) {
                 const ctx = getScenarioContextReply("pdl");
                 if (ctx) return ctx;
+                const guided = getGuidedScenarioAddressReply();
+                if (guided) return guided;
                 if (mefiant || sec) return prospectPersona.pdl + ", mais pourquoi vous en avez besoin ?";
                 return prospectPersona.pdl + ".";
             }
             if (agentAskedPostalAddress()) {
                 const ctx = getScenarioContextReply("address");
                 if (ctx) return ctx;
+                const guided = getGuidedScenarioAddressReply();
+                if (guided) return guided;
                 if (level === "intermediaire" && countProspectResistance() < 2) {
                     return "Je préfère d'abord voir ce que vous proposez avant de donner mon adresse.";
                 }
@@ -6552,7 +6700,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
                 return getIbanObjectionReply(profile);
             }
             if (/\b(pas d'?électricité|comment ça)\b/i.test(t)) {
-                return sec ? "Si si, j'ai de l'électricité. Électricité seulement, chez EDF." : "Oui j'ai de l'électricité, électricité seulement chez EDF.";
+                return sec ? "Si si, j'ai de l'électricité. Électricité seulement, chez " + sup + "." : "Oui j'ai de l'électricité, électricité seulement chez " + sup + ".";
             }
             if (agentAskedEnergyType() || /\b(gaz|électricité)\b/i.test(t)) {
                 return sec ? "Électricité seulement, pas de gaz." : "Électricité seulement.";
@@ -6560,8 +6708,8 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (agentAskedSupplier()) {
                 const ctx = getScenarioContextReply("supplier");
                 if (ctx) return ctx;
-                if (prospectAlreadySaidSupplier()) return sec ? "On l'a déjà dit : EDF." : "Comme je vous ai dit, EDF.";
-                return sec ? "EDF. Et alors ?" : "Je suis chez EDF.";
+                if (prospectAlreadySaidSupplier()) return sec ? "On l'a déjà dit : " + sup + "." : "Comme je vous ai dit, " + sup + ".";
+                return sec ? sup + ". Et alors ?" : "Je suis chez " + sup + ".";
             }
             if (agentAskedDuration()) return "Ça fait plusieurs années.";
             if (agentAskedBillAmount()) {
@@ -7246,7 +7394,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             return "\n\nCONTEXTE SCÉNARIO CERTIFICATION :\n"
                 + "- Scénario : " + step.label + "\n"
                 + "- Objectif agent : " + step.goal + "\n"
-                + "- Objections prospect : ~" + resistance + " (minimum " + step.minObjections + ")\n"
+                + "- Objections scénario traitées : ~" + countScenarioObjectionsUsed() + " / " + step.minObjections + "\n"
                 + "- Réponses agent traitées (reformulation + arguments) : ~" + handled + "\n"
                 + "- Prospect ouvert en fin d'appel : " + (yielded ? "OUI" : "NON") + "\n"
                 + "CRITÈRES PRIORITAIRES : reformulation des refus, arguments concrets (économies, comparatif gratuit, sans engagement), calme face au méfiant, relance closing.\n"
@@ -7269,6 +7417,7 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
             if (hasEconomy) bonus += 3;
             if (hasComparatif) bonus += 2;
             if (handled >= Math.max(3, (step.minObjections || 5) - 2)) bonus += 8;
+            if (countScenarioObjectionsUsed() >= (step.minObjections || 5)) bonus += 3;
             if (yielded) bonus += 6;
             let penalty = 0;
             const agentQuit = /au revoir|bonne journée/i.test(lastAgentText()) && !yielded && handled >= 3;
