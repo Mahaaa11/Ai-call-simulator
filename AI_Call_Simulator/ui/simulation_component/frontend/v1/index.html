@@ -7175,7 +7175,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
 
             const prospectAskedNumber = /comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|pourquoi.*m'appelez|bloctel|eu mon num/i.test(pFull);
             const badDatabaseReply = prospectAskedNumber && agentMsgs.some(m =>
-                /\b(base de donn|fichier client|notre base|listing|on a une base|database|fichier nominatif|base client)\b/i.test(m));
+                /\b(base de donn|base de contact|fichier client|notre base|listing|on a une base|database|fichier nominatif|base client)\b/i.test(m));
             const evasiveNumberReply = prospectAskedNumber && !badDatabaseReply && agentMsgs.some(m =>
                 /\b(je n'en sais rien|je n'ai aucune idée|aucune idée|pas nominatif|numéro qui s'affiche|numero qui s'affiche|appels ne sont pas nominatifs|pote numéro)\b/i.test(m))
                 && !/\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|base légale|intérêt légitime|comparateur)\b/i.test(full);
@@ -7482,7 +7482,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             const full = agentMsgs.join(" ").toLowerCase();
             const prospectAskedNumber = /comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|bloctel|eu mon num/i.test(pFull);
             const badDatabaseReply = prospectAskedNumber && agentMsgs.some(m =>
-                /\b(base de donn|fichier client|notre base|listing|on a une base|database|fichier nominatif)\b/i.test(m));
+                /\b(base de donn|base de contact|fichier client|notre base|listing|on a une base|database|fichier nominatif)\b/i.test(m));
             const evasiveNumberReply = prospectAskedNumber && !badDatabaseReply && agentMsgs.some(m =>
                 /\b(je n'en sais rien|je n'ai aucune idée|aucune idée|pas nominatif|numéro qui s'affiche|appels ne sont pas nominatifs|pote numéro)\b/i.test(m))
                 && !/\b(consentement|formulaire|partenaire|enedis|grdf|base légale|comparateur)\b/i.test(full);

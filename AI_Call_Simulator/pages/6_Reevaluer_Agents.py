@@ -1,4 +1,4 @@
-"""Réévaluer les conversations d'agents avec la grille compliance v2."""
+"""Réévaluer les dernières conversations d'agents avec la grille compliance v2."""
 
 from __future__ import annotations
 
@@ -18,8 +18,13 @@ for p in (WEB_DIR, SCRIPTS_DIR, PROJECT_ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from mysql_store import apply_mysql_env_from_mapping  # noqa: E402
-from reevaluate_agents import find_conversations, reevaluate_conversation  # noqa: E402
+from mysql_store import (  # noqa: E402
+    apply_mysql_env_from_mapping,
+    find_latest_conversations_for_agents,
+    list_recent_conversations_detailed,
+    resolve_conversation_agent_name,
+)
+from reevaluate_agents import reevaluate_conversation  # noqa: E402
 
 
 def _load_env() -> None:
@@ -52,10 +57,17 @@ def _mysql_from_secrets() -> bool:
     return True
 
 
+def _fmt_dt(value) -> str:
+    if not value:
+        return "—"
+    return str(value)[:19]
+
+
 st.set_page_config(page_title="Réévaluer agents", page_icon="🔄", layout="wide")
-st.title("🔄 Réévaluer les conversations")
+st.title("🔄 Réévaluer les dernières conversations")
 st.caption(
-    "Grille v2 : origine du numéro (jamais « base de données »), reformulation des objections, closing."
+    "Grille v2 : origine du numéro (jamais « base de données »), reformulation des objections, closing. "
+    "Par défaut : **la dernière conversation** de chaque agent."
 )
 
 if not _mysql_from_secrets():
@@ -63,32 +75,75 @@ if not _mysql_from_secrets():
     st.stop()
 
 default_agents = "Marc, Hassan, Mohamed Anas"
-agents_raw = st.text_input("Agents à réévaluer", value=default_agents)
-limit = st.number_input("Conversations max par recherche", min_value=1, max_value=10, value=3)
+agents_raw = st.text_input("Agents (dernière conversation de chacun)", value=default_agents)
+limit = st.number_input(
+    "Conversations par agent",
+    min_value=1,
+    max_value=5,
+    value=1,
+    help="1 = uniquement la plus récente",
+)
 dry_run = st.checkbox("Simulation (ne pas écrire en base)", value=False)
 
 targets = [a.strip() for a in agents_raw.split(",") if a.strip()]
 
-if st.button("Lancer la réévaluation", type="primary"):
+# Aperçu avant lancement
+try:
+    preview = find_latest_conversations_for_agents(targets, per_agent=int(limit))
+except Exception as exc:
+    st.error(f"Impossible de lire TiDB : {exc}")
+    st.stop()
+
+st.subheader("Conversations qui seront réévaluées")
+if not preview:
+    st.warning(
+        "Aucune conversation trouvée pour ces agents. "
+        "Vérifiez les noms ou consultez le tableau des dernières conversations ci-dessous."
+    )
+else:
+    preview_rows = []
+    for row in preview:
+        preview_rows.append({
+            "ID": row["id"],
+            "Agent (résolu)": row.get("_resolved_agent_name") or resolve_conversation_agent_name(row) or "—",
+            "Date": _fmt_dt(row.get("created_at")),
+            "Score actuel": row.get("score_total") if row.get("score_total") is not None else "—",
+            "Profil": row.get("profile_key") or "—",
+        })
+    st.dataframe(preview_rows, use_container_width=True, hide_index=True)
+
+with st.expander("Dernières conversations en base (diagnostic)"):
     try:
-        convs = find_conversations(targets, limit_per_agent=int(limit))
+        recent = list_recent_conversations_detailed(limit=25)
+        diag = []
+        for row in recent:
+            diag.append({
+                "ID": row["id"],
+                "Agent colonne": row.get("agent_name") or "—",
+                "Agent résolu": resolve_conversation_agent_name(row) or "—",
+                "Date": _fmt_dt(row.get("created_at")),
+                "Score": row.get("score_total") if row.get("score_total") is not None else "—",
+            })
+        st.dataframe(diag, use_container_width=True, hide_index=True)
     except Exception as exc:
-        st.error(f"Erreur MySQL : {exc}")
-        st.stop()
+        st.caption(f"Diagnostic indisponible : {exc}")
 
-    if not convs:
-        st.warning("Aucune conversation trouvée.")
-        st.stop()
+if st.button("Lancer la réévaluation", type="primary", disabled=not preview):
+    with st.spinner("Réévaluation en cours…"):
+        results = []
+        for conv in preview:
+            cid = int(conv["id"])
+            agent = conv.get("_resolved_agent_name") or resolve_conversation_agent_name(conv)
+            try:
+                results.append(reevaluate_conversation(cid, dry_run=dry_run))
+            except Exception as exc:
+                results.append({"id": cid, "agent_name": agent, "error": str(exc)})
 
-    results = []
-    for conv in convs:
-        cid = int(conv["id"])
-        try:
-            results.append(reevaluate_conversation(cid, dry_run=dry_run))
-        except Exception as exc:
-            results.append({"id": cid, "agent_name": conv.get("agent_name"), "error": str(exc)})
+    st.session_state["reeval_results"] = results
 
-    for r in results:
+if "reeval_results" in st.session_state:
+    st.subheader("Résultats")
+    for r in st.session_state["reeval_results"]:
         if r.get("error"):
             st.error(f"#{r['id']} — {r.get('agent_name')} : {r['error']}")
             continue
@@ -110,4 +165,4 @@ if st.button("Lancer la réévaluation", type="primary"):
     if dry_run:
         st.info("Mode simulation — aucune modification en base.")
     else:
-        st.success(f"{len(results)} conversation(s) réévaluée(s) en base TiDB.")
+        st.success(f"{len(st.session_state['reeval_results'])} conversation(s) réévaluée(s) en base TiDB.")

@@ -83,7 +83,7 @@ NUMBER_ASK_RE = re.compile(
     re.I,
 )
 BAD_NUMBER_REPLY_RE = re.compile(
-    r"base de donn|fichier client|notre base|listing|on a une base|database|"
+    r"base de donn|base de contact|fichier client|notre base|listing|on a une base|database|"
     r"fichier nominatif|fichier de client|nos bases|base client",
     re.I,
 )
@@ -116,7 +116,32 @@ def _level_label(score: int) -> str:
     return "Coaching nécessaire"
 
 
-def analyze_compliance(agent_msgs: list[str], prospect_msgs: list[str]) -> dict[str, Any]:
+def _ignored_number_origin(messages: list[dict]) -> tuple[bool, str]:
+    """Prospect asks origin of number; next agent reply does not address it."""
+    for i, msg in enumerate(messages):
+        if msg.get("speaker") != "prospect":
+            continue
+        if not NUMBER_ASK_RE.search(msg.get("content", "")):
+            continue
+        for j in range(i + 1, len(messages)):
+            if messages[j].get("speaker") != "agent":
+                continue
+            reply = messages[j].get("content", "")
+            if BAD_NUMBER_REPLY_RE.search(reply):
+                return False, ""
+            if GOOD_NUMBER_REPLY_RE.search(reply):
+                return False, ""
+            return True, reply[:120]
+        break
+    return False, ""
+
+
+def analyze_compliance(
+    agent_msgs: list[str],
+    prospect_msgs: list[str],
+    *,
+    ordered_messages: list[dict] | None = None,
+) -> dict[str, Any]:
     agent_text = " ".join(agent_msgs)
     prospect_text = " ".join(prospect_msgs)
     agent_lower = agent_text.lower()
@@ -129,6 +154,16 @@ def analyze_compliance(agent_msgs: list[str], prospect_msgs: list[str]) -> dict[
 
     bad_database_reply = prospect_asked_number and bool(bad_number_msgs)
     evasive_number_reply = prospect_asked_number and bool(evasive_number_msgs) and not good_number_reply
+    ignored_number_reply = False
+    ignored_number_example = ""
+    if (
+        ordered_messages
+        and prospect_asked_number
+        and not bad_database_reply
+        and not good_number_reply
+        and not evasive_number_reply
+    ):
+        ignored_number_reply, ignored_number_example = _ignored_number_origin(ordered_messages)
 
     reformulated = bool(re.search(r"je comprends|je vous comprends", agent_lower))
     has_economy = bool(re.search(r"20\s*€|économ|moins cher|\d+\s*€", agent_lower))
@@ -184,12 +219,18 @@ def analyze_compliance(agent_msgs: list[str], prospect_msgs: list[str]) -> dict[
             "quand le prospect demande l'origine de son numéro — utiliser consentement, "
             "formulaire web, partenaire ou demande de comparatif."
         )
-    elif evasive_number_reply:
+    elif evasive_number_reply or ignored_number_reply:
         penalty += 10
-        axes.append(
-            "Réponse insuffisante sur l'origine du numéro : éviter « je ne sais pas » ou "
-            "« numéro affiché » — expliquer le cadre (consentement, comparateur, partenaire)."
-        )
+        if ignored_number_reply:
+            axes.append(
+                "Question ignorée sur l'origine du numéro : ne pas enchaîner sur un autre sujet "
+                "(gaz/électricité, PDL…) — répondre clairement (consentement, comparateur, partenaire)."
+            )
+        else:
+            axes.append(
+                "Réponse insuffisante sur l'origine du numéro : éviter « je ne sais pas » ou "
+                "« numéro affiché » — expliquer le cadre (consentement, comparateur, partenaire)."
+            )
     elif prospect_asked_number and good_number_reply:
         bonus += 4
         points_forts.append("Bonne réponse sur l'origine du contact (consentement / cadre légal).")
@@ -220,6 +261,8 @@ def analyze_compliance(agent_msgs: list[str], prospect_msgs: list[str]) -> dict[
         "bad_number_examples": bad_number_msgs[:2],
         "evasive_number_reply": evasive_number_reply,
         "evasive_number_examples": evasive_number_msgs[:2],
+        "ignored_number_reply": ignored_number_reply,
+        "ignored_number_example": ignored_number_example,
         "good_number_reply": good_number_reply,
         "reformulated": reformulated,
         "objection_handling": objection_handling,
@@ -257,7 +300,7 @@ def _score_items(items: list[dict], scores: list[int], comments: list[str]) -> l
 def compute_heuristic_evaluation(messages: list[dict]) -> dict[str, Any]:
     agent_msgs = [m.get("content", "") for m in messages if m.get("speaker") == "agent"]
     prospect_msgs = [m.get("content", "") for m in messages if m.get("speaker") == "prospect"]
-    sig = analyze_compliance(agent_msgs, prospect_msgs)
+    sig = analyze_compliance(agent_msgs, prospect_msgs, ordered_messages=messages)
     full = " ".join(agent_msgs).lower()
     questions = full.count("?")
 
@@ -268,13 +311,16 @@ def compute_heuristic_evaluation(messages: list[dict]) -> dict[str, Any]:
     elif sig["evasive_number_reply"]:
         ex = sig["evasive_number_examples"][0] if sig["evasive_number_examples"] else ""
         number_comment = f"Réponse évasive sur l'origine du numéro — « {ex[:90]}… »"
+    elif sig.get("ignored_number_reply"):
+        ex = sig.get("ignored_number_example") or ""
+        number_comment = f"Question ignorée sur l'origine du numéro — relance : « {ex[:90]}… »"
     elif sig["prospect_asked_number"] and sig["good_number_reply"]:
         number_comment = "Origine du numéro expliquée correctement (consentement / cadre)."
 
     obj_resp_score = 2
     if sig["bad_database_reply"]:
         obj_resp_score = 0
-    elif sig["evasive_number_reply"]:
+    elif sig["evasive_number_reply"] or sig.get("ignored_number_reply"):
         obj_resp_score = 1
     elif sig["objection_handling"] >= 4:
         obj_resp_score = 4
@@ -382,7 +428,7 @@ def compute_heuristic_evaluation(messages: list[dict]) -> dict[str, Any]:
     score_total = _clamp(sum(s["score"] for s in sections) + sig["bonus"] - sig["penalty"])
 
     reco = []
-    if sig["bad_database_reply"] or sig["evasive_number_reply"]:
+    if sig["bad_database_reply"] or sig["evasive_number_reply"] or sig.get("ignored_number_reply"):
         reco.append(
             "Script origine numéro : « Vous avez laissé vos coordonnées via notre comparateur / "
             "un formulaire partenaire — jamais « base de données ». »"
@@ -402,6 +448,7 @@ def compute_heuristic_evaluation(messages: list[dict]) -> dict[str, Any]:
         "_compliance": {
             "bad_database_reply": sig["bad_database_reply"],
             "evasive_number_reply": sig["evasive_number_reply"],
+            "ignored_number_reply": sig.get("ignored_number_reply"),
             "objection_handling": sig["objection_handling"],
             "prospect_yielded": sig["prospect_yielded"],
         },

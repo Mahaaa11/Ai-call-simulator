@@ -1582,6 +1582,80 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return k;
         }
         function getModel() { return document.getElementById("nvidiaModelSelect").value; }
+
+        function extractOpenRouterText(data, allowReasoning) {
+            const msg = data.choices?.[0]?.message;
+            if (!msg) return "";
+            const content = msg.content;
+            if (typeof content === "string" && content.trim()) return content.trim();
+            if (Array.isArray(content)) {
+                const joined = content.map(p => (typeof p === "string" ? p : p.text || "")).join("").trim();
+                if (joined) return joined;
+            }
+            if (!allowReasoning) return "";
+            const reasoning = msg.reasoning || msg.reasoning_content;
+            if (typeof reasoning === "string" && reasoning.trim()) return reasoning.trim();
+            if (Array.isArray(msg.reasoning_details)) {
+                const joined = msg.reasoning_details.map(d => d.text || d.content || "").join("").trim();
+                if (joined) return joined;
+            }
+            return "";
+        }
+
+        function isFreeOpenRouterModel(model) {
+            return /:free\b/i.test(model || getModel());
+        }
+
+        function getAgentMaxTokens(model) {
+            return isFreeOpenRouterModel(model) ? 200 : 250;
+        }
+
+        function getEvalMaxTokens(model) {
+            return isFreeOpenRouterModel(model) ? 600 : 2500;
+        }
+
+        function parseAffordableMaxTokens(message) {
+            const m = String(message || "").match(/can only afford (\d+)/i);
+            if (!m) return null;
+            return Math.max(32, parseInt(m[1], 10));
+        }
+
+        function isPromptTokenLimitError(message) {
+            return /prompt tokens limit exceeded/i.test(String(message || ""));
+        }
+
+        function formatOpenRouterError(data, status) {
+            const err = data?.error;
+            const raw = typeof err === "string" ? err : (err?.message || "");
+            if (raw) {
+                if (/can only afford/i.test(raw)) {
+                    const n = parseAffordableMaxTokens(raw);
+                    return "Crédit OpenRouter très bas — le modèle gratuit nécessite quand même un petit solde sur openrouter.ai. "
+                        + (n ? "L'app réduit automatiquement les tokens. " : "")
+                        + "Ajoutez ~1$ sur openrouter.ai/settings/credits si ça persiste.";
+                }
+                if (isPromptTokenLimitError(raw)) {
+                    return "Contexte trop long pour votre crédit OpenRouter (" + raw + "). "
+                        + "L'app va réessayer avec un prompt réduit. Ajoutez ~1$ sur openrouter.ai/settings/credits pour éviter ça.";
+                }
+                return raw;
+            }
+            if (status === 401) return "Clé API invalide — vérifiez sur openrouter.ai/keys";
+            if (status === 402) {
+                return "Crédit OpenRouter insuffisant — même les modèles « gratuits » exigent un petit solde (~1$) sur openrouter.ai/settings/credits";
+            }
+            if (status === 429) {
+                if (/free-models-per-day/i.test(String(raw))) {
+                    return "Quota gratuit journalier épuisé (50 req/jour). Ajoutez 5$ sur openrouter.ai/settings/credits pour 1000 req/jour, ou réessayez demain.";
+                }
+                return "Trop de requêtes — réessayez dans quelques secondes";
+            }
+            if (typeof err === "object" && String(err?.message || err).includes("No endpoints found")) {
+                return "Modèle indisponible sur OpenRouter — choisissez Nemotron 3 Super (gratuit) dans la liste";
+            }
+            return "Erreur HTTP " + status;
+        }
+
         function validateApiKey(key) {
             if (!key) return "Veuillez saisir votre clé API OpenRouter.";
             if (!key.startsWith("sk-or-")) return "La clé OpenRouter doit commencer par sk-or-v1-...";
@@ -2177,7 +2251,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 { role: "user", content: "[Le prospect au téléphone dit] : " + prospectText }
             ];
             try {
-                const raw = await callOpenRouter(messages, apiKey, model, 220);
+                const raw = await callOpenRouter(messages, apiKey, model, getAgentMaxTokens(model), 0.68, false);
                 const reply = finalizeAgentReply(raw, prospectText);
                 const latency = Math.round(performance.now() - started);
                 const metrics = scoreBenchmarkAgentReply(reply, prospectText);
@@ -2251,22 +2325,95 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             btn.textContent = "⚡ Comparer 4 modèles gratuits (test rapide)";
         }
 
-        async function callOpenRouter(messages, apiKey, model, maxTokens) {
-            const res = await fetch(OPENROUTER_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + apiKey,
-                    "HTTP-Referer": location.origin,
-                    "X-Title": "AI Call Simulator v2"
-                },
-                body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.68, frequency_penalty: 0.25, presence_penalty: 0.15 })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error?.message || ("HTTP " + res.status));
-            const content = (data.choices?.[0]?.message?.content || "").trim();
-            if (!content) throw new Error("Réponse IA vide — réessayez");
-            return content;
+        async function callOpenRouter(messages, apiKey, model, maxTokens, temperature, isEval) {
+            const resolvedModel = model || getModel();
+            let tokenLimit = maxTokens || getAgentMaxTokens(resolvedModel);
+            const basePayload = {
+                model: resolvedModel,
+                messages,
+                max_tokens: tokenLimit,
+                temperature: temperature != null ? temperature : 0.68,
+                frequency_penalty: 0.25,
+                presence_penalty: 0.15
+            };
+            const attempts = isFreeOpenRouterModel(resolvedModel)
+                ? [basePayload, { ...basePayload, reasoning: { effort: "none", exclude: true } }]
+                : [{ ...basePayload, reasoning: { effort: "none", exclude: true } }, basePayload];
+            let lastError = null;
+
+            for (const payload of attempts) {
+                try {
+                    const res = await fetch(OPENROUTER_URL, {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Bearer " + apiKey,
+                            "Content-Type": "application/json",
+                            "HTTP-Referer": location.origin || "http://localhost:8501",
+                            "X-Title": "AI Call Simulator v2"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const raw = await res.text();
+                    let data = {};
+                    try { data = raw ? JSON.parse(raw) : {}; } catch (_) {
+                        throw new Error("Réponse OpenRouter invalide (" + res.status + ")");
+                    }
+                    if (!res.ok) {
+                        const msg = formatOpenRouterError(data, res.status);
+                        const affordable = parseAffordableMaxTokens(typeof data?.error === "string" ? data.error : data?.error?.message);
+                        if (res.status === 402 && affordable && payload.max_tokens > affordable) {
+                            return callOpenRouter(messages, apiKey, resolvedModel, affordable, temperature, isEval);
+                        }
+                        if (payload.reasoning && (res.status === 400 || res.status === 422)) {
+                            lastError = new Error(msg);
+                            continue;
+                        }
+                        throw new Error(msg);
+                    }
+                    const text = extractOpenRouterText(data, !!isEval);
+                    if (!text) {
+                        console.warn("OpenRouter réponse sans texte:", data);
+                        throw new Error("Réponse vide du modèle — essayez un autre modèle");
+                    }
+                    return text;
+                } catch (e) {
+                    lastError = e;
+                    if (payload.reasoning) continue;
+                    throw e;
+                }
+            }
+            throw lastError || new Error("Erreur OpenRouter");
+        }
+
+        function buildAgentOpenRouterMessages(plan, prospectLine, extra) {
+            const turnHint = prospectLine
+                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
+                    + "\nÉTAPE : " + getDiscoveryStageHint()
+                    + "\nRéponds en français oral comme Émilie (2-3 phrases). Réponds au prospect, ne répète pas ses mots."
+                : "";
+            const systemBase = plan.compact
+                ? systemPromptText.split("\n").slice(0, 28).join("\n")
+                : systemPromptText;
+            const compactSystem = systemBase + turnHint + (extra || "");
+            let turns = buildAgentTurnMessages();
+            if (plan.maxTurns && turns.length > plan.maxTurns) {
+                turns = turns.slice(-plan.maxTurns);
+            }
+            if (plan.compact) {
+                turns = turns.map(t => ({
+                    ...t,
+                    content: t.content.slice(0, plan.trimLen || 180)
+                }));
+            }
+            return [{ role: "system", content: compactSystem }, ...turns];
+        }
+
+        function validateAgentLLMReply(reply, prospectLine) {
+            const cleaned = cleanAgentReply(reply);
+            if (!cleaned || cleaned.length < 8 || isAgentMetaLeak(cleaned)) return null;
+            if (isAgentEcho(cleaned, prospectLine)) return null;
+            if (isAgentIgnoringObjection(cleaned, prospectLine)) return null;
+            return cleaned;
         }
 
         async function callAgentLLM(apiKey, extra) {
@@ -2275,33 +2422,43 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const ruled = resolveRuleBasedAgentReply(prospectLine);
             if (ruled) return ruled;
 
-            const model = getModel();
-            const turnMessages = buildAgentTurnMessages();
-            const turnHint = prospectLine
-                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
-                    + "\nÉTAPE : " + getDiscoveryStageHint()
-                    + "\nRéponds en français oral comme Émilie (2-3 phrases). Réponds au prospect, ne répète pas ses mots."
-                : "";
-            const compactSystem = systemPromptText.split("\n").slice(0, 28).join("\n") + turnHint + (extra || "");
-            const messages = [{ role: "system", content: compactSystem }, ...turnMessages];
+            const models = [getModel(), ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== getModel())];
+            const retryPlans = isFreeOpenRouterModel(getModel())
+                ? [
+                    { compact: false, maxTurns: null },
+                    { compact: true, maxTurns: 6 },
+                    { compact: true, maxTurns: 3 },
+                    { compact: true, maxTurns: 1 }
+                ]
+                : [
+                    { compact: false, maxTurns: null },
+                    { compact: true, maxTurns: 8 },
+                    { compact: true, maxTurns: 4 }
+                ];
+            let lastError = null;
 
-            try {
-                const raw = await callOpenRouter(messages, apiKey, model, 200);
-                let reply = cleanAgentReply(raw);
-                if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
-                    return getAgentFallbackReply(prospectLine);
+            for (const model of models) {
+                const maxTokens = getAgentMaxTokens(model);
+                for (const plan of retryPlans) {
+                    const messages = buildAgentOpenRouterMessages(plan, prospectLine, extra);
+                    try {
+                        const raw = await callOpenRouter(messages, apiKey, model, maxTokens, 0.68, false);
+                        const reply = validateAgentLLMReply(raw, prospectLine);
+                        if (reply) return reply;
+                    } catch (e) {
+                        lastError = e;
+                        const errMsg = e.message || String(e);
+                        if (/rate limit|429|too many requests|503|provider returned error/i.test(errMsg)) {
+                            break;
+                        }
+                        const retryable = isPromptTokenLimitError(errMsg) || /can only afford/i.test(errMsg);
+                        if (!retryable) break;
+                        console.warn("Agent LLM retry", model, plan, errMsg);
+                    }
                 }
-                if (isAgentEcho(reply, prospectLine)) {
-                    return getAgentFallbackReply(prospectLine);
-                }
-                if (isAgentIgnoringObjection(reply, prospectLine)) {
-                    return getAgentFallbackReply(prospectLine);
-                }
-                return reply;
-            } catch (e) {
-                console.warn("Agent LLM:", model, e.message);
-                return getAgentFallbackReply(prospectLine);
             }
+            if (lastError) console.warn("Agent LLM:", lastError.message);
+            return getAgentFallbackReply(prospectLine);
         }
 
         function cleanSpeech(t) {
@@ -2531,7 +2688,7 @@ ${transcript.slice(0, 2500)}`;
                     const raw = await callOpenRouter([
                         { role: "system", content: "Réponds uniquement en JSON valide." },
                         { role: "user", content: prompt }
-                    ], apiKey, model, 1200);
+                    ], apiKey, model, getEvalMaxTokens(model), 0.25, true);
                     const m = raw.match(/\{[\s\S]*\}/);
                     if (m) return JSON.parse(m[0]);
                 } catch (_) {}

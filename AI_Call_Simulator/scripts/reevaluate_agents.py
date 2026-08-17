@@ -16,9 +16,10 @@ if str(WEB_DIR) not in sys.path:
 
 from evaluation_engine import reevaluate_from_messages  # noqa: E402
 from mysql_store import (  # noqa: E402
+    find_latest_conversations_for_agents,
     get_conversation,
     get_conversation_messages,
-    list_conversations_by_agent_names,
+    resolve_conversation_agent_name,
     update_conversation_evaluation,
 )
 
@@ -50,34 +51,13 @@ def _parse_eval(raw) -> dict:
         return {}
 
 
-def _match_agent(agent_name: str, targets: list[str]) -> bool:
-    name = (agent_name or "").lower()
-    for t in targets:
-        tl = t.lower()
-        if tl in name:
-            return True
-        parts = tl.split()
-        if len(parts) >= 2 and all(p in name for p in parts):
-            return True
-    return False
-
-
-def find_conversations(agent_queries: list[str], limit_per_agent: int = 3) -> list[dict]:
-    seen: set[int] = set()
-    rows: list[dict] = []
-    for query in agent_queries:
-        grouped = list_conversations_by_agent_names([query], limit_per_agent=limit_per_agent)
-        for convs in grouped.values():
-            for conv in convs:
-                cid = int(conv["id"])
-                if cid in seen:
-                    continue
-                if not _match_agent(conv.get("agent_name") or "", agent_queries):
-                    continue
-                seen.add(cid)
-                rows.append(conv)
-    rows.sort(key=lambda r: r.get("id", 0), reverse=True)
-    return rows
+def find_conversations(agent_queries: list[str], limit_per_agent: int = 1) -> list[dict]:
+    """Dernière(s) conversation(s) par agent — recherche flexible (colonne + exam_meta)."""
+    return find_latest_conversations_for_agents(
+        agent_queries,
+        per_agent=max(1, limit_per_agent),
+        scan_limit=500,
+    )
 
 
 def reevaluate_conversation(conversation_id: int, *, dry_run: bool = False) -> dict:
@@ -88,11 +68,12 @@ def reevaluate_conversation(conversation_id: int, *, dry_run: bool = False) -> d
     prev = _parse_eval(conv.get("evaluation_json"))
     old_score = conv.get("score_total")
     evaluation = reevaluate_from_messages(messages, prev)
+    agent = resolve_conversation_agent_name(conv) or conv.get("agent_name")
     if not dry_run:
         update_conversation_evaluation(conversation_id, evaluation)
     return {
         "id": conversation_id,
-        "agent_name": conv.get("agent_name"),
+        "agent_name": agent,
         "old_score": old_score,
         "new_score": evaluation.get("score_total"),
         "new_level": evaluation.get("niveau"),
@@ -107,7 +88,12 @@ def main() -> int:
         default="Marc,Hassan,Mohamed Anas",
         help="Agent names (comma-separated)",
     )
-    parser.add_argument("--limit", type=int, default=3, help="Max conversations per search term")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=1,
+        help="Max conversations per agent (1 = dernière conversation)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Compute only, do not write to DB")
     parser.add_argument("--id", type=int, help="Re-evaluate a single conversation id")
     args = parser.parse_args()

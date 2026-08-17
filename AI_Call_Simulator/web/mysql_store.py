@@ -388,6 +388,100 @@ def get_conversation_messages(conversation_id: int) -> list[dict]:
         conn.close()
 
 
+def resolve_conversation_agent_name(row: dict) -> str:
+    """Agent name from column or evaluation_json.exam_meta."""
+    name = (row.get("agent_name") or "").strip()
+    if name:
+        return name
+    raw = row.get("evaluation_json")
+    if not raw:
+        return ""
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+        if not isinstance(data, dict):
+            return ""
+        meta = data.get("exam_meta") or {}
+        return (meta.get("agent_name") or "").strip()
+    except (json.JSONDecodeError, TypeError):
+        return ""
+
+
+def agent_name_matches(resolved_name: str, target: str) -> bool:
+    """Flexible match: prénom seul, nom complet, ou sous-chaîne."""
+    name = (resolved_name or "").lower().strip()
+    target = (target or "").lower().strip()
+    if not name or not target:
+        return False
+    if target in name or name in target:
+        return True
+    parts = target.split()
+    if len(parts) >= 2 and all(p in name for p in parts):
+        return True
+    if len(parts) == 1 and parts[0] in name.split():
+        return True
+    return False
+
+
+def list_recent_conversations_detailed(*, limit: int = 200) -> list[dict]:
+    """Recent conversations including evaluation_json (for agent name fallback)."""
+    ensure_schema()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, agent_name, profile_key, level_key, training_mode, model,
+                       prospect_first_name, prospect_last_name,
+                       score_total, score_level, evaluation_json,
+                       started_at, ended_at, created_at
+                FROM conversations
+                ORDER BY id DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            return list(cur.fetchall())
+    finally:
+        conn.close()
+
+
+def find_latest_conversations_for_agents(
+    target_names: list[str],
+    *,
+    per_agent: int = 1,
+    scan_limit: int = 300,
+) -> list[dict]:
+    """Most recent conversation(s) per agent, matching column + exam_meta names."""
+    targets = [t.strip() for t in target_names if t and t.strip()]
+    if not targets:
+        return []
+
+    rows = list_recent_conversations_detailed(limit=scan_limit)
+    buckets: dict[str, list[dict]] = {t: [] for t in targets}
+
+    for row in rows:
+        resolved = resolve_conversation_agent_name(row)
+        for target in targets:
+            if agent_name_matches(resolved, target):
+                if len(buckets[target]) < per_agent:
+                    enriched = dict(row)
+                    enriched["_resolved_agent_name"] = resolved or "—"
+                    buckets[target].append(enriched)
+                break
+
+    result: list[dict] = []
+    seen_ids: set[int] = set()
+    for target in targets:
+        for row in buckets[target]:
+            cid = int(row["id"])
+            if cid in seen_ids:
+                continue
+            seen_ids.add(cid)
+            result.append(row)
+    result.sort(key=lambda r: r.get("id", 0), reverse=True)
+    return result
+
+
 def list_conversations_for_agent(agent_name: str, *, limit: int = 100) -> list[dict]:
     name = (agent_name or "").strip()
     if not name:

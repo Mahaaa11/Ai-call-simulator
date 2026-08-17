@@ -13,10 +13,12 @@ from ui.agent_session import get_agent_name, require_agent_login
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 ENV_PATH = PROJECT_ROOT / ".env"
 
-if str(WEB_DIR) not in sys.path:
-    sys.path.insert(0, str(WEB_DIR))
+for p in (WEB_DIR, SCRIPTS_DIR):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
 
 from mysql_store import (
     apply_mysql_env_from_mapping,
@@ -26,7 +28,9 @@ from mysql_store import (
     get_conversation_messages,
     list_conversations,
     list_conversations_for_agent,
+    resolve_conversation_agent_name,
 )
+from reevaluate_agents import reevaluate_conversation
 
 
 def _load_env() -> None:
@@ -142,15 +146,16 @@ if agent_filter:
     needle = agent_filter.lower()
     filtered_rows = [
         r for r in rows
-        if needle in str(r.get("agent_name") or "").lower()
+        if needle in str(resolve_conversation_agent_name(r) or r.get("agent_name") or "").lower()
     ]
     st.caption(f"{len(filtered_rows)} résultat(s) pour « {agent_filter} » sur les {shown} affichées")
 
 table_rows = []
 for r in filtered_rows:
+    resolved = resolve_conversation_agent_name(r) or r.get("agent_name") or "—"
     table_rows.append({
         "ID": r["id"],
-        "Agent": r.get("agent_name") or "—",
+        "Agent": resolved,
         "Date": _fmt_dt(r.get("created_at")),
         "Profil": r.get("profile_key"),
         "Niveau": r.get("level_key"),
@@ -181,10 +186,33 @@ if not conv:
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Score", conv.get("score_total") if conv.get("score_total") is not None else "—")
-c2.metric("Agent", conv.get("agent_name") or "—")
+c2.metric("Agent", resolve_conversation_agent_name(conv) or conv.get("agent_name") or "—")
 c3.metric("Profil", conv.get("profile_key") or "—")
 c4.metric("Niveau", conv.get("level_key") or "—")
 st.caption(f"Mode : {conv.get('training_mode') or 'train_agent'}")
+
+reeval_key = f"reeval_done_{selected}"
+if st.button("Réévaluer avec grille v2", type="secondary", key=f"reeval_btn_{selected}"):
+    with st.spinner("Réévaluation en cours…"):
+        try:
+            result = reevaluate_conversation(selected, dry_run=False)
+            st.session_state[reeval_key] = result
+            conv = get_conversation(selected)
+        except Exception as exc:
+            st.error(f"Échec : {exc}")
+
+if reeval_key in st.session_state:
+    r = st.session_state[reeval_key]
+    old = r.get("old_score") or 0
+    new = r.get("new_score") or 0
+    delta = new - old
+    sign = "+" if delta >= 0 else ""
+    st.success(f"Score mis à jour : {old} → **{new}** ({sign}{delta}) · {r.get('new_level')}")
+    comp = r.get("compliance") or {}
+    if comp.get("bad_database_reply"):
+        st.warning("⚠️ Mention « base de données » détectée — pénalité appliquée.")
+    elif comp.get("evasive_number_reply"):
+        st.warning("⚠️ Réponse évasive sur l'origine du numéro.")
 
 st.markdown(f"**Créée le :** {_fmt_dt(conv.get('created_at'))}")
 
