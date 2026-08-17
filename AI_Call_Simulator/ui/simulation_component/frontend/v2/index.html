@@ -1423,6 +1423,7 @@
             curieux: { icon: "💡", title: "Prospect curieux", desc: "Ouvert mais exigeant sur les détails", mood: "" }
         };
         let callTimerInterval = null;
+        let callElapsedSec = 0;
         const TRAINING_MODE = "train_prospect";
 
         const PROFILES = {
@@ -1725,35 +1726,49 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             if (desc) desc.textContent = meta.desc;
         }
 
-        function formatDuration(sec) {
+        function formatCallTime(sec) {
             const m = Math.floor(sec / 60);
             const s = sec % 60;
             return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
         }
 
         function startCallTimer() {
-            if (callTimerInterval) clearInterval(callTimerInterval);
-            const started = Date.now();
-            const el = document.getElementById("statDuration");
+            callElapsedSec = 0;
+            clearInterval(callTimerInterval);
+            const liveDot = document.getElementById("liveDot");
+            if (liveDot) liveDot.classList.add("on");
             callTimerInterval = setInterval(() => {
-                if (el) el.textContent = formatDuration(Math.floor((Date.now() - started) / 1000));
+                if (!callActive) return;
+                callElapsedSec++;
+                updateLiveStats();
             }, 1000);
+            updateLiveStats();
         }
 
         function stopCallTimer() {
-            if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
+            clearInterval(callTimerInterval);
+            callTimerInterval = null;
+            callElapsedSec = 0;
+            const liveDot = document.getElementById("liveDot");
+            if (liveDot) liveDot.classList.remove("on");
+            const stats = document.getElementById("liveStats");
+            if (stats) stats.classList.remove("visible");
+            const dur = document.getElementById("statDuration");
+            if (dur) dur.textContent = "00:00";
+            document.querySelectorAll(".journey-step").forEach(el => el.classList.remove("active", "done"));
         }
 
         function updateLiveStats() {
             const stats = document.getElementById("liveStats");
-            const dot = document.getElementById("liveDot");
-            if (stats) stats.classList.add("visible");
-            if (dot) dot.classList.add("on");
-            const turns = chatTurns.filter(t => t.role === "user").length;
+            if (!stats || !callActive) return;
+            stats.classList.add("visible");
+            const dur = document.getElementById("statDuration");
             const objEl = document.getElementById("statObjections");
             const turnEl = document.getElementById("statTurns");
-            if (objEl) objEl.textContent = String(turns);
+            if (dur) dur.textContent = formatCallTime(callElapsedSec);
+            if (objEl) objEl.textContent = String(chatTurns.filter(t => t.role === "user").length);
             if (turnEl) turnEl.textContent = String(chatTurns.length);
+            updateCallJourney();
         }
 
         function updateCallJourney() {
@@ -2846,6 +2861,7 @@ ${transcript.slice(0, 2500)}`;
             evalDiv.style.display = "none";
             callActive = true;
             document.body.classList.add("call-active");
+            sessionStorage.removeItem(PENDING_EVAL_KEY);
             startCallTimer();
             updateScenarioPreview();
             startBtn.disabled = true;
@@ -2984,6 +3000,7 @@ ${transcript.slice(0, 2500)}`;
             applyHostedConfig();
             initMicStatus();
             showSaveResult();
+            void resumePendingEval();
             const el = document.getElementById("dbStatus");
             const cfg = getCfg();
             const onStreamlit = useStreamlitSave() || cfg.hostedOnStreamlit || isStreamlitCloud();
@@ -3033,6 +3050,7 @@ ${transcript.slice(0, 2500)}`;
         if (benchmarkBtn) benchmarkBtn.addEventListener("click", () => { void runFreeModelsBenchmark(); });
 
         (async function initProspect() {
+            stopCallTimer();
             initMicStatus();
             const cfg = getCfg();
             if (cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud()) {
