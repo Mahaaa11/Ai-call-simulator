@@ -494,13 +494,15 @@ def run_simulator(
     extra_config: dict | None = None,
     component=simulation_app_v1,
     frontend_dir: Path | None = None,
+    skip_page_config: bool = False,
 ) -> None:
-    st.set_page_config(
-        page_title=page_title,
-        page_icon=page_icon,
-        layout="wide",
-        initial_sidebar_state="collapsed",
-    )
+    if not skip_page_config:
+        st.set_page_config(
+            page_title=page_title,
+            page_icon=page_icon,
+            layout="wide",
+            initial_sidebar_state="collapsed",
+        )
 
     require_agent_login(compact=True)
 
@@ -534,11 +536,13 @@ def run_simulator(
     inject_global_css()
     is_v2 = "prospect" in html_path.stem.lower() or frontend_dir and "v2" in str(frontend_dir)
     render_hero(
-        "Simulateur d'appels énergie" if not is_v2 else "Mode Prospect — IA agent",
+        "Mode 1 : vous êtes l'agent"
+        if not is_v2
+        else "Mode 2 : vous êtes le prospect",
         "Entraînez-vous sur des appels sortants avec évaluation en direct."
         if not is_v2
-        else "Jouez le client difficile — observez comment l'IA traite vos objections.",
-        badge="Version 2 · IA Agent" if is_v2 else "Version 1 · Vous êtes l'agent",
+        else "Jouez le client difficile — observez comment l'IA agent traite vos objections.",
+        badge="Mode 1 · Agent commercial" if not is_v2 else "Mode 2 · Prospect",
     )
 
     st.markdown(

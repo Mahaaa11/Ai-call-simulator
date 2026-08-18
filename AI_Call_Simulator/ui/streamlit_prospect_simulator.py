@@ -9,7 +9,7 @@ from ui.simulator_host import run_simulator
 SIMULATION_HTML = Path(__file__).resolve().parents[1] / "web" / "simulation_prospect.html"
 
 
-def main() -> None:
+def main(*, skip_page_config: bool = False) -> None:
     from ui.simulator_host import COMPONENT_FRONTEND
     from ui.simulation_component import simulation_app_v2
 
@@ -20,6 +20,7 @@ def main() -> None:
         iframe_height=1050,
         component=simulation_app_v2,
         frontend_dir=COMPONENT_FRONTEND / "v2",
+        skip_page_config=skip_page_config,
     )
 
 

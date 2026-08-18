@@ -23,7 +23,7 @@ from ui.agent_session import (  # noqa: E402
     logout_agent,
     render_login_form,
 )
-from ui.brand_theme import inject_global_css, render_feature_cards, render_hero  # noqa: E402
+from ui.brand_theme import inject_global_css, render_feature_cards, render_hero, safe_page_config  # noqa: E402
 
 
 def _load_env() -> None:
@@ -63,7 +63,7 @@ def _mysql_from_secrets() -> bool:
     return True
 
 
-st.set_page_config(page_title="Identification agent", page_icon="👤", layout="wide")
+safe_page_config(page_title="Identification agent", page_icon="👤", layout="wide")
 inject_global_css()
 render_hero(
     "Espace agent",
@@ -106,24 +106,24 @@ if is_logged_in():
         st.markdown(
             """
             <div class="lc-card">
-              <h3>📞 Mode Agent (v1)</h3>
+              <h3>📞 Mode 1 : vous êtes l'agent</h3>
               <p>Vous vendez — l'IA joue le prospect Engie avec objections RGPD.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.page_link("app.py", label="Lancer Mode Agent →", icon="📞")
+        st.page_link("pages/_mode1_agent.py", label="Lancer Mode 1 →", icon="📞")
     with c2:
         st.markdown(
             """
             <div class="lc-card">
-              <h3>🎭 Mode Prospect (v2)</h3>
+              <h3>🎭 Mode 2 : vous êtes le prospect</h3>
               <p>Vous jouez le client — l'IA agent doit traiter vos objections.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.page_link("pages/2_Mode_Prospect_IA.py", label="Lancer Mode Prospect →", icon="🎭")
+        st.page_link("pages/2_Mode_Prospect_IA.py", label="Lancer Mode 2 →", icon="🎭")
 
     if st.button("Se déconnecter / changer de nom"):
         logout_agent()

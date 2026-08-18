@@ -5,6 +5,92 @@ from __future__ import annotations
 import streamlit as st
 
 
+def safe_page_config(**kwargs) -> None:
+    """Set page config once; no-op when the main app already configured it."""
+    try:
+        st.set_page_config(**kwargs)
+    except Exception:
+        pass
+
+
+def inject_sidebar_css() -> None:
+    st.markdown(
+        """
+        <style>
+        section[data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #002D58 0%, #003d75 55%, #004a8f 100%);
+            border-right: none;
+            box-shadow: 4px 0 24px rgba(0, 45, 88, 0.18);
+        }
+
+        section[data-testid="stSidebar"] > div {
+            padding-top: 0.5rem;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
+            padding: 0.75rem 0.65rem 1rem;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {
+            content: "Lead \\& Connect";
+            display: block;
+            padding: 1rem 0.85rem 0.35rem;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: #ffffff;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::after {
+            content: "Simulateur d'appels";
+            display: block;
+            padding: 0 0.85rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.62);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 0.65rem;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] ul {
+            gap: 0.35rem;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a {
+            border-radius: 12px !important;
+            margin: 0 0.15rem !important;
+            padding: 0.65rem 0.85rem !important;
+            font-weight: 600 !important;
+            font-size: 0.92rem !important;
+            color: rgba(255, 255, 255, 0.88) !important;
+            background: transparent !important;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"] {
+            background: linear-gradient(135deg, #00827F 0%, #006b68 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(0, 130, 127, 0.35);
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        section[data-testid="stSidebar"] hr {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def inject_global_css() -> None:
     st.markdown(
         """
