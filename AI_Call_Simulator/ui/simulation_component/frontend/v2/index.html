@@ -1420,8 +1420,9 @@
                 <div class="journey-step active" data-step="0">📞 Accroche</div>
                 <div class="journey-step" data-step="1">🔍 Découverte</div>
                 <div class="journey-step" data-step="2">🏠 Qualification</div>
-                <div class="journey-step" data-step="3">💼 Proposition</div>
-                <div class="journey-step" data-step="4">✅ Closing</div>
+                <div class="journey-step" data-step="3">📊 Conso / PDL</div>
+                <div class="journey-step" data-step="4">⚡ OHM → Offre</div>
+                <div class="journey-step" data-step="5">✅ Closing</div>
             </div>
             <div class="live-stats" id="liveStats">
                 <div class="stat-pill"><span class="stat-val" id="statDuration">00:00</span><span class="stat-lbl">Durée</span></div>
@@ -1497,7 +1498,7 @@
             curieux: {
                 tone: "Pédagogue, répond aux questions avant d'enchaîner.",
                 pace: "Normal à détaillé — le prospect aime comprendre.",
-                focus: "Expliquer Home Energy, heures creuses, rétractation 14 jours si demandé.",
+                focus: "Expliquer OHM Energy puis l'offre Home Energy (HP/HC, rétractation 14 jours) si demandé.",
                 confirm: ["Excellente question", "Très bien", "C'est parfait"]
             }
         };
@@ -1748,37 +1749,54 @@
             try { localStorage.setItem(COACHING_KEY, JSON.stringify(tips.slice(0, 4))); } catch (_) {}
         }
 
+        const OHM_SUPPLIER_LINES = [
+            "Le fournisseur que j'ai retenu pour vous, c'est OHM Energy — ça s'écrit O-H-M Energy. C'est un producteur 100 % français : ils produisent eux-mêmes leur électricité vertueuse, ce qui leur permet d'avoir des tarifs très compétitifs.",
+            "Je vous présente OHM Energy, O-H-M Energy : fournisseur français qui produit sa propre énergie verte. C'est grâce à ça qu'on obtient des tarifs intéressants pour les particuliers.",
+            "Concrètement, le partenaire retenu c'est OHM Energy — producteur 100 % français, énergie vertueuse produite en interne, donc des prix compétitifs par rapport aux gros fournisseurs classiques."
+        ];
+
         const AGENT_SCRIPT = `Tu es Samuel, conseiller commercial de la société Ogenies (Au Génie).
 CONTEXTE : Appel SORTANT énergie en France. Suite à un échange préalable avec un collègue sur la facture d'énergie, tu reprends le dossier pour lancer un comparatif et proposer une offre plus avantageuse.
 MISSION : Tu es l'AGENT COMMERCIAL uniquement. Ne joue JAMAIS le prospect.
 
-STRUCTURE OBLIGATOIRE (ordre des phases — respecte cette progression, ne saute pas d'étape) :
-1. ACCROCHE (suite échange collègue, facture énergie, reprise dossier, comparatif) → 2. FOURNISSEUR → 3. MENSUALITÉ → 4. RÉGULARISATION (pain point)
-→ 5. PROPOSITION DE VALEUR (comparateur indépendant)
-→ 6. VÉRIFICATION IDENTITÉ (adresse, nom, code postal, email)
-→ 7. QUALIFICATION LOGEMENT (Linky, gaz, étage, compteur…)
-→ 8. PROFIL CONSOMMATION (surface, occupants, chauffage, kWh/an)
-→ 9. OFFRE (Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, cadeau 50€, 14 jours)
-→ 10. CLOSING (IBAN, code SMS, récap réglementaire)
-→ 11. FINALISATION (validation, remerciement, Bloctel)
+STRUCTURE OBLIGATOIRE (ordre strict — ne saute JAMAIS d'étape) :
+1. ACCROCHE (suite échange collègue, facture énergie, reprise dossier, comparatif)
+2. DÉCOUVERTE (fournisseur actuel, mensualité, régularisation — pain point)
+3. PROPOSITION DE VALEUR (comparateur indépendant Ogenies, gratuit, sans engagement)
+4. IDENTITÉ (adresse, nom, code postal, email si besoin)
+5. QUALIFICATION LOGEMENT (Linky, gaz, étage, surface, occupants, chauffage, kWh/an)
+6. RÉCUPÉRATION CONSOMMATION — OBLIGATOIRE AVANT TOUT CHIFFRE D'OFFRE :
+   - Demande le PDL (référence point de livraison, 14 chiffres sur la facture), OU
+   - Confirme l'adresse complète pour interroger Enedis et récupérer la consommation réelle.
+   - INTERDIT de proposer un montant en € tant que la conso n'est pas récupérée ou en cours de récupération.
+7. PRÉSENTATION FOURNISSEUR — OBLIGATOIRE AVANT L'OFFRE :
+   - Présente OHM Energy (O-H-M Energy) : fournisseur 100 % français, producteur d'électricité vertueuse,
+     production propre, tarifs compétitifs. Reformule avec tes mots.
+8. PROPOSITION OFFRE (seulement après étapes 6 et 7) :
+   - « Avec ce fournisseur, j'ai trouvé une offre avantageuse pour vous : »
+   - Contrat Home Energy chez OHM : option heures pleines/heures creuses, 6 kVA, mensualité fixe adaptée à la conso,
+     contrat 2 ans, cadeau 50 €, 14 jours de rétractation, pas de grosse régularisation.
+9. CLOSING (IBAN, code SMS, récap réglementaire)
+10. FINALISATION (validation, remerciement, Bloctel)
 
 FORMULATIONS LIBRES (crucial) :
 - La structure ci-dessus est un CADRE, pas un script à réciter mot pour mot.
 - Chaque réplique doit être ORIGINALE : varie ton vocabulaire, ton rythme et tes exemples.
 - Adapte ton style au profil du prospect (hostile, pressé, méfiant, curieux…) tout en gardant les phases.
-- Les exemples des appels réels (Samuel, Eric, Yann…) sont des INSPIRATIONS, pas des phrases à copier.
 - Alterne les confirmations : « C'est parfait », « Très bien », « Je note », « D'accord », etc.
 
 CONTENU MINIMUM PAR PHASE (à couvrir, formulation libre) :
 - Découverte : fournisseur actuel, montant mensuel, régularisation annuelle.
 - Qualification : logement, Linky, consommation, chauffage.
-- Offre : économie vs facture actuelle + pas de grosse régularisation.
+- Conso/PDL : PDL 14 chiffres ou adresse pour Enedis — explique pourquoi c'est nécessaire.
+- Fournisseur : OHM Energy (O-H-M), 100 % français, énergie vertueuse, tarifs compétitifs.
+- Offre : Home Energy chez OHM, mensualité fixe vs facture actuelle, cadeau 50 €.
 - Closing : accord explicite avant IBAN / code SMS.
 
-ESTIMATION / PDL :
-- Sans PDL, toute mensualité proposée est une ESTIMATION (profil logement + mensualité déclarée).
-- Si le prospect demande comment vous avez la conso : expliquez clairement que ce n'est pas encore la courbe Enedis ; le PDL (14 chiffres) affinerait.
-- Ne repose jamais une question déjà traitée (Linky, 85 €, régularisation…) sauf si le prospect n'a pas répondu.
+INTERDIT :
+- Proposer un prix (72 €, 85 €…) ou « Home Energy » comme offre chiffrée AVANT d'avoir le PDL ou l'adresse pour la conso.
+- Présenter Home Energy comme nom de fournisseur — le fournisseur c'est OHM Energy ; Home Energy c'est le nom du contrat/offre.
+- Reposer une question déjà traitée (Linky, mensualité…) sauf si le prospect n'a pas répondu.
 
 IDENTITÉ PROSPECT :
 - Tu ne connais PAS le nom du prospect au début (appels non nominatifs).
@@ -2018,7 +2036,10 @@ RÈGLES FORMAT :
             const steps = document.querySelectorAll(".journey-step");
             if (!steps.length) return;
             const phase = getCallPhase();
-            const phaseToStep = { opening: 0, discovery: 1, identity: 2, qualification: 2, offer: 3, closing: 4 };
+            const phaseToStep = {
+                opening: 0, discovery: 1, identity: 1, qualification: 2,
+                consumption: 3, supplier: 4, offer: 4, closing: 5
+            };
             const active = phaseToStep[phase] ?? 1;
             steps.forEach((step, i) => {
                 step.classList.remove("active", "done");
@@ -2092,7 +2113,8 @@ RÈGLES FORMAT :
                 + "\n- Pose des questions en découverte ; n'invente jamais les réponses du prospect."
                 + "\n- Les exemples ci-dessus illustrent la STRUCTURE — reformule librement selon le profil prospect."
                 + "\n- Traite la régularisation comme pain point avant de proposer l'offre."
-                + "\n- Qualifie le logement (Linky, surface, chauffage) avant la proposition Home Energy."
+                + "\n- Qualifie le logement (Linky, surface, chauffage) puis PDL/adresse Enedis AVANT toute proposition chiffrée."
+                + "\n- Présente OHM Energy (O-H-M) puis l'offre Home Energy."
                 + "\n- Closing structuré : IBAN → code SMS → récap réglementaire complet.";
         }
 
@@ -2110,7 +2132,7 @@ RÈGLES FORMAT :
                 + "\n- Fournisseur probable : " + s.supplier + " (électricité seule)"
                 + "\n- Facture indicative : ~" + s.billAmount + " €/mois"
                 + "\n- Régularisation possible : ~" + s.regularization + " € en fin d'année"
-                + "\n- Économie à proposer : ~" + s.offerTarget + " €/mois (mensualité fixe Home Energy)"
+                + "\n- Économie indicative (après PDL/conso) : ~" + s.offerTarget + " €/mois fixe — contrat Home Energy chez OHM Energy"
                 + "\n- Profil type : ~" + s.surfaceM2 + " m², " + s.occupants + " occupant(s), ~" + s.kwhYear + " kWh/an"
                 + "\n- Ville type : " + s.city + " (" + s.zip + ")"
                 + "\n- Ne cite PAS ces chiffres par défaut : adapte-toi aux réponses du prospect humain."
@@ -2123,9 +2145,8 @@ RÈGLES FORMAT :
             const c = getColleagueName();
             const p = PROFILES[getProfile()];
             return "Samuel, Ogenies, appel sortant énergie FR. Suite échange collègue " + c
-                + ", comparatif facture énergie, gratuit sans engagement. "
-                + "Écoute le prospect et réponds à SA dernière réplique. 2-4 phrases, reformule les scripts. "
-                + "Profil prospect : " + p.label + ". Niveau : " + getLevel() + ".";
+                + ", comparatif. Ordre strict : qualification → PDL/adresse conso → OHM Energy (fournisseur FR) → offre Home Energy chiffrée. "
+                + "Profil : " + p.label + ". Niveau : " + getLevel() + ".";
         }
 
         function buildObjectionGuidanceHint(prospectText) {
@@ -2150,10 +2171,16 @@ RÈGLES FORMAT :
                 hints.push("Refus/méfiance : rassure (comparateur indépendant, gratuit, sans engagement), puis une question ouverte si le prospect accepte d'écouter.");
             }
             if (prospectAskedEstimationMethod(prospectText)) {
-                hints.push("Question consommation / estimation / PDL : explique que 72 € est une ESTIMATION basée sur ce qu'il a déjà dit (m², Linky, 85 €) — pas encore la conso Enedis ; le PDL (14 chiffres sur facture) affinerait. Ne repose PAS Linky ni mensualité déjà dites.");
+                hints.push("Question consommation / estimation / PDL : explique qu'il faut d'abord PDL (14 chiffres) ou adresse Enedis — INTERDIT d'annoncer un € avant. Ensuite OHM Energy, puis offre Home Energy chiffrée.");
             }
             if (/homme nrj|home energy|ohm|nrj|quel fournisseur|c est qui.*fournisseur/i.test(t)) {
-                hints.push("Clarifie : « Home Energy » (pas homme NRJ) = nom d'offre ; Ogenies = comparateur ; le fournisseur partenaire est nommé avant signature.");
+                hints.push("Clarifie : le FOURNISSEUR = OHM Energy (O-H-M) ; l'OFFRE = contrat Home Energy (HP/HC, 6 kVA). Présente OHM avant le montant.");
+            }
+            if (!agentCollectedPdlOrAddressForConso() && qualificationSeemsComplete()) {
+                hints.push("AVANT toute offre chiffrée : demande le PDL (14 chiffres) ou l'adresse pour récupérer la consommation Enedis.");
+            }
+            if (agentCollectedPdlOrAddressForConso() && !agentPresentedOhmSupplier()) {
+                hints.push("Conso en cours / PDL obtenu : présente MAINTENANT OHM Energy (100 % français, énergie vertueuse, tarifs compétitifs) AVANT le montant.");
             }
             if (prospectIsBusy(prospectText)) {
                 hints.push("Pressé : rassure (bref, 2 min) ou propose un rappel s'il insiste.");
@@ -2209,21 +2236,96 @@ RÈGLES FORMAT :
             return chatTurns.filter(t => t.role === "assistant").length;
         }
 
+        function prospectProvidedPdl() {
+            return prospectUserTurns().some(t => {
+                const digits = String(t).replace(/\D/g, "");
+                return digits.length >= 14 && digits.length <= 16;
+            });
+        }
+
+        function prospectProvidedAddressForConso() {
+            return prospectUserTurns().some(t =>
+                /\d{1,4}[\s,]+(?:rue|avenue|bd|boulevard|impasse|allee|allée|chemin)/i.test(t)
+                || /\d{5}\s+[A-Za-zÀ-ÿ\-]{2,}/.test(t)
+            );
+        }
+
+        function qualificationSeemsComplete() {
+            const all = prospectUserTurns().join(" ").toLowerCase();
+            return prospectMentionedBill()
+                && (/linky|appartement|maison|m2|m²|metre|metres/i.test(all))
+                && (/electri|chauffage|occupant|60|70|80|90/i.test(all) || /tout en electri/i.test(all));
+        }
+
+        function agentCollectedPdlOrAddressForConso() {
+            if (prospectProvidedPdl()) return true;
+            if (prospectProvidedAddressForConso() && agentSaid(/enedis|consommation|recuper|pdl|14 chiffres|point de livraison/i)) {
+                return true;
+            }
+            if (agentSaid(/je vais interroger|recuperer votre consomm|consommation reelle|consommation réelle/i)) {
+                return true;
+            }
+            return false;
+        }
+
+        function agentPresentedOhmSupplier() {
+            return chatTurns.some(t => t.role === "assistant"
+                && /ohm energy|o h m energy|100\s*%\s*franc|producteur.*franc|electricite vertueuse|energie vertueuse/i.test(t.content));
+        }
+
+        function getOhmSupplierPitchReply() {
+            return pickUnusedReply(OHM_SUPPLIER_LINES);
+        }
+
+        function getConsumptionCollectionReply() {
+            return pickUnusedReply([
+                "Pour vous proposer une offre vraiment adaptée, j'ai besoin de votre consommation réelle. Avez-vous une facture sous la main ? Le PDL — référence point de livraison en 14 chiffres — me permet de la récupérer chez Enedis.",
+                "Avant de vous annoncer un tarif, je dois verrouiller votre consommation : soit vous me donnez le PDL sur votre facture, soit je reprends l'adresse complète pour interroger Enedis. Qu'est-ce qui vous arrange ?",
+                "C'est l'étape indispensable : sans PDL ou adresse pour la conso, je ne peux pas vous proposer un montant fiable. Vous avez le numéro PDL en 14 chiffres ?"
+            ]);
+        }
+
+        function getHomeEnergyOfferReply() {
+            const s = callScenario;
+            const target = s.offerTarget || 72;
+            return pickUnusedReply([
+                "Avec OHM Energy, j'ai trouvé une offre avantageuse pour vous : le contrat Home Energy, option heures pleines et heures creuses, 6 kVA, pour une mensualité fixe autour de " + target + " € par mois sur 2 ans — c'est moins que ce que vous payez aujourd'hui, sans mauvaise surprise en régularisation. Vous bénéficiez aussi de 50 € offerts et 14 jours de rétractation. Qu'en pensez-vous ?",
+                "Voilà ce que j'ai obtenu chez OHM : l'offre Home Energy, mensualité fixe environ " + target + " €/mois, HP/HC, 6 kVA, contrat 2 ans, cadeau 50 €, 14 jours pour changer d'avis. Ça vous convient qu'on regarde les détails ?"
+            ]);
+        }
+
+        function blocksPrematureOffer(reply) {
+            const r = (reply || "").toLowerCase();
+            const hasPrice = /\d{2,3}\s*€|mensualit[^.]{0,40}\d+/i.test(r);
+            const mentionsOffer = /home energy|cadeau.*50|offre avantageuse|mensualit[^.]{0,20}fixe/i.test(r);
+            if (!(hasPrice || mentionsOffer)) return false;
+            if (!agentCollectedPdlOrAddressForConso()) return true;
+            if (!agentPresentedOhmSupplier()) return true;
+            return false;
+        }
+
         function getCallPhase() {
             const agentAll = chatTurns.filter(t => t.role === "assistant").map(t => t.content).join(" ");
-            if (/code.*quatre|code.*4|confirmez.*code|contrat.*valid|recapitulatif|récapitulatif|retractation.*14|bloctel/i.test(agentAll)) {
+            if (/code.*quatre|code.*4|confirmez.*code|contrat.*valid|recapitulatif|récapitulatif|retractation.*14|bloctel|iban/i.test(agentAll)) {
                 return "closing";
             }
-            if (/home energy|heures creuses|heures pleines|6 kva|mensualit|offre.*ans|cadeau.*50|57\s*€|option.*fixe/i.test(agentAll) && prospectMentionedBill()) {
+            if (agentPresentedOhmSupplier() && agentCollectedPdlOrAddressForConso()
+                && agentSaid(/home energy|mensualit.*fixe|cadeau.*50|offre avantageuse/i)) {
                 return "offer";
             }
-            if (/surface|occupant|chauffage|linky|etage|appartement|metres|m²|ballon|presence|vehicule|kwh|consommation annuelle/i.test(agentAll)) {
+            if (agentCollectedPdlOrAddressForConso() && !agentPresentedOhmSupplier()) {
+                return "supplier";
+            }
+            if (qualificationSeemsComplete() && !agentCollectedPdlOrAddressForConso()) {
+                return "consumption";
+            }
+            if (/surface|occupant|chauffage|linky|etage|appartement|metres|m²|ballon|kwh|consommation annuelle/i.test(agentAll)) {
                 return "qualification";
             }
             if (/adresse|nom|prenom|code postal|depuis combien|email|mail|vous etes au/i.test(agentAll) && (prospectMentionedBill() || agentSaid(/regularis/i))) {
                 return "identity";
             }
-            if (prospectMentionedBill() || agentSaid(/regularis/i) || agentSaid(/meilleurs fournisseurs|moins cher/i)) {
+            if (prospectMentionedBill() || agentSaid(/regularis/i) || agentSaid(/meilleurs fournisseurs|moins cher|comparateur/i)) {
                 return "discovery";
             }
             if (agentTurnCount() <= 1) return "opening";
@@ -2418,17 +2520,23 @@ RÈGLES FORMAT :
 
             if (/homme nrj|home energy|ohm energy|nrj|quel fournisseur.*propos|c est qui.*fournisseur|fournisseur que vous/i.test(t)) {
                 return pickUnusedReply([
-                    "Je parlais de l'offre Home Energy — ce n'est pas « homme NRJ », c'est le nom du contrat. Ogenies est le comparateur indépendant ; le nom du fournisseur partenaire vous est communiqué clairement avant toute signature, sans engagement.",
-                    "Bonne question : Home Energy, c'est le type d'offre — mensualité fixe, heures pleines et creuses. Nous comparons plusieurs partenaires ; je vous dirai exactement lequel correspond à votre profil une fois l'estimation validée."
+                    "Je vous parlais de OHM Energy — O-H-M Energy — c'est le fournisseur, pas « homme NRJ ». C'est un producteur 100 % français qui produit sa propre électricité vertueuse. L'offre s'appelle Home Energy : mensualité fixe, heures pleines et creuses, 6 kVA.",
+                    "Le fournisseur retenu, c'est OHM Energy. Home Energy, c'est le nom du contrat chez eux — option HP/HC, mensualité fixe. Ogenies reste le comparateur indépendant qui vous accompagne."
                 ]);
             }
 
             if (prospectAskedEstimationMethod(prospectText)) {
-                return pickUnusedReply([
-                    "Très bonne question : pour l'instant les 72 € sont une estimation à partir de ce que vous m'avez indiqué — 60 m², tout électrique, Linky, et vos 85 €/mois. Je n'ai pas encore votre courbe Enedis. Pour être précis, il me faudrait le PDL — la référence point de livraison, 14 chiffres sur votre facture.",
-                    "Vous avez raison, je n'ai pas récupéré votre consommation réelle : c'est une simulation indicative. Le comparatif exact passe par le PDL ou les infos de facture. On peut continuer avec cette estimation ou vous me donnez le PDL pour affiner — qu'est-ce que vous préférez ?",
-                    "Exactement : sans PDL je me base sur votre profil logement et votre mensualité. C'est pour ça que je parle d'estimation, pas de chiffre définitif. Si vous avez une facture sous la main, le numéro PDL en 14 chiffres me permettrait de verrouiller le tarif."
-                ]);
+                if (!agentCollectedPdlOrAddressForConso()) {
+                    return pickUnusedReply([
+                        "Très bonne question : avant de vous annoncer un montant, je dois récupérer votre consommation réelle — le PDL en 14 chiffres sur votre facture, ou votre adresse pour interroger Enedis. Vous avez une facture sous la main ?",
+                        "Vous avez raison de demander : je ne peux pas proposer un tarif fiable sans votre conso. Soit le PDL sur facture, soit je reprends l'adresse complète pour Enedis — qu'est-ce qui vous arrange ?",
+                        "Exactement : sans PDL ou adresse pour la conso, je ne peux pas chiffrer l'offre. Le numéro PDL en 14 chiffres se trouve sur votre facture d'électricité — vous l'avez sous la main ?"
+                    ]);
+                }
+                if (!agentPresentedOhmSupplier()) {
+                    return getOhmSupplierPitchReply();
+                }
+                return getHomeEnergyOfferReply();
             }
 
             if (shouldAllowGracefulClose(prospectText)) {
@@ -2551,7 +2659,7 @@ RÈGLES FORMAT :
             const last = lastProspectText();
             const adapt = getProfileAdaptation();
             if (prospectAskedEstimationMethod(last)) {
-                return "OBJECTION ESTIMATION / CONSO : explique PDL + estimation indicative (72 €) — NE repose PAS Linky, mensualité ou régularisation déjà couverts.";
+                return "OBJECTION ESTIMATION / CONSO : explique qu'il faut d'abord PDL ou adresse Enedis — NE propose PAS de montant en € tant que la conso n'est pas récupérée. Puis OHM Energy, puis offre Home Energy.";
             }
             if (prospectRefuses(last) || prospectIsHostile(last) || prospectHasLegalObjection(last) || prospectIsBusy(last)) {
                 return "TRAITE l'objection en premier (" + adapt.tone + "). Utilise reformulation + script légal si RGPD/Bloctel/consentement. Ne demande PAS fournisseur/facture/PDL tant que l'objection n'est pas traitée.";
@@ -2562,7 +2670,9 @@ RÈGLES FORMAT :
                 discovery: "Phase DÉCOUVERTE : fournisseur → mensualité → régularisation. " + adapt.focus + " Formulation libre.",
                 identity: "Phase IDENTITÉ : adresse, nom, code postal, email. Une question à la fois. " + adapt.pace,
                 qualification: "Phase QUALIFICATION : logement, Linky, surface, chauffage, kWh. Varie tes questions.",
-                offer: "Phase OFFRE : Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, cadeau 50€. Adapte l'argumentaire au profil.",
+                consumption: "Phase CONSO/PDL : demande PDL (14 chiffres) OU adresse pour Enedis. INTERDIT de proposer un € avant cette étape.",
+                supplier: "Phase FOURNISSEUR : présente OHM Energy (O-H-M), 100 % français, énergie vertueuse, tarifs compétitifs. Puis enchaîne vers l'offre.",
+                offer: "Phase OFFRE : « Avec OHM, j'ai trouvé… » → contrat Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, 50 €, 14 jours. " + adapt.pace,
                 closing: "Phase CLOSING : IBAN, code SMS, récap réglementaire. " + adapt.pace
             };
             return "PHASE : " + phase.toUpperCase() + ". " + (hints[phase] || hints.discovery)
@@ -2699,7 +2809,13 @@ RÈGLES FORMAT :
             if (scripted) return scripted;
 
             if (prospectAskedEstimationMethod(prospectText)) {
-                return "Très bonne question : les 72 € sont une estimation basée sur votre appartement, le Linky et vos 85 €/mois — pas encore votre conso Enedis. Le PDL sur facture (14 chiffres) permettrait d'affiner. On continue comme ça ou vous l'avez sous la main ?";
+                if (!agentCollectedPdlOrAddressForConso()) {
+                    return "Très bonne question : avant de vous annoncer un montant, je dois récupérer votre consommation réelle — soit le PDL en 14 chiffres sur votre facture, soit votre adresse pour interroger Enedis. Vous avez une facture sous la main ?";
+                }
+                if (!agentPresentedOhmSupplier()) {
+                    return getOhmSupplierPitchReply();
+                }
+                return getHomeEnergyOfferReply();
             }
 
             const phase = getCallPhase();
@@ -2718,7 +2834,7 @@ RÈGLES FORMAT :
                 if (!prospectMentionedSupplier()) {
                     return confirm + ". Chez quel fournisseur êtes-vous actuellement pour l'électricité ?";
                 }
-                return confirm + ". Avez-vous le PDL — la référence point de livraison en 14 chiffres — sur une facture ? Ça permet d'affiner le comparatif.";
+                return confirm + ". Comment ça se passe au niveau de la régularisation en fin d'année ?";
             }
             if (phase === "identity") {
                 return confirm + ". Pour vérifier votre dossier, vous êtes à quelle adresse ?";
@@ -2729,10 +2845,16 @@ RÈGLES FORMAT :
             if (phase === "qualification") {
                 return confirm + ". Votre chauffage et l'eau chaude sont bien tout électrique ?";
             }
-            if (phase === "offer") {
-                return "Pour résumer : estimation autour de 72 €/mois fixe avec Home Energy, à affiner avec le PDL si vous le souhaitez. Qu'est-ce qui vous ferait hésiter encore ?";
+            if (phase === "consumption") {
+                return getConsumptionCollectionReply();
             }
-            return confirm + ". Pour avancer : chez quel fournisseur êtes-vous, et avez-vous votre PDL sous la main ?";
+            if (phase === "supplier") {
+                return getOhmSupplierPitchReply();
+            }
+            if (phase === "offer") {
+                return getHomeEnergyOfferReply();
+            }
+            return confirm + ". Pour avancer : avez-vous le PDL en 14 chiffres sur une facture, ou je reprends votre adresse pour Enedis ?";
         }
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
@@ -2747,6 +2869,13 @@ RÈGLES FORMAT :
             let reply = cleanAgentReply(raw);
             if (isIncompleteSentence(reply)) {
                 reply = reply.replace(/[,;:]\s*(pour|afin|que|de|à|a)\s*$/i, ".").trim();
+            }
+            if (blocksPrematureOffer(reply)) {
+                if (!agentCollectedPdlOrAddressForConso()) {
+                    reply = getConsumptionCollectionReply();
+                } else if (!agentPresentedOhmSupplier()) {
+                    reply = getOhmSupplierPitchReply();
+                }
             }
             if (isIncompleteSentence(reply) || !reply || reply.length < 8 || isAgentMetaLeak(reply)
                 || isWeakAckOnly(reply) || isNearDuplicateAgentReply(reply)) {
@@ -2787,7 +2916,8 @@ RÈGLES FORMAT :
                 [/\bogenie\b/gi, "Ogenies"],
                 [/\belectricite\b/gi, "électricité"],
                 [/\bfacture d electricite\b/gi, "facture d'électricité"],
-                [/\bhomme nrj\b/gi, "Home Energy"],
+                [/\bhomme nrj\b/gi, "OHM Energy"],
+                [/\bhome energy\b/gi, "Home Energy"],
                 [/\bnet ste\b/gi, "Engie"],
                 [/\bnr j\b/gi, "NRJ"],
                 [/\bkilowatt heure\b/gi, "kilowatt-heure"],

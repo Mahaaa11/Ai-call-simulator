@@ -62,12 +62,30 @@ window.AGENT_CALL_STRUCTURE = {
         ]
       },
       {
-        "id": "argumentation",
-        "label": "Proposition — Home Energy, heures creuses, mensualité fixe",
+        "id": "consumption",
+        "label": "Consommation — PDL ou adresse Enedis (obligatoire avant chiffre)",
         "examples": [
-          "Ce que je vous propose, c'est une mensualité fixe autour de [montant] euros par mois.",
-          "L'offre Home Energy avec option heures pleines et heures creuses, puissance 6 kVA.",
-          "Contrat de deux ans, sans engagement, avec 14 jours de rétractation.",
+          "Pour vous proposer une offre adaptée, j'ai besoin de votre consommation réelle. Avez-vous le PDL — référence point de livraison en 14 chiffres — sur une facture ?",
+          "Avant de vous annoncer un tarif, je dois verrouiller votre consommation : soit le PDL, soit je reprends l'adresse complète pour interroger Enedis.",
+          "Sans PDL ou adresse pour la conso, je ne peux pas vous proposer un montant fiable. Vous avez une facture sous la main ?"
+        ]
+      },
+      {
+        "id": "supplier",
+        "label": "Présentation fournisseur — OHM Energy (O-H-M), 100 % français",
+        "examples": [
+          "Le fournisseur que j'ai retenu pour vous, c'est OHM Energy — ça s'écrit O-H-M Energy. C'est un producteur 100 % français : ils produisent eux-mêmes leur électricité vertueuse, ce qui leur permet d'avoir des tarifs très compétitifs.",
+          "Je vous présente OHM Energy : fournisseur français qui produit sa propre énergie verte. C'est grâce à ça qu'on obtient des tarifs intéressants.",
+          "Concrètement, le partenaire retenu c'est OHM Energy — producteur 100 % français, énergie vertueuse produite en interne."
+        ]
+      },
+      {
+        "id": "argumentation",
+        "label": "Proposition — offre Home Energy chez OHM (après conso + fournisseur)",
+        "examples": [
+          "Avec OHM Energy, j'ai trouvé une offre avantageuse pour vous : le contrat Home Energy, option heures pleines et heures creuses, 6 kVA.",
+          "Ce que je vous propose, c'est une mensualité fixe autour de [montant] euros par mois chez OHM Energy.",
+          "Contrat Home Energy de deux ans, sans engagement, avec 14 jours de rétractation.",
           "Vous aurez aussi un cadeau de 50 euros sur une facture ultérieure."
         ]
       },
