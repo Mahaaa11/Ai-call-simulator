@@ -1207,7 +1207,8 @@
         <label for="trainingScenarioSelect">Scénario d'entraînement</label>
         <select id="trainingScenarioSelect">
             <option value="random">🎲 Aléatoire — profil et client variables</option>
-            <option value="certif_fournisseur_mefiant" selected>🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
+            <option value="certif_engie_rgpd_nouvelle_loi" selected>🎓 Examen — Engie 3 mois, RGPD & nouvelle loi (Karim Benali)</option>
+            <option value="certif_fournisseur_mefiant">🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
             <option value="certif_engie_mefiant_agressif">🔥 Certification — Engie méfiant (Marc Dupont, Marseille)</option>
         </select>
         <p class="training-scenario-hint" id="trainingScenarioHint">Choisissez un scénario guidé ou laissez en aléatoire pour varier les profils.</p>
@@ -1557,6 +1558,39 @@
             }
         };
 
+        const NOUVELLE_LOI_OBJECTIONS = [
+            "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
+            "Je n'ai jamais donné mon accord.",
+            "Où avez-vous obtenu mon numéro ?",
+            "Je retire mon autorisation.",
+            "Je vais vous signaler à la DGCCRF.",
+            "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
+            "Je suis inscrit sur Bloctel.",
+            "Prouvez-moi que vous avez mon consentement."
+        ];
+
+        const NOUVELLE_LOI_OBJECTIONS_DEBUTANT = [
+            "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
+            "Où avez-vous obtenu mon numéro ?"
+        ];
+
+        function buildNouvelleLoiProspectBlock() {
+            return `\nOBJECTIONS NOUVELLE LOI (tous profils — reformule, ne les récite pas toutes d'un coup) :
+- « Selon la nouvelle loi, vous n'avez pas le droit de m'appeler. »
+- « Je n'ai jamais donné mon accord. »
+- « Où avez-vous obtenu mon numéro ? »
+- « Je retire mon autorisation. »
+- « Je vais vous signaler à la DGCCRF. »
+- « Vous êtes encore un centre d'appels qui ne respecte pas la loi. »
+- « Je suis inscrit sur Bloctel. »
+- « Prouvez-moi que vous avez mon consentement. »
+
+COMPORTEMENT ATTENDU :
+- Utilise ces objections quand le sujet touche à la légalité, Bloctel, consentement ou origine de l'appel.
+- Si l'agent répond bien (entretien préalable avec un collègue, facture d'électricité, hausse ~18 %, estimation d'économies), tu peux te calmer et coopérer progressivement.
+- Si l'agent dit « base de données », ignore ta question ou reste vague → reste ferme ou relance une objection légale.`;
+        }
+
         const PROFILE_UI = {
             agressif: { icon: "😤", title: "Prospect agressif", desc: "Objection directe, ton sec — travaillez l'accroche et la répartie" },
             presse: { icon: "⏱️", title: "Prospect pressé", desc: "Manque de temps, réponses courtes — soyez efficace" },
@@ -1740,8 +1774,8 @@
 - MINIMUM 3 objections ou questions de méfiance avant de donner adresse, PDL ou e-mail.
 - Sur l'IBAN : pose une objection (« pourquoi ? », « c'est sécurisé ? ») — tu peux le donner si l'agent répond clairement (prélèvement, résiliation ancien fournisseur, SEPA, sécurité des données).
 - Donne ton prénom seulement après avoir compris l'objet de l'appel ; l'adresse seulement après une offre claire.
-- Objections types : pourquoi cet appel, sans engagement, prix garanti, arnaques, habitudes, « je veux voir par écrit ».
-- Tu ne signes pas au téléphone sans explications : si l'agent convainc, tu avances ; sinon tu demandes un mail ou un rappel.
+- Objections types : pourquoi cet appel, sans engagement, prix garanti, arnaques, habitudes, « je veux voir par écrit », nouvelle loi, Bloctel, consentement, DGCCRF.
+- Tu ne signes pas au téléphone sans explications : si l'agent convainc (notamment entretien préalable avec un collègue), tu avances ; sinon tu demandes un mail ou un rappel.
 - Pas de cris extrêmes. Raccrochage rare, seulement si l'agent ignore tes questions ou insiste sans argument.`,
             avance: `NIVEAU AVANCÉ — TRÈS DIFFICILE (PRIORITAIRE SUR LE PROFIL) :
 - Tu refuses, tu es agacé : "ça ne m'intéresse pas", "ne m'appelez plus", "raccrochez".
@@ -1760,6 +1794,53 @@
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
         const V1_EXAM_PROGRESS_KEY = "simulator_v1_exam_progress";
         const EXAM_CAMPAIGNS = {
+            "2026-08-18": {
+                id: "certif_engie_rgpd_20260818",
+                title: "Examen — Engie récent, RGPD & nouvelle loi",
+                dateLabel: "18 août 2026",
+                instructions: "Un seul appel · Même scénario pour tous · Client chez Engie depuis 3 mois · Méfiant RGPD + pas intéressé · Frais de résiliation / facture de clôture · Toutes les objections nouvelle loi · Niveau avancé · Valider à 70/100 — ne passer à l'étape suivante que si l'agent traite bien chaque objection (reformulation + réponse concrète).",
+                passScore: 70,
+                steps: [
+                    {
+                        id: "examen_engie_rgpd_nouvelle_loi",
+                        label: "Examen — Engie 3 mois, RGPD & nouvelle loi",
+                        profile: "mefiant_rgpd",
+                        level: "avance",
+                        scenarioType: "standard",
+                        prospectTone: "mefiant_ferme",
+                        strictObjectionGate: true,
+                        firstName: "Karim",
+                        lastName: "Benali",
+                        supplier: "Engie",
+                        billAmount: 88,
+                        offerTarget: 72,
+                        yearsAtSupplier: "3 mois",
+                        address: "14 avenue Jean Jaurès, 69007 Lyon",
+                        opening: "Oui bonjour ? Écoutez, je viens de passer chez Engie, c'est pour quoi ?",
+                        brief: "Karim Benali, 41 ans, chez Engie depuis 3 mois (~88 €/mois élec seule). Pas intéressé par un nouveau changement. Méfiant RGPD et nouvelle loi. A payé des frais de résiliation sur l'ancien fournisseur en croyant que c'était la facture de clôture — très méfiant sur les promesses.",
+                        backstory: "Tu as quitté ton ancien fournisseur il y a environ 4 mois pour Engie (tu es chez Engie depuis 3 mois). À la fin, on t'a facturé des « frais de résiliation » que tu pensais être la simple facture de clôture — tu t'es senti arnaqué. Tu refuses de rechanger sans garanties écrites. Tu n'es pas intéressé par un nouvel appel commercial.",
+                        goal: "Traiter séquentiellement chaque objection (RGPD, nouvelle loi, Bloctel, consentement, frais de clôture/résiliation, pas intéressé). Reformuler + arguments concrets (collègue, hausse 18 %, comparatif gratuit, facture de clôture vs résiliation, sans engagement). Ne passer à la suite que si l'objection en cours est bien traitée. Conclure un comparatif si l'agent convainc.",
+                        minObjections: 10,
+                        expectedOutcome: "changement_fournisseur",
+                        objections: [
+                            "Ça ne m'intéresse pas, je viens tout juste de passer chez Engie.",
+                            "Je suis chez Engie depuis trois mois, laissez-moi tranquille.",
+                            "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
+                            "Je n'ai jamais donné mon accord.",
+                            "Où avez-vous obtenu mon numéro ?",
+                            "Comment avez-vous eu mes données ?",
+                            "Je suis inscrit sur Bloctel.",
+                            "Prouvez-moi que vous avez mon consentement.",
+                            "La dernière fois j'ai payé des frais de résiliation alors que c'était la facture de clôture — je ne retombe pas dans ce piège.",
+                            "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
+                            "Je retire mon autorisation.",
+                            "Je vais vous signaler à la DGCCRF.",
+                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie encore plus après ma dernière expérience.",
+                            "Envoyez-moi tout par mail, je ne décide rien au téléphone."
+                        ]
+                    }
+                ]
+            },
             "2026-07-27": {
                 id: "certif_engie_20260727",
                 title: "Examen certification — Changement fournisseur Engie",
@@ -1803,6 +1884,44 @@
             }
         };
         const TRAINING_SCENARIOS = {
+            certif_engie_rgpd_nouvelle_loi: {
+                id: "certif_engie_rgpd_nouvelle_loi",
+                label: "Examen — Engie 3 mois, RGPD & nouvelle loi",
+                description: "Karim Benali, 41 ans, Engie depuis 3 mois (~88 €/mois) — pas intéressé, méfiant RGPD, frais de clôture/résiliation, toutes les objections nouvelle loi. Avancé · une objection à la fois.",
+                profile: "mefiant_rgpd",
+                level: "avance",
+                scenarioType: "standard",
+                prospectTone: "mefiant_ferme",
+                strictObjectionGate: true,
+                firstName: "Karim",
+                lastName: "Benali",
+                supplier: "Engie",
+                billAmount: 88,
+                offerTarget: 72,
+                yearsAtSupplier: "3 mois",
+                address: "14 avenue Jean Jaurès, 69007 Lyon",
+                opening: "Oui bonjour ? Écoutez, je viens de passer chez Engie, c'est pour quoi ?",
+                backstory: "Tu as quitté ton ancien fournisseur il y a environ 4 mois pour Engie (tu es chez Engie depuis 3 mois). À la fin, on t'a facturé des « frais de résiliation » que tu pensais être la simple facture de clôture — tu t'es senti arnaqué. Tu refuses de rechanger sans garanties écrites.",
+                goal: "Traiter chaque objection RGPD / nouvelle loi / résiliation-clôture avec reformulation et réponses concrètes. Ne céder que si l'agent traite bien l'objection en cours avant de passer à la suite.",
+                minObjections: 10,
+                expectedOutcome: "changement_fournisseur",
+                objections: [
+                    "Ça ne m'intéresse pas, je viens tout juste de passer chez Engie.",
+                    "Je suis chez Engie depuis trois mois, laissez-moi tranquille.",
+                    "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
+                    "Je n'ai jamais donné mon accord.",
+                    "Où avez-vous obtenu mon numéro ?",
+                    "Comment avez-vous eu mes données ?",
+                    "Je suis inscrit sur Bloctel.",
+                    "Prouvez-moi que vous avez mon consentement.",
+                    "La dernière fois j'ai payé des frais de résiliation alors que c'était la facture de clôture — je ne retombe pas dans ce piège.",
+                    "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
+                    "Je retire mon autorisation.",
+                    "Je vais vous signaler à la DGCCRF.",
+                    "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie encore plus après ma dernière expérience.",
+                    "Envoyez-moi tout par mail, je ne décide rien au téléphone."
+                ]
+            },
             certif_fournisseur_mefiant: {
                 id: "certif_fournisseur_mefiant",
                 label: "Certification — Changement fournisseur méfiant",
@@ -1973,6 +2092,17 @@
                     "Répondez clairement sur l'origine du contact et le cadre légal si demandé.",
                     "Ne fuyez pas la question RGPD — une phrase factuelle suffit souvent.",
                     "Proposez un envoi écrit si le client veut vérifier votre identité."
+                ]
+            },
+            nouvelle_loi: {
+                label: "Nouvelle loi / consentement",
+                tips: [
+                    "Ne jamais « base de données » ou « fichier clients » — expliquer l'entretien préalable avec un collègue sur la facture d'électricité.",
+                    "Bloctel / pas le droit d'appeler : rappeler que le contact fait suite à une discussion avec un collègue (hausse ~18 %, régularisation).",
+                    "Jamais donné mon accord : empathie sur le harcèlement, puis rappel de l'échange avec le collègue et confirmation des économies possibles.",
+                    "Retrait d'autorisation : proposer blacklist Génie-Opérateur + rappeler que le client peut rappeler lui-même.",
+                    "DGCCRF / centre d'appels : reformuler — appel de suivi après entretien collègue, pas démarchage froid.",
+                    "Prouver le consentement : confirmer nom, adresse, rappeler l'échange avec le collègue (sans inventer de détails absents du dossier)."
                 ]
             }
         };
@@ -2380,7 +2510,17 @@
             const step = getFixedScenarioStep();
             if (!step?.objections?.length) return [];
             return step.objections.map(o => {
-                if (/comment avez/i.test(o)) return /comment avez|eu mon num/i;
+                if (/comment avez/i.test(o)) return /comment avez|eu mon num|obtenu mon num/i;
+                if (/eu mes données/i.test(o)) return /eu mes données|eu mes donnees|mes données/i;
+                if (/nouvelle loi|pas le droit/i.test(o)) return /nouvelle loi|pas le droit de m appeler|pas le droit/i;
+                if (/jamais donné mon accord/i.test(o)) return /jamais donné mon accord|jamais donne mon accord|pas donné mon accord/i;
+                if (/bloctel/i.test(o)) return /bloctel|liste rouge/i;
+                if (/prouvez.*consentement/i.test(o)) return /prouvez.*consentement|prouve.*consentement|mon consentement/i;
+                if (/retire mon autorisation/i.test(o)) return /retire mon autorisation|retire.*autorisation|retrait.*autorisation/i;
+                if (/dgccrf/i.test(o)) return /dgccrf|signaler/i;
+                if (/centre d'appel|respecte pas la loi/i.test(o)) return /centre d appel|respecte pas la loi/i;
+                if (/facture de clôture|clôture|résiliation.*clôture/i.test(o)) return /facture de clôture|facture de cloture|frais de résiliation|clôture|cloture|piège/i;
+                if (/intéresse pas|vient.*engie|trois mois|3 mois/i.test(o)) return /intéresse pas|vient.*engie|trois mois|3 mois|laissez-moi tranquille/i;
                 if (/frais de résiliation|résiliation/i.test(o)) return /frais de résiliation|résiliation/i;
                 if (/compliqu|galère/i.test(o)) return /compliqu|galère|dernière fois/i;
                 if (/voisin/i.test(o)) return /voisin/i;
@@ -2434,28 +2574,84 @@
             const toneLine = step.prospectTone === "agressif"
                 ? "- TON : méfiant ET agressif — sec, impatient. Pas d'insultes gratuites."
                 : (step.prospectTone === "mefiant_ferme"
-                    ? "- TON : méfiant et ferme, sceptique — pas agressif, pas insultant, pas de menaces de raccrocher. Tu testes l'agent avec des objections logiques sur le changement de fournisseur."
+                    ? "- TON : méfiant et ferme, sceptique — pas agressif, pas insultant, pas de menaces de raccrocher. Tu testes l'agent avec des objections logiques."
                     : "");
             const yieldLine = step.expectedOutcome === "changement_fournisseur"
-                ? `- FIN ATTENDUE : CHANGEMENT DE FOURNISSEUR — après ${step.minObjections || 5} objections bien traitées (reformulation + arguments concrets : économies, comparatif gratuit, sans engagement, résiliation), tu DOIS céder progressivement : « Bon… si c'est vraiment moins cher et sans galère avec ${step.supplier || "mon fournisseur"}, on peut avancer » puis « Quelle est la prochaine étape ? ». INTERDIT de refuser jusqu'au bout si l'agent a bien répondu.`
+                ? `- FIN ATTENDUE : COMPARATIF / CHANGEMENT — après ${step.minObjections || 5} objections bien traitées (reformulation + arguments concrets), tu DOIS céder progressivement : « Bon… si c'est vraiment clair et sans frais cachés, on peut regarder » puis « Quelle est la prochaine étape ? ». INTERDIT de refuser jusqu'au bout si l'agent a bien répondu à chaque objection.`
                 : "";
             const openingLine = step.opening
                 ? `- Première réplique (accroche) : « ${step.opening} »`
                 : "";
+            const backstoryLine = step.backstory
+                ? `- HISTOIRE FIXE (ne contredis jamais) : ${step.backstory}`
+                : "";
+            const strictLine = step.strictObjectionGate
+                ? "- RÈGLE STRICTE : UNE objection à la fois. Ne passe à la suivante QUE si l'agent reformule ton objection ET répond concrètement (collègue, 18 %, facture clôture vs résiliation, Bloctel, etc.). Sinon, répète ou durcis la MÊME objection."
+                : "";
             const priorityLine = step.minObjections
                 ? `- PRIORITÉ SCÉNARIO : ce bloc prime sur « niveau avancé = refus total ». Tu es difficile mais jouable — tu finis par accepter le comparatif si l'agent est bon.`
                 : "";
-            return [priorityLine, toneLine, openingLine, yieldLine].filter(Boolean).join("\n");
+            return [priorityLine, toneLine, openingLine, backstoryLine, strictLine, yieldLine].filter(Boolean).join("\n");
         }
 
         function buildGuidedScenarioLevelBlock(step) {
             if (!step) return "";
             const min = step.minObjections || 5;
+            const strictExtra = step.strictObjectionGate
+                ? "\n- STRICT : ne passe à l'objection suivante ou à la découverte (fournisseur, facture, adresse) QUE si l'agent a traité l'objection en cours (empathie + réponse concrète). Sinon, insiste sur la même objection."
+                : "";
             return `NIVEAU SCÉNARIO GUIDÉ — EXIGEANT MAIS JOUABLE (PRIORITAIRE) :
-- Minimum ${min} objections sur le changement de fournisseur avant d'envisager la proposition.
+- Minimum ${min} objections avant d'envisager la proposition.
 - Ton ferme et sceptique, PAS agressif (pas de cris, pas de « raccrochez », pas d'insultes).
-- Ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets (économies chiffrées, comparatif gratuit, sans engagement, résiliation gérée).
-- Si l'agent a traité tes objections sérieusement → tu t'ouvres et tu acceptes le comparatif/changement en fin d'appel.`;
+- Ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets (collègue, hausse 18 %, comparatif gratuit, sans engagement, facture de clôture vs frais de résiliation, Bloctel).${strictExtra}
+- Si l'agent a traité tes objections sérieusement → tu t'ouvres et tu acceptes le comparatif en fin d'appel.`;
+        }
+
+        function getLastProspectObjectionIndex() {
+            const step = getFixedScenarioStep();
+            if (!step?.objections?.length) return -1;
+            const markers = getScenarioObjectionMarkers();
+            let lastIdx = -1;
+            for (let i = 0; i < markers.length; i++) {
+                if (chatTurns.some(t => t.role === "assistant" && markers[i].test(t.content))) lastIdx = i;
+            }
+            return lastIdx;
+        }
+
+        function agentHandledLastScenarioObjectionWell() {
+            const step = getFixedScenarioStep();
+            if (!step?.objections?.length) return true;
+            const lastIdx = getLastProspectObjectionIndex();
+            if (lastIdx < 0) return true;
+            const markers = getScenarioObjectionMarkers();
+            const marker = markers[lastIdx];
+            let objectionTurnIdx = -1;
+            for (let i = chatTurns.length - 1; i >= 0; i--) {
+                if (chatTurns[i].role === "assistant" && marker.test(chatTurns[i].content)) {
+                    objectionTurnIdx = i;
+                    break;
+                }
+            }
+            if (objectionTurnIdx < 0) return true;
+            const agentAfter = chatTurns.slice(objectionTurnIdx + 1).find(t => t.role === "user");
+            if (!agentAfter) return false;
+            const agentReply = agentAfter.content || "";
+            if (/\b(base de donn|fichier client|notre base|listing)\b/i.test(agentReply)) return false;
+            const reformulated = /\b(je comprends|je vous comprends|tout à fait|effectivement|normal que|rassure|logique|d'accord pour|c'est vrai que|bien entendu)\b/i.test(agentReply);
+            const concrete = /\b(comparatif|gratuit|sans engagement|économ|€|euro|résiliation|sepa|génie|genie|collègue|collegue|conversation avec|entretien|18\s*%|facture de clôture|cloture|clôture|black.?list|bloctel|consentement|dgccrf|hauss|augmentation)\b/i.test(agentReply);
+            if (agentIgnoredProspectQuestion()) return false;
+            return (reformulated && concrete) || (concrete && agentReply.length >= 55);
+        }
+
+        function getScenarioObjectionRepeatReply(step, objectionLine) {
+            const repeats = [
+                "Vous n'avez pas répondu à ma question — " + objectionLine,
+                "Ce n'est pas ce que j'ai demandé. " + objectionLine,
+                "Je vous ai posé une objection, traitez-la avant de continuer : " + objectionLine
+            ];
+            const snippet = objectionLine.slice(0, 24).replace(/[?.!,'"]/g, "");
+            const count = chatTurns.filter(t => t.role === "assistant" && new RegExp(snippet, "i").test(t.content)).length;
+            return repeats[Math.min(Math.max(0, count - 1), repeats.length - 1)];
         }
 
         function buildTrainingScenarioPromptBlock(step) {
@@ -3174,17 +3370,19 @@ Réponds UNIQUEMENT en JSON valide (sans markdown) :
 
 RÈGLES : score_total = somme des scores ; chaque commentaire cite un moment CONCRET de l'agent ; varie les notes selon la qualité réelle.
 
-RÈGLE CRITIQUE — Origine du numéro / RGPD :
-- Si le prospect demande « comment avez-vous mon numéro » / Bloctel : PÉNALISER FORTEMENT (-15 pts) si l'agent dit « base de données », « fichier clients », « notre base », « listing ».
+RÈGLE CRITIQUE — Origine du numéro / RGPD / nouvelle loi :
+- Si le prospect demande « comment avez-vous mon numéro » / Bloctel / nouvelle loi / consentement : PÉNALISER FORTEMENT (-15 pts) si l'agent dit « base de données », « fichier clients », « notre base », « listing ».
 - INTERDIT de valoriser une mention de base de données — c'est une erreur commerciale et RGPD.
 - BONNE réponse : consentement, formulaire web, demande de comparatif, partenaire (Enedis/GRDF), coordonnées laissées volontairement, base légale / intérêt légitime.
+- BONNE réponse (nouvelle loi) : contact suite à un entretien / discussion avec un collègue sur la facture d'électricité, hausse ~18 %, régularisation, estimation d'économies — pas démarchage froid.
+- Retrait d'autorisation : blacklist Génie-Opérateur + possibilité de rappeler l'entreprise.
 - Pénaliser aussi « je ne sais pas » / « numéro qui s'affiche » / « appels non nominatifs » sans explication claire.`;
 
         const COMPACT_EVAL_PROMPT = `Évalue UNIQUEMENT l'agent commercial (/100). Réponds en JSON valide SANS markdown.
 Grille: 1.Accroche/15 2.Découverte/20 3.Argumentation/20 4.Objections/15 5.Closing/15 6.Communication/10 7.Organisation/5
 Format: {"score_total":N,"niveau":"Excellent|Bon|À améliorer|Coaching nécessaire","sections":[{"name":"1. Accroche...","score":N,"max":15,"items":[{"name":"...","score":N,"max":N,"comment":"citation concrète agent"}]}],"points_forts":["","",""],"axes_amelioration":["","",""],"recommandations":["",""]}
 Commentaires = citations ou moments précis de l'agent. Pas de commentaire générique.
-RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier clients » (-15 pts). Bon : consentement, formulaire, comparateur, partenaire. Pénaliser « je ne sais pas » / « numéro affiché » sans explication.`;
+RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » / « fichier clients » (-15 pts). Bon : consentement, formulaire, comparateur, partenaire, OU entretien préalable avec un collègue (facture électricité, hausse 18 %). Pénaliser « je ne sais pas » / « numéro affiché » sans explication.`;
 
         const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
         const OPENROUTER_FALLBACK_MODELS = [
@@ -3760,7 +3958,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
         function countScenarioResistance() {
             const step = getFixedScenarioStep();
             if (!step) return countProspectResistance();
-            const resistancePattern = /changer|fournisseur|intéresse pas|tranquille|engie|edf|bloctel|iban|arnaque|mail|résiliation|voisin|galère|compliqu|baratin|confiance|perd.*temps|scripts?|reste chez|pas envie|hors de question/i;
+            const resistancePattern = /changer|fournisseur|intéresse pas|tranquille|engie|edf|bloctel|iban|arnaque|mail|résiliation|voisin|galère|compliqu|baratin|confiance|perd.*temps|scripts?|reste chez|pas envie|hors de question|nouvelle loi|consentement|dgccrf|pas le droit/i;
             return chatTurns.filter(t => t.role === "assistant" && (isHardObjection(t.content) || resistancePattern.test(t.content))).length;
         }
 
@@ -3778,7 +3976,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
                 if (!wasResistance) continue;
                 const agentReply = chatTurns[i].content || "";
                 const reformulated = /\b(je comprends|je vous comprends|tout à fait|effectivement|normal que|rassure|logique|d'accord pour|c'est vrai que)\b/i.test(agentReply);
-                const concrete = /\b(comparatif|gratuit|sans engagement|économ|€|euro|résiliation|sepa|génie|genie|4[,.]8|moins cher|positionné|tarif|augmentation|20\s*€|libre depuis)\b/i.test(agentReply);
+                const concrete = /\b(comparatif|gratuit|sans engagement|économ|€|euro|résiliation|sepa|génie|genie|4[,.]8|moins cher|positionné|tarif|augmentation|20\s*€|libre depuis|collègue|collegue|conversation avec|entretien|18\s*%|cloture|clôture|bloctel|consentement|dgccrf|black.?list)\b/i.test(agentReply);
                 if ((reformulated && concrete) || (concrete && agentReply.length >= 70)) count++;
             }
             return count;
@@ -3797,7 +3995,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
         }
 
         function countProspectResistance() {
-            const soft = /préfère d'abord|par écrit|par mail|e-mail|email|pourquoi vous|comment avez|sans engagement|garanti|bloqué|habitude|étudier|réfléchir|pas sûr|hésite|intéressant mais|avant de donner|tranquillement|recontacte|recontact/i;
+            const soft = /préfère d'abord|par écrit|par mail|e-mail|email|pourquoi vous|comment avez|sans engagement|garanti|bloqué|habitude|étudier|réfléchir|pas sûr|hésite|intéressant mais|avant de donner|tranquillement|recontacte|recontact|nouvelle loi|pas le droit de m appeler|jamais donné mon accord|retire mon autorisation|dgccrf|prouvez.*consentement|centre d appel/i;
             return chatTurns.filter(t =>
                 t.role === "assistant" && (isHardObjection(t.content) || soft.test(t.content))
             ).length;
@@ -3820,8 +4018,14 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             const profile = PROFILES[getProfileKey()];
             const lv = level || getLevel();
             const fb = profile.fallbacks;
-            if (Array.isArray(fb)) return fb;
-            return fb[lv] || fb.debutant || PROFILES.agressif.fallbacks.debutant;
+            let base;
+            if (Array.isArray(fb)) base = fb.slice();
+            else base = (fb[lv] || fb.debutant || PROFILES.agressif.fallbacks.debutant).slice();
+            const law = lv === "debutant" ? NOUVELLE_LOI_OBJECTIONS_DEBUTANT : NOUVELLE_LOI_OBJECTIONS;
+            if (base.length <= 3) return base.concat(law);
+            const tail = base.slice(-2);
+            const head = base.slice(0, -2);
+            return head.concat(law).concat(tail);
         }
 
         function getMefiantRgpdObjectionMarkers(list) {
@@ -3829,7 +4033,13 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
                 if (/comment avez-vous eu mon num/i.test(o)) return /comment avez-vous eu mon num|eu mon numéro|eu mon numero/i;
                 if (/base légale/i.test(o)) return /base légale|base legale|légal.*appel/i;
                 if (/qui êtes-vous/i.test(o)) return /qui êtes-vous|qui es-tu|c'est qui/i;
-                if (/bloctel/i.test(o)) return /bloctel|liste rouge/i;
+                if (/bloctel/i.test(o)) return /bloctel|liste rouge|pas le droit de m appeler|nouvelle loi/i;
+                if (/nouvelle loi/i.test(o)) return /nouvelle loi|pas le droit de m appeler|pas le droit/i;
+                if (/jamais donné mon accord/i.test(o)) return /jamais donné mon accord|jamais donne mon accord|pas donné mon accord/i;
+                if (/retire mon autorisation/i.test(o)) return /retire mon autorisation|retire.*autorisation|retrait.*autorisation/i;
+                if (/dgccrf/i.test(o)) return /dgccrf|signaler/i;
+                if (/respecte pas la loi/i.test(o)) return /respecte pas la loi|centre d appel/i;
+                if (/prouvez.*consentement/i.test(o)) return /prouvez.*consentement|prouve.*consentement|mon consentement/i;
                 if (/eu mes données/i.test(o)) return /eu mes données|eu mes donnees|mes données personnelles/i;
                 if (/consommation/i.test(o)) return /consommation|accéder à ma conso|données de conso/i;
                 if (/enregistré/i.test(o)) return /enregistré|enregistre cet appel/i;
@@ -4569,6 +4779,18 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             const step = getFixedScenarioStep();
             if (!step?.objections?.length) return null;
             if (agentHandledObjectionsWell()) return null;
+
+            if (step.strictObjectionGate) {
+                const lastIdx = getLastProspectObjectionIndex();
+                if (lastIdx >= 0 && !agentHandledLastScenarioObjectionWell()) {
+                    return getScenarioObjectionRepeatReply(step, step.objections[lastIdx]);
+                }
+                const used = countScenarioObjectionsUsed();
+                const min = step.minObjections || 4;
+                if (used >= min && agentHandledLastScenarioObjectionWell()) return null;
+                return getNextScenarioObjection();
+            }
+
             const used = countScenarioObjectionsUsed();
             const min = step.minObjections || 4;
             if (used >= min) return null;
@@ -4579,6 +4801,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             const step = getFixedScenarioStep();
             if (!step || step.expectedOutcome !== "changement_fournisseur") return null;
             if (agentSaidGoodbye()) return null;
+            if (step.strictObjectionGate && getLastProspectObjectionIndex() >= 0 && !agentHandledLastScenarioObjectionWell()) return null;
             const min = step.minObjections || 5;
             const ready = agentHandledObjectionsWell()
                 || (countScenarioObjectionsUsed() >= min && countAgentObjectionHandling() >= Math.max(2, min - 2));
@@ -4612,6 +4835,10 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             if (scenarioMin) {
                 if (agentSaidGoodbye()) return false;
                 if (agentHandledObjectionsWell()) return true;
+                const step = getFixedScenarioStep();
+                if (step?.strictObjectionGate && getLastProspectObjectionIndex() >= 0 && !agentHandledLastScenarioObjectionWell()) {
+                    return false;
+                }
                 const used = countScenarioObjectionsUsed();
                 if (agentAskedClosing()) return used >= Math.max(1, scenarioMin - 1) || turns >= 8;
                 return used >= scenarioMin
@@ -4684,6 +4911,17 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
         }
 
         function tryFactualAnswer(profile, level) {
+            const step = getFixedScenarioStep();
+            if (step?.strictObjectionGate) {
+                if (getLastProspectObjectionIndex() >= 0 && !agentHandledLastScenarioObjectionWell()) {
+                    return getScenarioObjectionRepeatReply(step, step.objections[getLastProspectObjectionIndex()]);
+                }
+                if (countScenarioObjectionsUsed() < Math.min(3, step.minObjections || 5)
+                    && (agentAskedSupplier() || agentAskedBillAmount() || agentAskedPostalAddress() || agentIsCommercialPitch())) {
+                    const obj = getScenarioObjectionReply();
+                    if (obj) return obj;
+                }
+            }
             const sup = personaSupplier();
             const bill = personaBill();
             const years = prospectPersona.yearsAtSupplier || "plusieurs années";
@@ -5026,8 +5264,11 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
                 if (agentHandledObjectionsWell()) {
                     return "RAPPEL SCÉNARIO : l'agent a bien traité tes objections — CÈDE MAINTENANT (accepte comparatif/adresse, ne répète plus d'objections déjà dites).";
                 }
+                if (fixedStep.strictObjectionGate && getLastProspectObjectionIndex() >= 0 && !agentHandledLastScenarioObjectionWell()) {
+                    return "RAPPEL SCÉNARIO STRICT : l'agent n'a PAS traité ton objection en cours — RÉPÈTE ou DURCIS la même objection, refuse de passer à autre chose (pas de fournisseur/facture/adresse tant qu'il n'a pas répondu).";
+                }
                 if (used < minObj) {
-                    return "RAPPEL SCÉNARIO : objection " + (used + 1) + "/" + minObj + " — ton " + tone + ", utilise une NOUVELLE objection du scénario (pas EDF si tu es chez Engie, ne répète pas).";
+                    return "RAPPEL SCÉNARIO : objection " + (used + 1) + "/" + minObj + " — ton " + tone + ", utilise la PROCHAINE objection du scénario dans l'ordre (ne répète pas celles déjà traitées).";
                 }
                 if (handled >= Math.max(2, minObj - 2) && (agentAskedProposition() || agentMentionedProposition() || turns >= 6 || agentAskedPostalAddress() || agentAskedPdl())) {
                     return "RAPPEL SCÉNARIO : l'agent a reformulé et argumenté — ouvre-toi, donne ton adresse si demandée, accepte le comparatif.";
@@ -7173,13 +7414,13 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             const prospectRepeatsHurry = (pFull.match(/pressé|faites vite/g) || []).length >= 3;
             const wrongEnergyPitch = /gaz/i.test(full) && /électricité seulement|électricité seule/i.test(pFull);
 
-            const prospectAskedNumber = /comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|pourquoi.*m'appelez|bloctel|eu mon num/i.test(pFull);
+            const prospectAskedNumber = /comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|pourquoi.*m'appelez|bloctel|eu mon num|nouvelle loi|pas le droit de m'appeler|consentement|dgccrf|retire mon autorisation|jamais donné mon accord/i.test(pFull);
             const badDatabaseReply = prospectAskedNumber && agentMsgs.some(m =>
                 /\b(base de donn|base de contact|fichier client|notre base|listing|on a une base|database|fichier nominatif|base client)\b/i.test(m));
             const evasiveNumberReply = prospectAskedNumber && !badDatabaseReply && agentMsgs.some(m =>
                 /\b(je n'en sais rien|je n'ai aucune idée|aucune idée|pas nominatif|numéro qui s'affiche|numero qui s'affiche|appels ne sont pas nominatifs|pote numéro)\b/i.test(m))
-                && !/\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|base légale|intérêt légitime|comparateur)\b/i.test(full);
-            const goodNumberReply = prospectAskedNumber && /\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|contacté|coordonnées|base légale|intérêt légitime|comparateur)\b/i.test(full);
+                && !/\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|base légale|intérêt légitime|comparateur|collègue|collegue|conversation avec|entretien avec|discussion avec|contact.*suite|18\s*%|hauss)/i.test(full);
+            const goodNumberReply = prospectAskedNumber && /\b(consentement|formulaire|demande en ligne|partenaire|enedis|grdf|contacté|coordonnées|base légale|intérêt légitime|comparateur|collègue|collegue|conversation avec|entretien avec|échangé avec|discussion avec|contact.*suite|18\s*%|hauss.*facture|black.?list|blacklist)/i.test(full);
 
             const scoreItems = (items, scores, comments) => items.map((def, i) => ({
                 name: def.name,
@@ -7225,7 +7466,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
                 : (evasiveNumberReply
                     ? "Réponse évasive sur l'origine du numéro (« je ne sais pas », « numéro affiché ») — manque consentement/formulaire/partenaire."
                     : (goodNumberReply
-                        ? "Bonne explication sur l'origine du contact (consentement / cadre)."
+                        ? "Bonne explication sur l'origine du contact (consentement / cadre / entretien collègue)."
                         : (emailPivot
                             ? "Acceptation d'envoyer par mail."
                             : (wantsWrittenOffer ? "Client demande devis mail — agent demande quand même PDL/facture." : "Réponses aux objections perfectibles."))));
@@ -7313,7 +7554,7 @@ RÈGLE CRITIQUE origine numéro : jamais « base de données » / « fichier cli
             }
 
             const axes = [];
-            if (badDatabaseReply) axes.push("Ne jamais dire « base de données » ou « fichier clients » — dire : consentement, formulaire comparateur, partenaire.");
+            if (badDatabaseReply) axes.push("Ne jamais dire « base de données » ou « fichier clients » — dire : consentement, formulaire, comparateur, partenaire, ou entretien préalable avec un collègue.");
             if (evasiveNumberReply) axes.push("Origine du numéro : éviter « je ne sais pas » — expliquer le cadre légal (consentement, comparateur).");
             if (addressRefusedLoop) axes.push("Dès le refus adresse/PDL : proposer une offre écrite par email au lieu de répéter la même demande.");
             if (agentFrustration) axes.push("Ne jamais conclure par « si vous ne voulez pas faire des économies » — rester professionnel.");
@@ -7713,6 +7954,7 @@ ${buildProspectFacts(persona)}
 CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingState())}
 
 ${CALL_STRUCTURE}
+${buildNouvelleLoiProspectBlock()}
 ${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : (trainingScenario ? buildTrainingScenarioPromptBlock(trainingScenario) : getTrainingEvolutionBlock(persona))}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :

@@ -1258,7 +1258,7 @@
         <div class="hero-logo">LEAD &amp; CONNECT</div>
         <span class="hero-badge v2-badge">Version 2 — Mode Prospect</span>
         <h1>Vous jouez le prospect · L'IA joue l'agent commercial</h1>
-        <p>Posez des objections et observez comment l'agent IA (Émilie) les traite — même interface que la v1.</p>
+        <p>Posez des objections et observez comment l'agent IA (Samuel) adapte son discours à <strong>votre profil</strong> et au <strong>modèle LLM</strong> choisi — tout en suivant la structure d'appel Ogenies.</p>
         <a href="simulation.html" id="v1Link">← Version 1 : entraînement agent (vous vendez)</a>
     </div>
 
@@ -1335,9 +1335,9 @@
         <div class="call-stage">
             <div class="video-shell">
                 <div class="agent-frame" id="agentFrame">
-                    <div class="agent-avatar" aria-hidden="true">👩‍💼</div>
+                    <div class="agent-avatar" aria-hidden="true">👨‍💼</div>
                     <div class="agent-brand">
-                        <strong>Émilie</strong>
+                        <strong>Samuel</strong>
                         <span>Ogenies</span>
                     </div>
                     <div class="video-vignette"></div>
@@ -1377,8 +1377,9 @@
             <div class="call-journey" id="callJourney">
                 <div class="journey-step active" data-step="0">📞 Accroche</div>
                 <div class="journey-step" data-step="1">🔍 Découverte</div>
-                <div class="journey-step" data-step="2">💼 Proposition</div>
-                <div class="journey-step" data-step="3">✅ Closing</div>
+                <div class="journey-step" data-step="2">🏠 Qualification</div>
+                <div class="journey-step" data-step="3">💼 Proposition</div>
+                <div class="journey-step" data-step="4">✅ Closing</div>
             </div>
             <div class="live-stats" id="liveStats">
                 <div class="stat-pill"><span class="stat-val" id="statDuration">00:00</span><span class="stat-lbl">Durée</span></div>
@@ -1425,6 +1426,45 @@
         let callTimerInterval = null;
         let callElapsedSec = 0;
         const TRAINING_MODE = "train_prospect";
+
+        const PROFILE_ADAPTATIONS = {
+            agressif: {
+                tone: "Calme et posé face à l'hostilité — jamais agressif en retour.",
+                pace: "Ralenti : empathie d'abord, une question ensuite.",
+                focus: "Reconnaître le dérangement, lever la méfiance avant la découverte.",
+                confirm: ["Je comprends", "Vous avez raison d'être prudent", "Je vous entends"]
+            },
+            presse: {
+                tone: "Direct et respectueux du temps du prospect.",
+                pace: "1 à 2 phrases max par réplique.",
+                focus: "Aller vite au fournisseur et au montant ; condenser la qualification.",
+                confirm: ["Compris", "Très bien", "Je fais court"]
+            },
+            mefiant_fournisseur: {
+                tone: "Rassurant, conseil honnête — pas de pression.",
+                pace: "Normal, avec insistance sur « comparateur indépendant » et « sans obligation ».",
+                focus: "Montrer qu'on peut conseiller de garder son fournisseur si c'est déjà le meilleur tarif.",
+                confirm: ["Je note", "D'accord", "C'est noté"]
+            },
+            mefiant_rgpd: {
+                tone: "Transparent et pédagogique sur les données.",
+                pace: "Prendre le temps d'expliquer RGPD / appels non nominatifs avant de questionner.",
+                focus: "Crédibilité et conformité avant toute collecte d'information.",
+                confirm: ["Bien sûr", "Je comprends votre question", "C'est légitime"]
+            },
+            curieux: {
+                tone: "Pédagogue, répond aux questions avant d'enchaîner.",
+                pace: "Normal à détaillé — le prospect aime comprendre.",
+                focus: "Expliquer Home Energy, heures creuses, rétractation 14 jours si demandé.",
+                confirm: ["Excellente question", "Très bien", "C'est parfait"]
+            }
+        };
+
+        const LEVEL_ADAPTATIONS = {
+            debutant: "Prospect peu résistant : tu peux avancer plus vite dans la structure s'il coopère.",
+            intermediaire: "Prospect modérément résistant : alterne valeur (gratuit, sans engagement) et questions.",
+            avance: "Prospect très résistant : patience, 2 à 3 reformulations par objection avant d'envisager une clôture."
+        };
 
         const PROFILES = {
             agressif: {
@@ -1482,8 +1522,15 @@
         function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
         function createCallScenario() {
-            const bill = pickRandom([58, 65, 72, 78, 84, 91]);
-            const offer = Math.max(48, bill - pickRandom([8, 10, 12, 15]));
+            const bill = pickRandom([58, 62, 65, 72, 78, 84, 91]);
+            const offer = Math.max(48, bill - pickRandom([5, 8, 10, 12, 15]));
+            const cities = [
+                { city: "Toulon", zip: "83200" },
+                { city: "Marseille", zip: "13008" },
+                { city: "Nice", zip: "06000" },
+                { city: "Lyon", zip: "69003" }
+            ];
+            const loc = pickRandom(cities);
             return {
                 firstName: pickRandom(SCENARIO_FIRST),
                 lastName: pickRandom(SCENARIO_LAST),
@@ -1491,6 +1538,12 @@
                 yearsAtSupplier: pickRandom(["2 ans", "3 ans", "plus de 4 ans", "5 ans"]),
                 billAmount: bill,
                 offerTarget: offer,
+                regularization: pickRandom([80, 90, 110]),
+                surfaceM2: pickRandom([55, 70, 85, 95]),
+                occupants: pickRandom([1, 2, 3]),
+                kwhYear: pickRandom([1200, 1500, 1800, 2200]),
+                city: loc.city,
+                zip: loc.zip,
                 pdl: (function () {
                     let s = "";
                     for (let i = 0; i < 14; i++) s += Math.floor(Math.random() * 10);
@@ -1500,15 +1553,74 @@
         }
 
         let callScenario = createCallScenario();
+        const AGENT_SCRIPT_COMPACT_LINES = 38;
 
         function buildAgentOpening(level) {
-            if (level === "debutant") {
-                return "Bonjour, je suis Émilie d'Ogenies. Je vous appelle suite à une étude sur les augmentations de factures d'électricité — vous avez une petite minute ?";
+            const profile = getProfile();
+            const openings = {
+                debutant: {
+                    default: "Bonjour. Oui, je suis Samuel, de la société Ogenies. Je vous appelle concernant votre facture d'électricité. C'est bien vous que j'ai réussi à joindre ?",
+                    presse: "Bonjour, Samuel d'Ogenies — appel rapide sur votre facture d'électricité. C'est bien vous ?",
+                    agressif: "Bonjour, je suis Samuel d'Ogenies. Je vous appelle pour votre facture d'électricité — je serai bref. C'est bien vous ?",
+                    curieux: "Bonjour, je suis Samuel de la société Ogenies. Je vous contacte au sujet de votre facture d'électricité — est-ce le bon interlocuteur ?"
+                },
+                intermediaire: {
+                    default: "Bonjour, je suis Samuel de la société Ogenies. Je vous appelle concernant votre facture d'électricité — c'est bien vous ?",
+                    presse: "Bonjour, Samuel d'Ogenies, facture d'électricité — c'est bien vous ?",
+                    mefiant_rgpd: "Bonjour, Samuel d'Ogenies. Appel concernant votre contrat d'électricité — je ne dispose pas de vos coordonnées à l'avance. C'est bien vous ?"
+                },
+                avance: {
+                    default: "Bonjour, Samuel d'Ogenies. Facture d'électricité — c'est bien vous ?"
+                }
+            };
+            const bucket = openings[level] || openings.intermediaire;
+            return bucket[profile] || bucket.default || openings.debutant.default;
+        }
+
+        function getProfileAdaptation() {
+            return PROFILE_ADAPTATIONS[getProfile()] || PROFILE_ADAPTATIONS.curieux;
+        }
+
+        function getProfileAdaptationBlock(compact) {
+            const p = PROFILES[getProfile()];
+            const a = getProfileAdaptation();
+            if (compact) {
+                return "\nPROFIL : " + p.label + " — " + a.tone + " " + a.pace;
             }
-            if (level === "intermediaire") {
-                return "Bonjour, Émilie d'Ogenies. Appel court pour vérifier si vous payez le bon tarif sur votre électricité — vous avez deux minutes ?";
+            return "\n\nADAPTATION PROFIL PROSPECT (« " + p.label + " ») :"
+                + "\n- Ton : " + a.tone
+                + "\n- Rythme : " + a.pace
+                + "\n- Priorité : " + a.focus
+                + "\n- Confirmations possibles (varie) : " + (a.confirm || []).join(", ")
+                + "\n- Garde la STRUCTURE Samuel mais reformule avec tes propres mots selon ce profil.";
+        }
+
+        function getLevelAdaptationBlock() {
+            return "\nNIVEAU OBJECTIONS : " + (LEVEL_ADAPTATIONS[getLevel()] || LEVEL_ADAPTATIONS.intermediaire);
+        }
+
+        function getModelStyleHint(model) {
+            const m = String(model || getModel()).toLowerCase();
+            if (/llama|nemotron|hermes/i.test(m)) {
+                return "Formulations directes et orales ; varie le vocabulaire d'un tour à l'autre.";
             }
-            return "Bonjour, Émilie d'Ogenies. Étude nationale sur les hausses de factures énergie — je serai brève, promis.";
+            if (/gemma|qwen/i.test(m)) {
+                return "Ton clair et pédagogique si le prospect questionne ; ne récite pas un script.";
+            }
+            if (/gpt-oss|deepseek/i.test(m)) {
+                return "Réponses concises et naturelles ; évite les formulations identiques à chaque appel.";
+            }
+            return "Reformule chaque phase avec tes propres mots — le structure guide, le wording est libre.";
+        }
+
+        function getAgentTemperature(model) {
+            let t = 0.74;
+            const profile = getProfile();
+            if (profile === "curieux") t += 0.07;
+            if (profile === "presse") t -= 0.04;
+            if (profile === "agressif" || profile === "mefiant_rgpd") t += 0.05;
+            if (isFreeOpenRouterModel(model)) t += 0.04;
+            return Math.min(0.88, Math.max(0.68, t));
         }
 
         function getAgentAntiRepeatContext() {
@@ -1535,43 +1647,45 @@
             try { localStorage.setItem(COACHING_KEY, JSON.stringify(tips.slice(0, 4))); } catch (_) {}
         }
 
-        const AGENT_SCRIPT = `Tu es Émilie (ou Eugénie), conseillère commerciale Ogenies.
-CONTEXTE : Appel SORTANT énergie en France. Tu appelles le prospect pour une étude / vérification tarifaire électricité (et gaz si pertinent).
-MISSION : Tu es l'AGENT COMMERCIAL uniquement. Ne joue JAMAIS le prospect. Ne dis jamais « en tant que prospect ».
+        const AGENT_SCRIPT = `Tu es Samuel, conseiller commercial de la société Ogenies (Au Génie).
+CONTEXTE : Appel SORTANT énergie en France. Tu appelles le prospect pour sa facture d'électricité.
+MISSION : Tu es l'AGENT COMMERCIAL uniquement. Ne joue JAMAIS le prospect.
 
-STRUCTURE D'APPEL :
-1. Accroche : te présenter, Ogenies, objet = vérification augmentations (pas vente forcée)
-2. Découverte : fournisseur actuel, ancienneté, montant facture — POSE DES QUESTIONS, n'invente pas les réponses du prospect
-3. Comparatif : indépendant, gratuit, sans engagement, 14 jours rétractation
-4. Proposition : tarif compétitif si économies possibles (adapte le montant à ce que le prospect a dit)
-5. Closing : IBAN seulement après accord, ou proposition email / rappel
+STRUCTURE OBLIGATOIRE (ordre des phases — respecte cette progression, ne saute pas d'étape) :
+1. ACCROCHE → 2. FOURNISSEUR → 3. MENSUALITÉ → 4. RÉGULARISATION (pain point)
+→ 5. PROPOSITION DE VALEUR (comparateur indépendant)
+→ 6. VÉRIFICATION IDENTITÉ (adresse, nom, code postal, email)
+→ 7. QUALIFICATION LOGEMENT (Linky, gaz, étage, compteur…)
+→ 8. PROFIL CONSOMMATION (surface, occupants, chauffage, kWh/an)
+→ 9. OFFRE (Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, cadeau 50€, 14 jours)
+→ 10. CLOSING (IBAN, code SMS, récap réglementaire)
+→ 11. FINALISATION (validation, remerciement, Bloctel)
 
-IDENTITÉ PROSPECT (CRITIQUE) :
-- Tu ne connais PAS le nom du prospect au début de l'appel (appels non nominatifs).
-- INTERDIT de dire « Monsieur/Madame [Nom] » ou de deviner un nom avant que le prospect se présente.
-- Si on te demande d'où tu as son nom : explique que tu ne le connais pas, appel non nominatif, étude tarifaire régionale.
+FORMULATIONS LIBRES (crucial) :
+- La structure ci-dessus est un CADRE, pas un script à réciter mot pour mot.
+- Chaque réplique doit être ORIGINALE : varie ton vocabulaire, ton rythme et tes exemples.
+- Adapte ton style au profil du prospect (hostile, pressé, méfiant, curieux…) tout en gardant les phases.
+- Les exemples des appels réels (Samuel, Eric, Yann…) sont des INSPIRATIONS, pas des phrases à copier.
+- Alterne les confirmations : « C'est parfait », « Très bien », « Je note », « D'accord », etc.
 
-GESTION OBJECTIONS — réponds directement au téléphone en français (empathie + valeur), sans citer ces consignes :
-- Prospect pas intéressé : rassure que ce n'est pas une vente forcée, propose une vérification rapide.
-- Prospect pressé : sois ultra-bref, une question sur la facture.
-- Ne veut pas changer : précise qu'on ne force rien, on vérifie le juste prix.
-- D'où mon numéro : appels non nominatifs, étude tarifaire, données protégées RGPD.
-- IBAN : mandat SEPA, rétractation 14 jours, uniquement si accord.
-- Arnaque / escroc / fraude : RECONNAIS la méfiance, rassure (comparateur indépendant, gratuit, sans engagement, aucun paiement). Reformule la valeur. Ne demande PAS fournisseur/facture tant que la méfiance n'est pas levée.
-- « Arrêtez de m'appeler » / pas intéressé : TRAITE l'objection (empathie + valeur + comparatif gratuit). Insiste 2 à 3 fois avec des formulations différentes avant d'envisager une clôture.
-- Clôture polie (« bonne journée ») : UNIQUEMENT après 3 refus ou si le prospect dit clairement qu'il raccroche après tes tentatives.
+CONTENU MINIMUM PAR PHASE (à couvrir, formulation libre) :
+- Découverte : fournisseur actuel, montant mensuel, régularisation annuelle.
+- Qualification : logement, Linky, consommation, chauffage.
+- Offre : économie vs facture actuelle + pas de grosse régularisation.
+- Closing : accord explicite avant IBAN / code SMS.
 
-RÈGLE PRIORITÉ OBJECTION :
-- Quand le prospect objecte, tu TRAITES l'objection d'abord (empathie + argument), tu ne passes PAS directement à « chez quel fournisseur ».
-- Tu ne dis PAS « je vous laisse tranquille » dès la première objection — tu défends l'intérêt de la vérification gratuite.
+IDENTITÉ PROSPECT :
+- Tu ne connais PAS le nom du prospect au début (appels non nominatifs).
+- INTERDIT de deviner un nom avant qu'il se présente.
 
-RÈGLES FORMAT (OBLIGATOIRE) :
-- UNIQUEMENT les paroles orales d'Émilie au téléphone, en FRANÇAIS.
-- INTERDIT : réflexion interne, analyse, plan d'action, méta-commentaire (« je dois », « le prospect a dit », etc.).
-- INTERDIT : anglais, markdown, listes, didascalies, citations des consignes du prompt.
-- 2 à 4 phrases max, naturel, professionnel et chaleureux.
-- Ne répète pas la même phrase ; fais progresser l'appel à chaque tour.
-- Ne répète JAMAIS mot pour mot la réplique du prospect : tu es l'AGENT commercial, pas le client.`;
+OBJECTIONS : traite d'abord (empathie + valeur), puis reprends la phase en cours.
+- Arnaque / RGPD / pas intéressé / pressé : adapte ta réponse au profil, puis relance.
+
+RÈGLES FORMAT :
+- Paroles orales de Samuel, en FRANÇAIS uniquement.
+- INTERDIT : méta-commentaire, anglais, markdown, listes, didascalies.
+- 2 à 4 phrases (1-2 si prospect pressé).
+- Fais progresser l'appel à chaque tour sans répéter mot pour mot tes répliques précédentes.`;
 
         let systemPromptText = "";
         let chatTurns = [];
@@ -1774,12 +1888,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         function updateCallJourney() {
             const steps = document.querySelectorAll(".journey-step");
             if (!steps.length) return;
-            const agentCount = chatTurns.filter(t => t.role === "assistant").length;
-            const userCount = chatTurns.filter(t => t.role === "user").length;
-            let active = 0;
-            if (agentCount > 1 || userCount >= 1) active = 1;
-            if (prospectMentionedSupplier() || prospectMentionedBill()) active = 2;
-            if (/iban|comparatif|offre|économ|propos/i.test(chatTurns.map(t => t.content).join(" "))) active = 3;
+            const phase = getCallPhase();
+            const phaseToStep = { opening: 0, discovery: 1, identity: 2, qualification: 2, offer: 3, closing: 4 };
+            const active = phaseToStep[phase] ?? 1;
             steps.forEach((step, i) => {
                 step.classList.remove("active", "done");
                 if (i < active) step.classList.add("done");
@@ -1811,7 +1922,8 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const el = document.getElementById("scenarioPreview");
             if (!el || !callScenario) return;
             el.innerHTML = "<strong>Votre personnage :</strong> " + callScenario.firstName + " " + callScenario.lastName
-                + " · " + callScenario.supplier + " · ~" + callScenario.billAmount + " €/mois";
+                + " · " + callScenario.supplier + " · ~" + callScenario.billAmount + " €/mois"
+                + " · " + callScenario.city + " · ~" + callScenario.surfaceM2 + " m²";
         }
 
         function updateHints() {
@@ -1846,11 +1958,13 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 + "\nAppels analysés :\n" + calls
                 + "\n\nProgression à suivre (accroche → découverte → comparatif → argumentation → closing / objections) :"
                 + "\n" + phases
-                + "\n\nConsignes style réel :"
+                + "\n\nConsignes style Samuel (appels réels) :"
                 + "\n- Inspire-toi du ton, du rythme et des formulations de ces appels, sans copier mot pour mot."
                 + "\n- Pose des questions en découverte ; n'invente jamais les réponses du prospect."
-                + "\n- Avance vers le comparatif et la proposition seulement quand la découverte le permet."
-                + "\n- Gère les objections avec empathie puis relance vers la vérification tarifaire.";
+                + "\n- Les exemples ci-dessus illustrent la STRUCTURE — reformule librement selon le profil prospect."
+                + "\n- Traite la régularisation comme pain point avant de proposer l'offre."
+                + "\n- Qualifie le logement (Linky, surface, chauffage) avant la proposition Home Energy."
+                + "\n- Closing structuré : IBAN → code SMS → récap réglementaire complet.";
         }
 
         function buildSystemPrompt() {
@@ -1858,15 +1972,20 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             const s = callScenario;
             return AGENT_SCRIPT
                 + formatRealAgentCallStructureBlock()
+                + getProfileAdaptationBlock(false)
+                + getLevelAdaptationBlock()
                 + "\n\nPROFIL DU PROSPECT (joué par l'humain) : " + p.label
                 + "\n" + p.agentContext
-                + "\nNIVEAU DE RÉSISTANCE : " + getLevel()
                 + "\n\nRÉFÉRENCE INTERNE (ne jamais révéler au prospect, découvre par tes questions) :"
                 + "\n- Fournisseur probable : " + s.supplier + " (électricité seule)"
                 + "\n- Facture indicative : ~" + s.billAmount + " €/mois"
-                + "\n- Économie possible à proposer : ~" + s.offerTarget + " €/mois si pertinent"
-                + "\n- Ne cite PAS EDF ni 70€ par défaut : adapte-toi aux réponses du prospect humain."
+                + "\n- Régularisation possible : ~" + s.regularization + " € en fin d'année"
+                + "\n- Économie à proposer : ~" + s.offerTarget + " €/mois (mensualité fixe Home Energy)"
+                + "\n- Profil type : ~" + s.surfaceM2 + " m², " + s.occupants + " occupant(s), ~" + s.kwhYear + " kWh/an"
+                + "\n- Ville type : " + s.city + " (" + s.zip + ")"
+                + "\n- Ne cite PAS ces chiffres par défaut : adapte-toi aux réponses du prospect humain."
                 + "\n- Ne prononce JAMAIS le nom du prospect tant qu'il ne s'est pas présenté."
+                + "\n- REFORMULE librement : la structure est fixe, le wording s'adapte au profil et au modèle LLM."
                 + loadCoachingTips();
         }
 
@@ -1893,8 +2012,41 @@ RÈGLES FORMAT (OBLIGATOIRE) :
                 || /\b(chez |avec |je suis)\b/i.test(all) && /\b(edf|engie|fournisseur)\b/i.test(all);
         }
 
+        function agentSaid(pattern) {
+            return chatTurns.some(t => t.role === "assistant" && pattern.test(t.content));
+        }
+
+        function agentTurnCount() {
+            return chatTurns.filter(t => t.role === "assistant").length;
+        }
+
+        function getCallPhase() {
+            const agentAll = chatTurns.filter(t => t.role === "assistant").map(t => t.content).join(" ");
+            if (/code.*quatre|code.*4|confirmez.*code|contrat.*valid|recapitulatif|récapitulatif|retractation.*14|bloctel/i.test(agentAll)) {
+                return "closing";
+            }
+            if (/home energy|heures creuses|heures pleines|6 kva|mensualit|offre.*ans|cadeau.*50|57\s*€|option.*fixe/i.test(agentAll) && prospectMentionedBill()) {
+                return "offer";
+            }
+            if (/surface|occupant|chauffage|linky|etage|appartement|metres|m²|ballon|presence|vehicule|kwh|consommation annuelle/i.test(agentAll)) {
+                return "qualification";
+            }
+            if (/adresse|nom|prenom|code postal|depuis combien|email|mail|vous etes au/i.test(agentAll) && (prospectMentionedBill() || agentSaid(/regularis/i))) {
+                return "identity";
+            }
+            if (prospectMentionedBill() || agentSaid(/regularis/i) || agentSaid(/meilleurs fournisseurs|moins cher/i)) {
+                return "discovery";
+            }
+            if (agentTurnCount() <= 1) return "opening";
+            return "discovery";
+        }
+
+        function prospectMentionedRegularization() {
+            return prospectUserTurns().some(t => /regularis|rajout|fin d annee|fin d année|90|80|supplement/i.test(prospectTextNorm(t)));
+        }
+
         function prospectMentionedBill() {
-            return prospectUserTurns().some(t => /\d+\s*€|euro/i.test(t));
+            return prospectUserTurns().some(t => /\d+\s*€|euro|\d+\s*euros?/i.test(t));
         }
 
         function agentAskedBill() {
@@ -2015,19 +2167,21 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         function getDiscoveryStageHint() {
             const last = lastProspectText();
+            const adapt = getProfileAdaptation();
             if (prospectRefuses(last) || prospectIsHostile(last)) {
-                return "TRAITE l'objection : empathie + valeur (gratuit, sans engagement, comparateur). Ne demande PAS fournisseur/facture tant que le prospect n'est pas apaisé. Ne dis pas « je vous laisse tranquille » tout de suite.";
+                return "TRAITE l'objection (" + adapt.tone + "). Ne demande PAS fournisseur/facture tant que le prospect n'est pas apaisé. Reformule avec tes propres mots.";
             }
-            if (prospectMentionedBill()) {
-                return "Le prospect a donné un fournisseur et un montant : propose le comparatif gratuit et sans engagement.";
-            }
-            if (prospectMentionedSupplier()) {
-                return "Le prospect a indiqué son fournisseur : remercie et demande depuis combien de temps + montant mensuel de la facture électricité.";
-            }
-            if (agentAskedBill() || chatTurns.filter(t => t.role === "assistant").length >= 2) {
-                return "Passe à la découverte : demande le fournisseur actuel ou le montant de la facture électricité.";
-            }
-            return "Gère l'objection puis pose UNE question de découverte (fournisseur ou facture).";
+            const phase = getCallPhase();
+            const hints = {
+                opening: "Phase ACCROCHE : confirme le correspondant, puis fournisseur. Formulation libre.",
+                discovery: "Phase DÉCOUVERTE : fournisseur → mensualité → régularisation. " + adapt.focus + " Formulation libre.",
+                identity: "Phase IDENTITÉ : adresse, nom, code postal, email. Une question à la fois. " + adapt.pace,
+                qualification: "Phase QUALIFICATION : logement, Linky, surface, chauffage, kWh. Varie tes questions.",
+                offer: "Phase OFFRE : Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, cadeau 50€. Adapte l'argumentaire au profil.",
+                closing: "Phase CLOSING : IBAN, code SMS, récap réglementaire. " + adapt.pace
+            };
+            return "PHASE : " + phase.toUpperCase() + ". " + (hints[phase] || hints.discovery)
+                + " Structure obligatoire, wording libre.";
         }
 
         function isAgentEcho(reply, prospectText) {
@@ -2120,57 +2274,45 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             return chatTurns.some(t => t.role === "assistant" && /on regarde en deux minutes|qu est-ce que vous preferez|laisse tranquille|soit on regarde/i.test(prospectTextNorm(t.content)));
         }
 
+        function resolveCriticalObjectionReply(prospectText) {
+            return getObjectionHandlingReply(prospectText);
+        }
+
         function resolveRuleBasedAgentReply(prospectText) {
             const raw = (prospectText || "").trim();
             const t = prospectTextNorm(raw);
             if (!t) return null;
 
-            const objectionReply = getObjectionHandlingReply(raw);
+            const objectionReply = resolveCriticalObjectionReply(raw);
             if (objectionReply) return objectionReply;
 
-            if (/pourquoi.*(demand|question|info|numero|donn|dire|mention)|c est quoi l interet|droit.*savoir/i.test(t)) {
-                return "Bonne question : c'est uniquement pour comparer votre tarif au marché et voir si vous payez trop cher — rien n'est obligatoire.";
-            }
-            if (/qui (etes|êtes)|vous etes qui|d ou.*nom|comment.*nom|comment.*numero|comment.*donnees|rgpd|donnees|proteg/i.test(t)) {
-                return "Je suis Émilie, conseillère Ogenies. Les appels ne sont pas nominatifs : je ne connais pas vos coordonnées à l'avance. C'est une étude régionale sur les hausses de factures, sans engagement.";
-            }
-            if (/pourquoi.*appel|pourquoi vous m appelez|c est pour quoi|pour quoi exactement|vendre|voulait.*vendre/i.test(t)) {
-                return "Je vous appelle pour une vérification rapide : savoir si vous payez le juste tarif sur votre électricité. Ce n'est pas une vente forcée, c'est gratuit et sans engagement.";
-            }
-            if (/veux pas dire|pas envie.*donner|pas vous donner|confidentiel|secret/i.test(t)) {
-                return "Je respecte ça. Sans ces infos je ne peux pas chiffrer d'économies — je peux vous envoyer un lien par mail, ou on s'arrête là si vous préférez.";
-            }
-            if (/pas le temps|occupe|presse|faites vite|faites court/i.test(t)) {
-                return "Je serai très brève. Chez quel fournisseur êtes-vous pour l'électricité ?";
-            }
-            if (/ne veux pas changer|pas envie de chang|satisfait|changer de fourn/i.test(t)) {
-                return "Je comprends, on ne vous oblige à rien. On vérifie juste si votre offre actuelle est encore compétitive — chez quel fournisseur êtes-vous aujourd'hui ?";
-            }
-            if (/iban|rib|coordonnees banc|compte banc/i.test(t)) {
-                return "Le RIB sert uniquement au mandat SEPA si vous acceptez une offre — rétractation 14 jours, aucun prélèvement sans votre accord explicite.";
-            }
-            if (/gratuit|sans engagement|14 jours|retractation|comparatif/i.test(t) && /\?/.test(raw)) {
-                return "Oui, le comparatif est gratuit et sans engagement, avec 14 jours de rétractation. On ne change rien sans votre accord.";
-            }
-            if (prospectMentionedBill()) {
-                return "Merci, c'est noté. Je peux lancer une vérification gratuite et sans engagement pour voir si vous pourriez payer moins — est-ce que ça vous convient ?";
-            }
-            if (prospectMentionedSupplier() || /\b(edf|engie|total|vattenfall|ekwateur)\b/i.test(t)) {
-                const msg = "Parfait, merci. Depuis combien de temps êtes-vous chez eux, et à peu près combien payez-vous par mois sur votre facture d'électricité ?";
-                return agentAlreadySaid(msg) ? "D'accord. Et le montant mensuel de votre facture, à peu près, c'est combien ?" : msg;
-            }
-            if (/^oui|^ok|^d accord|^allez|^vas y|^bonjour/i.test(t) && t.length < 40) {
-                return "Super, merci. Chez quel fournisseur êtes-vous actuellement pour l'électricité ?";
-            }
             return null;
         }
 
         function getAgentFallbackReply(prospectText) {
-            const ruled = resolveRuleBasedAgentReply(prospectText);
-            if (ruled) return ruled;
-            const objectionReply = getObjectionHandlingReply(prospectText);
-            if (objectionReply) return objectionReply;
-            return "D'accord. Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
+            const critical = resolveCriticalObjectionReply(prospectText);
+            if (critical) return critical;
+            const phase = getCallPhase();
+            const confirm = pickRandom(getProfileAdaptation().confirm || ["D'accord", "Très bien", "C'est parfait"]);
+            if (phase === "opening") {
+                return confirm + ". Vous êtes auprès de quel fournisseur actuellement pour votre électricité ?";
+            }
+            if (phase === "discovery" && !prospectMentionedBill()) {
+                return confirm + ". Vous payez combien par mois pour votre électricité ?";
+            }
+            if (phase === "discovery") {
+                return "Comment ça se passe au niveau de la régularisation — est-ce que vous rajoutez à la fin de l'année ?";
+            }
+            if (phase === "identity") {
+                return confirm + ". Pour vérifier votre dossier, vous êtes à quelle adresse ?";
+            }
+            if (phase === "qualification") {
+                return confirm + ". Vous habitez en appartement ou en maison ?";
+            }
+            if (phase === "offer") {
+                return "D'après votre profil, je peux vous proposer une mensualité fixe plus avantageuse — on regarde ?";
+            }
+            return confirm + ". Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
         }
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
@@ -2289,7 +2431,7 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         function scoreBenchmarkAgentReply(reply, prospectText) {
             const t = (reply || "").trim();
             if (!t) return { score: 0, french: false, noEcho: false, inRole: false };
-            const french = !isAgentMetaLeak(t) && (/\b(je|vous|comprends|d'accord|bonjour|émilie|ogenies)\b/i.test(t));
+            const french = !isAgentMetaLeak(t) && (/\b(je|vous|comprends|d'accord|bonjour|samuel|ogenies|c est parfait)\b/i.test(t));
             const noEcho = !isAgentEcho(t, prospectText);
             const inRole = !isAgentMetaLeak(t);
             let score = 0;
@@ -2302,9 +2444,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
         async function runSingleModelBenchmark(apiKey, model, prospectText) {
             const started = performance.now();
-            const system = AGENT_SCRIPT.split("\n").slice(0, 28).join("\n");
+            const system = AGENT_SCRIPT.split("\n").slice(0, AGENT_SCRIPT_COMPACT_LINES).join("\n");
             const messages = [
-                { role: "system", content: system + "\n\nRéponds UNIQUEMENT en français oral comme Émilie." },
+                { role: "system", content: system + "\n\nRéponds UNIQUEMENT en français oral comme Samuel." },
                 { role: "assistant", content: buildAgentOpening("intermediaire") },
                 { role: "user", content: "[Le prospect au téléphone dit] : " + prospectText }
             ];
@@ -2443,14 +2585,16 @@ RÈGLES FORMAT (OBLIGATOIRE) :
             throw lastError || new Error("Erreur OpenRouter");
         }
 
-        function buildAgentOpenRouterMessages(plan, prospectLine, extra) {
+        function buildAgentOpenRouterMessages(plan, prospectLine, extra, model) {
             const turnHint = prospectLine
                 ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
                     + "\nÉTAPE : " + getDiscoveryStageHint()
-                    + "\nRéponds en français oral comme Émilie (2-3 phrases). Réponds au prospect, ne répète pas ses mots."
+                    + "\nSTYLE LLM : " + getModelStyleHint(model)
+                    + getProfileAdaptationBlock(true)
+                    + "\nRéponds en français oral comme Samuel. Structure fixe, formulation originale (2-4 phrases)."
                 : "";
             const systemBase = plan.compact
-                ? systemPromptText.split("\n").slice(0, 28).join("\n")
+                ? systemPromptText.split("\n").slice(0, AGENT_SCRIPT_COMPACT_LINES).join("\n")
                 : systemPromptText;
             const compactSystem = systemBase + turnHint + (extra || "");
             let turns = buildAgentTurnMessages();
@@ -2477,8 +2621,9 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         async function callAgentLLM(apiKey, extra) {
             const prospectLine = lastProspectText();
 
-            const ruled = resolveRuleBasedAgentReply(prospectLine);
-            if (ruled) return ruled;
+            if (shouldCloseAfterObjections() || (prospectExplicitHangUp(prospectLine) && countAgentObjectionResponses() >= 1)) {
+                return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
+            }
 
             const models = [getModel(), ...OPENROUTER_FALLBACK_MODELS.filter(m => m !== getModel())];
             const retryPlans = isFreeOpenRouterModel(getModel())
@@ -2497,10 +2642,11 @@ RÈGLES FORMAT (OBLIGATOIRE) :
 
             for (const model of models) {
                 const maxTokens = getAgentMaxTokens(model);
+                const temperature = getAgentTemperature(model);
                 for (const plan of retryPlans) {
-                    const messages = buildAgentOpenRouterMessages(plan, prospectLine, extra);
+                    const messages = buildAgentOpenRouterMessages(plan, prospectLine, extra, model);
                     try {
-                        const raw = await callOpenRouter(messages, apiKey, model, maxTokens, 0.68, false);
+                        const raw = await callOpenRouter(messages, apiKey, model, maxTokens, temperature, false);
                         const reply = validateAgentLLMReply(raw, prospectLine);
                         if (reply) return reply;
                     } catch (e) {
@@ -2725,13 +2871,14 @@ RÈGLES FORMAT (OBLIGATOIRE) :
         async function evaluateAgent(apiKey) {
             const agentLines = chatTurns.filter(t => t.role === "assistant").map((t, i) => (i + 1) + ". " + t.content).join("\n");
             const transcript = chatTurns.map(t => (t.role === "assistant" ? "AGENT IA" : "PROSPECT") + ": " + t.content).join("\n");
-            const prompt = `Tu es formateur vente énergie. Évalue comment l'AGENT IA (pas le prospect humain) a traité les objections.
+            const prompt = `Tu es formateur vente énergie. Évalue comment l'AGENT IA Samuel (style appels Ogenies réels) a mené l'appel.
+Critères : accroche, découverte (fournisseur/mensualité/régularisation), qualification logement, argumentaire Home Energy, closing (IBAN/code/récap).
 Profil prospect joué : ${getProfile()}, niveau : ${getLevel()}.
 
 Réponds en JSON valide :
 {"score_total":0-100,"niveau":"Excellent|Bon|À améliorer|Coaching nécessaire",
 "points_forts":["","",""],"axes_amelioration":["","",""],
-"techniques_observees":["reformulation","empathie",...],
+"techniques_observees":["reformulation","empathie","pain point régularisation",...],
 "commentaire":"analyse pédagogique pour les stagiaires"}
 
 RÉPLIQUES AGENT IA :
@@ -2754,9 +2901,9 @@ ${transcript.slice(0, 2500)}`;
             return {
                 score_total: 65,
                 niveau: "À améliorer",
-                points_forts: ["L'agent s'est présenté clairement.", "Ton professionnel maintenu."],
-                axes_amelioration: ["Approfondir la reformulation des objections.", "Mieux valoriser le comparatif gratuit."],
-                techniques_observees: ["présentation", "questionnement"],
+                points_forts: ["Samuel s'est présenté clairement.", "Ton professionnel maintenu."],
+                axes_amelioration: ["Approfondir la qualification logement avant l'offre.", "Mieux traiter le pain point régularisation."],
+                techniques_observees: ["présentation", "questionnement", "comparatif"],
                 commentaire: "Analyse locale — relancez si besoin avec crédits OpenRouter."
             };
         }

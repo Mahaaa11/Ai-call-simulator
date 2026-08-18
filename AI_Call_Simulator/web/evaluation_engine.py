@@ -79,7 +79,9 @@ EVAL_GRID = [
 NUMBER_ASK_RE = re.compile(
     r"comment avez-vous eu mon num|comment vous avez mon num|d'où.*numéro|"
     r"pourquoi.*m'appelez|pourquoi cet appel|bloctel|eu mon num|eu mes données|"
-    r"comment avez-vous eu mes",
+    r"comment avez-vous eu mes|nouvelle loi|pas le droit de m'appeler|"
+    r"jamais donné mon accord|retire mon autorisation|dgccrf|"
+    r"respecte pas la loi|prouvez.*consentement|centre d'appel",
     re.I,
 )
 BAD_NUMBER_REPLY_RE = re.compile(
@@ -97,7 +99,11 @@ GOOD_NUMBER_REPLY_RE = re.compile(
     r"consentement|formulaire|demande en ligne|partenaire|enedis|grdf|"
     r"vous nous avez contact|laissé vos coordonnées|opt.?in|base légale|"
     r"intérêt légitime|comparateur gratuit|demande de comparatif|"
-    r"vous avez demandé|inscription|rgpd",
+    r"vous avez demandé|inscription|rgpd|"
+    r"collègue|collegue|conversation avec|entretien avec|échangé avec|"
+    r"discussion avec|contact.*suite|hauss[ée].*18|18\s*%|"
+    r"facture d'électricité|facture d electricite|augmentation|régul|regul|"
+    r"black.?list|blacklist|génie.?opérateur|genie.?operateur|estimation.*économ",
     re.I,
 )
 
@@ -188,7 +194,8 @@ def analyze_compliance(
     for i, pmsg in enumerate(prospect_msgs):
         if not re.search(
             r"changer|fournisseur|intéresse pas|numéro|numero|iban|résiliation|confiance|"
-            r"engie|mail|bloctel|compliqu",
+            r"engie|mail|bloctel|compliqu|nouvelle loi|consentement|dgccrf|autorisation|"
+            r"pas le droit|centre d'appel",
             pmsg,
             re.I,
         ):
@@ -199,7 +206,8 @@ def analyze_compliance(
         ref = bool(re.search(r"je comprends|je vous comprends|tout à fait|rassure", amsg, re.I))
         concrete = bool(
             re.search(
-                r"comparatif|gratuit|sans engagement|économ|€|résiliation|génie|genie|moins cher",
+                r"comparatif|gratuit|sans engagement|économ|€|résiliation|génie|genie|moins cher|"
+                r"collègue|collegue|conversation avec|entretien avec|18\s*%|black.?list",
                 amsg,
                 re.I,
             )
@@ -233,7 +241,9 @@ def analyze_compliance(
             )
     elif prospect_asked_number and good_number_reply:
         bonus += 4
-        points_forts.append("Bonne réponse sur l'origine du contact (consentement / cadre légal).")
+        points_forts.append(
+            "Bonne réponse sur l'origine du contact (consentement / cadre légal / entretien collègue)."
+        )
 
     if reformulated and objection_handling >= 3:
         bonus += 6
@@ -315,7 +325,7 @@ def compute_heuristic_evaluation(messages: list[dict]) -> dict[str, Any]:
         ex = sig.get("ignored_number_example") or ""
         number_comment = f"Question ignorée sur l'origine du numéro — relance : « {ex[:90]}… »"
     elif sig["prospect_asked_number"] and sig["good_number_reply"]:
-        number_comment = "Origine du numéro expliquée correctement (consentement / cadre)."
+        number_comment = "Origine du numéro expliquée correctement (consentement / cadre / entretien collègue)."
 
     obj_resp_score = 2
     if sig["bad_database_reply"]:
