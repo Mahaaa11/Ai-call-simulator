@@ -76,11 +76,7 @@ if is_logged_in():
             st.warning(f"Impossible de lire TiDB : {exc}")
 
     st.markdown("---")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.page_link("app.py", label="📞 Lancer une simulation", icon="📞")
-    with c2:
-        st.page_link("pages/3_Historique_Appels.py", label="📋 Mes conversations", icon="📋")
+    st.page_link("app.py", label="📞 Lancer une simulation", icon="📞")
     if st.button("Se déconnecter / changer de nom"):
         logout_agent()
         st.rerun()
