@@ -1732,6 +1732,11 @@ CONTENU MINIMUM PAR PHASE (à couvrir, formulation libre) :
 - Offre : économie vs facture actuelle + pas de grosse régularisation.
 - Closing : accord explicite avant IBAN / code SMS.
 
+ESTIMATION / PDL :
+- Sans PDL, toute mensualité proposée est une ESTIMATION (profil logement + mensualité déclarée).
+- Si le prospect demande comment vous avez la conso : expliquez clairement que ce n'est pas encore la courbe Enedis ; le PDL (14 chiffres) affinerait.
+- Ne repose jamais une question déjà traitée (Linky, 85 €, régularisation…) sauf si le prospect n'a pas répondu.
+
 IDENTITÉ PROSPECT :
 - Tu ne connais PAS le nom du prospect au début (appels non nominatifs).
 - INTERDIT de deviner un nom avant qu'il se présente.
@@ -2101,6 +2106,12 @@ RÈGLES FORMAT :
             if (/interesse pas|pas interesse|demarch|faites confiance|voleur/i.test(t)) {
                 hints.push("Refus/méfiance : rassure (comparateur indépendant, gratuit, sans engagement), puis une question ouverte si le prospect accepte d'écouter.");
             }
+            if (prospectAskedEstimationMethod(prospectText)) {
+                hints.push("Question consommation / estimation / PDL : explique que 72 € est une ESTIMATION basée sur ce qu'il a déjà dit (m², Linky, 85 €) — pas encore la conso Enedis ; le PDL (14 chiffres sur facture) affinerait. Ne repose PAS Linky ni mensualité déjà dites.");
+            }
+            if (/homme nrj|home energy|ohm|nrj|quel fournisseur|c est qui.*fournisseur/i.test(t)) {
+                hints.push("Clarifie : « Home Energy » (pas homme NRJ) = nom d'offre ; Ogenies = comparateur ; le fournisseur partenaire est nommé avant signature.");
+            }
             if (prospectIsBusy(prospectText)) {
                 hints.push("Pressé : rassure (bref, 2 min) ou propose un rappel s'il insiste.");
             }
@@ -2138,8 +2149,13 @@ RÈGLES FORMAT :
 
         function prospectMentionedSupplier() {
             const all = prospectUserTurns().join(" ").toLowerCase();
-            return /\b(edf|engie|totalenergies|total energies|vattenfall|ekwateur|mint)\b/i.test(all)
-                || /\b(chez |avec |je suis)\b/i.test(all) && /\b(edf|engie|fournisseur)\b/i.test(all);
+            return /\b(edf|engie|totalenergies|total energies|vattenfall|ekwateur|mint|ohm|ste)\b/i.test(all)
+                || /\b(chez |avec |je suis)\b/i.test(all) && /\b(edf|engie|fournisseur|electricite)\b/i.test(all);
+        }
+
+        function prospectAskedEstimationMethod(text) {
+            const t = prospectTextNorm(text);
+            return /recupere.*consomm|consommation|pdl|point de livraison|estimation|comment vous (avez|savez)|pas recupere|juste une estimation|comment.*72|ou vous avez|d ou vous avez.*consomm/i.test(t);
         }
 
         function agentSaid(pattern) {
@@ -2357,6 +2373,21 @@ RÈGLES FORMAT :
                 ]);
             }
 
+            if (/homme nrj|home energy|ohm energy|nrj|quel fournisseur.*propos|c est qui.*fournisseur|fournisseur que vous/i.test(t)) {
+                return pickUnusedReply([
+                    "Je parlais de l'offre Home Energy — ce n'est pas « homme NRJ », c'est le nom du contrat. Ogenies est le comparateur indépendant ; le nom du fournisseur partenaire vous est communiqué clairement avant toute signature, sans engagement.",
+                    "Bonne question : Home Energy, c'est le type d'offre — mensualité fixe, heures pleines et creuses. Nous comparons plusieurs partenaires ; je vous dirai exactement lequel correspond à votre profil une fois l'estimation validée."
+                ]);
+            }
+
+            if (prospectAskedEstimationMethod(prospectText)) {
+                return pickUnusedReply([
+                    "Très bonne question : pour l'instant les 72 € sont une estimation à partir de ce que vous m'avez indiqué — 60 m², tout électrique, Linky, et vos 85 €/mois. Je n'ai pas encore votre courbe Enedis. Pour être précis, il me faudrait le PDL — la référence point de livraison, 14 chiffres sur votre facture.",
+                    "Vous avez raison, je n'ai pas récupéré votre consommation réelle : c'est une simulation indicative. Le comparatif exact passe par le PDL ou les infos de facture. On peut continuer avec cette estimation ou vous me donnez le PDL pour affiner — qu'est-ce que vous préférez ?",
+                    "Exactement : sans PDL je me base sur votre profil logement et votre mensualité. C'est pour ça que je parle d'estimation, pas de chiffre définitif. Si vous avez une facture sous la main, le numéro PDL en 14 chiffres me permettrait de verrouiller le tarif."
+                ]);
+            }
+
             if (shouldAllowGracefulClose(prospectText)) {
                 return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
             }
@@ -2476,6 +2507,9 @@ RÈGLES FORMAT :
         function getDiscoveryStageHint() {
             const last = lastProspectText();
             const adapt = getProfileAdaptation();
+            if (prospectAskedEstimationMethod(last)) {
+                return "OBJECTION ESTIMATION / CONSO : explique PDL + estimation indicative (72 €) — NE repose PAS Linky, mensualité ou régularisation déjà couverts.";
+            }
             if (prospectRefuses(last) || prospectIsHostile(last) || prospectHasLegalObjection(last) || prospectIsBusy(last)) {
                 return "TRAITE l'objection en premier (" + adapt.tone + "). Utilise reformulation + script légal si RGPD/Bloctel/consentement. Ne demande PAS fournisseur/facture/PDL tant que l'objection n'est pas traitée.";
             }
@@ -2599,30 +2633,63 @@ RÈGLES FORMAT :
             return null;
         }
 
+        function isWeakAckOnly(reply) {
+            const t = normalizeReply(reply);
+            return t.length < 95
+                && /(legitime|je comprends|bonne question|je vous entends)/i.test(t)
+                && !/\b(pdl|consommation|estimation|linky|euro|fournisseur|home energy|72|85)\b/i.test(t);
+        }
+
+        function isNearDuplicateAgentReply(reply) {
+            const cur = normalizeReply(reply);
+            if (!cur || cur.length < 24) return false;
+            return chatTurns.filter(t => t.role === "assistant").some(t => {
+                const n = normalizeReply(t.content);
+                if (n === cur) return true;
+                if (cur.length > 50 && n.length > 50 && n.slice(0, 55) === cur.slice(0, 55)) return true;
+                return false;
+            });
+        }
+
         function getAgentFallbackReply(prospectText) {
             const scripted = getObjectionHandlingReply(prospectText);
             if (scripted) return scripted;
+
+            if (prospectAskedEstimationMethod(prospectText)) {
+                return "Très bonne question : les 72 € sont une estimation basée sur votre appartement, le Linky et vos 85 €/mois — pas encore votre conso Enedis. Le PDL sur facture (14 chiffres) permettrait d'affiner. On continue comme ça ou vous l'avez sous la main ?";
+            }
+
             const phase = getCallPhase();
             const confirm = pickRandom(getProfileAdaptation().confirm || ["D'accord", "Très bien", "C'est parfait"]);
+
             if (phase === "opening") {
                 return confirm + ". Vous êtes auprès de quel fournisseur actuellement pour votre électricité ?";
             }
             if (phase === "discovery" && !prospectMentionedBill()) {
                 return confirm + ". Vous payez combien par mois pour votre électricité ?";
             }
-            if (phase === "discovery") {
+            if (phase === "discovery" && !prospectMentionedRegularization()) {
                 return "Comment ça se passe au niveau de la régularisation — est-ce que vous rajoutez à la fin de l'année ?";
+            }
+            if (phase === "discovery" && prospectMentionedBill()) {
+                if (!prospectMentionedSupplier()) {
+                    return confirm + ". Chez quel fournisseur êtes-vous actuellement pour l'électricité ?";
+                }
+                return confirm + ". Avez-vous le PDL — la référence point de livraison en 14 chiffres — sur une facture ? Ça permet d'affiner le comparatif.";
             }
             if (phase === "identity") {
                 return confirm + ". Pour vérifier votre dossier, vous êtes à quelle adresse ?";
             }
+            if (phase === "qualification" && !/\b(appartement|maison|m2|m²|linky|linky)\b/i.test(prospectUserTurns().join(" "))) {
+                return confirm + ". Vous habitez en appartement ou en maison, et quelle surface environ ?";
+            }
             if (phase === "qualification") {
-                return confirm + ". Vous habitez en appartement ou en maison ?";
+                return confirm + ". Votre chauffage et l'eau chaude sont bien tout électrique ?";
             }
             if (phase === "offer") {
-                return "D'après votre profil, je peux vous proposer une mensualité fixe plus avantageuse — on regarde ?";
+                return "Pour résumer : estimation autour de 72 €/mois fixe avec Home Energy, à affiner avec le PDL si vous le souhaitez. Qu'est-ce qui vous ferait hésiter encore ?";
             }
-            return confirm + ". Chez quel fournisseur êtes-vous pour l'électricité, et à peu près combien payez-vous par mois ?";
+            return confirm + ". Pour avancer : chez quel fournisseur êtes-vous, et avez-vous votre PDL sous la main ?";
         }
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
@@ -2638,7 +2705,8 @@ RÈGLES FORMAT :
             if (isIncompleteSentence(reply)) {
                 reply = reply.replace(/[,;:]\s*(pour|afin|que|de|à|a)\s*$/i, ".").trim();
             }
-            if (isIncompleteSentence(reply) || !reply || reply.length < 8 || isAgentMetaLeak(reply)) {
+            if (isIncompleteSentence(reply) || !reply || reply.length < 8 || isAgentMetaLeak(reply)
+                || isWeakAckOnly(reply) || isNearDuplicateAgentReply(reply)) {
                 reply = getAgentFallbackReply(prospectText);
             }
             return ensureAgentReplyAddressesProspect(reply, prospectText);
@@ -2676,6 +2744,9 @@ RÈGLES FORMAT :
                 [/\bogenie\b/gi, "Ogenies"],
                 [/\belectricite\b/gi, "électricité"],
                 [/\bfacture d electricite\b/gi, "facture d'électricité"],
+                [/\bhomme nrj\b/gi, "Home Energy"],
+                [/\bnet ste\b/gi, "Engie"],
+                [/\bnr j\b/gi, "NRJ"],
                 [/\bkilowatt heure\b/gi, "kilowatt-heure"],
                 [/\bk w h\b/gi, "kWh"],
                 [/\bengie\b/gi, "Engie"],
