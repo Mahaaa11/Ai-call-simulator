@@ -1558,37 +1558,88 @@
             }
         };
 
-        const NOUVELLE_LOI_OBJECTIONS = [
-            "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
-            "Je n'ai jamais donné mon accord.",
-            "Où avez-vous obtenu mon numéro ?",
-            "Je retire mon autorisation.",
-            "Je vais vous signaler à la DGCCRF.",
-            "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
-            "Je suis inscrit sur Bloctel.",
-            "Prouvez-moi que vous avez mon consentement."
+        const NOUVELLE_LOI_SETS = [
+            [
+                "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
+                "Je suis inscrit sur Bloctel.",
+                "Je n'ai jamais donné mon accord."
+            ],
+            [
+                "Où avez-vous obtenu mon numéro ?",
+                "Prouvez-moi que vous avez mon consentement.",
+                "Je vais vous signaler à la DGCCRF."
+            ],
+            [
+                "Je retire mon autorisation.",
+                "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
+                "Comment avez-vous eu mes données ?"
+            ]
         ];
 
-        const NOUVELLE_LOI_OBJECTIONS_DEBUTANT = [
-            "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
-            "Où avez-vous obtenu mon numéro ?"
-        ];
+        const CLOTURE_RESILIATION_OBJECTION = "La dernière fois on m'a fait payer des frais de résiliation — je ne veux plus me faire avoir comme ça.";
+
+        function hashAgentName(name) {
+            let h = 0;
+            const s = String(name || "agent").toLowerCase().trim();
+            for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i) | 0;
+            return Math.abs(h);
+        }
+
+        function pickNouvelleLoiSetForAgent(agentName) {
+            const idx = hashAgentName(agentName) % NOUVELLE_LOI_SETS.length;
+            return NOUVELLE_LOI_SETS[idx].slice();
+        }
+
+        function getNouvelleLoiObjectionsForSession() {
+            const name = getAgentName() || getExamAgentName();
+            if (name) return pickNouvelleLoiSetForAgent(name);
+            return NOUVELLE_LOI_SETS[Math.floor(Math.random() * NOUVELLE_LOI_SETS.length)].slice();
+        }
+
+        function buildEngieRgpdExamObjections(agentName) {
+            const legal = pickNouvelleLoiSetForAgent(agentName);
+            return [
+                "Ça ne m'intéresse pas, je viens tout juste de passer chez Engie.",
+                "Je suis chez Engie depuis trois mois, laissez-moi tranquille.",
+                legal[0],
+                legal[1],
+                legal[2],
+                CLOTURE_RESILIATION_OBJECTION,
+                "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie encore plus après ma dernière expérience.",
+                "Envoyez-moi tout par mail, je ne décide rien au téléphone."
+            ];
+        }
+
+        let resolvedScenarioStep = null;
+
+        function resolveScenarioStep(step) {
+            if (!step) return null;
+            if (!step.useNouvelleLoiSets) return step;
+            const agentName = getAgentName() || getExamAgentName() || "agent";
+            const objections = buildEngieRgpdExamObjections(agentName);
+            return Object.assign({}, step, {
+                objections: objections,
+                minObjections: step.minObjections || 7,
+                assignedNouvelleLoi: pickNouvelleLoiSetForAgent(agentName)
+            });
+        }
 
         function buildNouvelleLoiProspectBlock() {
-            return `\nOBJECTIONS NOUVELLE LOI (tous profils — reformule, ne les récite pas toutes d'un coup) :
-- « Selon la nouvelle loi, vous n'avez pas le droit de m'appeler. »
-- « Je n'ai jamais donné mon accord. »
-- « Où avez-vous obtenu mon numéro ? »
-- « Je retire mon autorisation. »
-- « Je vais vous signaler à la DGCCRF. »
-- « Vous êtes encore un centre d'appels qui ne respecte pas la loi. »
-- « Je suis inscrit sur Bloctel. »
-- « Prouvez-moi que vous avez mon consentement. »
+            const assigned = getNouvelleLoiObjectionsForSession();
+            return `\nOBJECTIONS NOUVELLE LOI (3 seulement pour cet appel — reformule, ne les enchaîne pas) :
+- « ${assigned[0]} »
+- « ${assigned[1]} »
+- « ${assigned[2]} »
 
 COMPORTEMENT ATTENDU :
-- Utilise ces objections quand le sujet touche à la légalité, Bloctel, consentement ou origine de l'appel.
-- Si l'agent répond bien (entretien préalable avec un collègue, facture d'électricité, hausse ~18 %, estimation d'économies), tu peux te calmer et coopérer progressivement.
-- Si l'agent dit « base de données », ignore ta question ou reste vague → reste ferme ou relance une objection légale.`;
+- Utilise ces 3 objections quand le sujet touche à la légalité, Bloctel ou consentement.
+- Si l'agent répond bien (entretien avec un collègue, hausse ~18 %, comparatif gratuit), tu peux te calmer progressivement.
+- Si l'agent dit « base de données » ou ignore ta question → reste ferme sur la même objection.
+
+FACTURE DE CLÔTURE (important) :
+- Toi tu dis avoir payé des « frais de résiliation » — tu es méfiant, tu ne connais PAS le terme « facture de clôture ».
+- C'est à L'AGENT d'expliquer que c'était en réalité une facture de clôture (solde de fin de contrat), pas des frais de résiliation cachés.
+- Ne dis pas toi-même « c'était la facture de clôture » — attends l'explication de l'agent.`;
         }
 
         const PROFILE_UI = {
@@ -1798,7 +1849,7 @@ COMPORTEMENT ATTENDU :
                 id: "certif_engie_rgpd_20260818",
                 title: "Examen — Engie récent, RGPD & nouvelle loi",
                 dateLabel: "18 août 2026",
-                instructions: "Un seul appel · Même scénario pour tous · Client chez Engie depuis 3 mois · Méfiant RGPD + pas intéressé · Frais de résiliation / facture de clôture · Toutes les objections nouvelle loi · Niveau avancé · Valider à 70/100 — ne passer à l'étape suivante que si l'agent traite bien chaque objection (reformulation + réponse concrète).",
+                instructions: "Un seul appel · Même scénario client pour tous (Engie 3 mois) · 3 objections nouvelle loi différentes selon le nom de l'agent · Objection frais de résiliation (l'agent doit expliquer facture de clôture) · Niveau avancé · 70/100 — une objection à la fois, traitée avant de continuer.",
                 passScore: 70,
                 steps: [
                     {
@@ -1809,6 +1860,7 @@ COMPORTEMENT ATTENDU :
                         scenarioType: "standard",
                         prospectTone: "mefiant_ferme",
                         strictObjectionGate: true,
+                        useNouvelleLoiSets: true,
                         firstName: "Karim",
                         lastName: "Benali",
                         supplier: "Engie",
@@ -1817,27 +1869,11 @@ COMPORTEMENT ATTENDU :
                         yearsAtSupplier: "3 mois",
                         address: "14 avenue Jean Jaurès, 69007 Lyon",
                         opening: "Oui bonjour ? Écoutez, je viens de passer chez Engie, c'est pour quoi ?",
-                        brief: "Karim Benali, 41 ans, chez Engie depuis 3 mois (~88 €/mois élec seule). Pas intéressé par un nouveau changement. Méfiant RGPD et nouvelle loi. A payé des frais de résiliation sur l'ancien fournisseur en croyant que c'était la facture de clôture — très méfiant sur les promesses.",
-                        backstory: "Tu as quitté ton ancien fournisseur il y a environ 4 mois pour Engie (tu es chez Engie depuis 3 mois). À la fin, on t'a facturé des « frais de résiliation » que tu pensais être la simple facture de clôture — tu t'es senti arnaqué. Tu refuses de rechanger sans garanties écrites. Tu n'es pas intéressé par un nouvel appel commercial.",
-                        goal: "Traiter séquentiellement chaque objection (RGPD, nouvelle loi, Bloctel, consentement, frais de clôture/résiliation, pas intéressé). Reformuler + arguments concrets (collègue, hausse 18 %, comparatif gratuit, facture de clôture vs résiliation, sans engagement). Ne passer à la suite que si l'objection en cours est bien traitée. Conclure un comparatif si l'agent convainc.",
-                        minObjections: 10,
-                        expectedOutcome: "changement_fournisseur",
-                        objections: [
-                            "Ça ne m'intéresse pas, je viens tout juste de passer chez Engie.",
-                            "Je suis chez Engie depuis trois mois, laissez-moi tranquille.",
-                            "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
-                            "Je n'ai jamais donné mon accord.",
-                            "Où avez-vous obtenu mon numéro ?",
-                            "Comment avez-vous eu mes données ?",
-                            "Je suis inscrit sur Bloctel.",
-                            "Prouvez-moi que vous avez mon consentement.",
-                            "La dernière fois j'ai payé des frais de résiliation alors que c'était la facture de clôture — je ne retombe pas dans ce piège.",
-                            "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
-                            "Je retire mon autorisation.",
-                            "Je vais vous signaler à la DGCCRF.",
-                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie encore plus après ma dernière expérience.",
-                            "Envoyez-moi tout par mail, je ne décide rien au téléphone."
-                        ]
+                        brief: "Karim Benali, 41 ans, chez Engie depuis 3 mois (~88 €/mois). Pas intéressé. Méfiant RGPD : 3 objections nouvelle loi (différentes selon l'agent). A payé des « frais de résiliation » chez l'ancien fournisseur — l'agent doit expliquer que c'était une facture de clôture.",
+                        backstory: "Tu as quitté ton ancien fournisseur il y a environ 4 mois pour Engie (tu es chez Engie depuis 3 mois). On t'a facturé des « frais de résiliation » à la fin — tu penses t'être fait avoir. Tu ne connais pas le terme « facture de clôture » : c'est l'agent qui doit t'expliquer. Tu refuses de rechanger sans garanties claires.",
+                        goal: "Objections dans l'ordre : pas intéressé → 3 nouvelle loi (selon agent) → frais de résiliation (agent explique facture de clôture) → IBAN/mail. Reformulation + réponses concrètes obligatoires avant de passer à la suite.",
+                        minObjections: 7,
+                        expectedOutcome: "changement_fournisseur"
                     }
                 ]
             },
@@ -1887,12 +1923,13 @@ COMPORTEMENT ATTENDU :
             certif_engie_rgpd_nouvelle_loi: {
                 id: "certif_engie_rgpd_nouvelle_loi",
                 label: "Examen — Engie 3 mois, RGPD & nouvelle loi",
-                description: "Karim Benali, 41 ans, Engie depuis 3 mois (~88 €/mois) — pas intéressé, méfiant RGPD, frais de clôture/résiliation, toutes les objections nouvelle loi. Avancé · une objection à la fois.",
+                description: "Karim Benali, Engie 3 mois (~88 €/mois) — 3 objections nouvelle loi selon votre nom, frais de résiliation (agent explique facture de clôture). Avancé.",
                 profile: "mefiant_rgpd",
                 level: "avance",
                 scenarioType: "standard",
                 prospectTone: "mefiant_ferme",
                 strictObjectionGate: true,
+                useNouvelleLoiSets: true,
                 firstName: "Karim",
                 lastName: "Benali",
                 supplier: "Engie",
@@ -1901,26 +1938,10 @@ COMPORTEMENT ATTENDU :
                 yearsAtSupplier: "3 mois",
                 address: "14 avenue Jean Jaurès, 69007 Lyon",
                 opening: "Oui bonjour ? Écoutez, je viens de passer chez Engie, c'est pour quoi ?",
-                backstory: "Tu as quitté ton ancien fournisseur il y a environ 4 mois pour Engie (tu es chez Engie depuis 3 mois). À la fin, on t'a facturé des « frais de résiliation » que tu pensais être la simple facture de clôture — tu t'es senti arnaqué. Tu refuses de rechanger sans garanties écrites.",
-                goal: "Traiter chaque objection RGPD / nouvelle loi / résiliation-clôture avec reformulation et réponses concrètes. Ne céder que si l'agent traite bien l'objection en cours avant de passer à la suite.",
-                minObjections: 10,
-                expectedOutcome: "changement_fournisseur",
-                objections: [
-                    "Ça ne m'intéresse pas, je viens tout juste de passer chez Engie.",
-                    "Je suis chez Engie depuis trois mois, laissez-moi tranquille.",
-                    "Selon la nouvelle loi, vous n'avez pas le droit de m'appeler.",
-                    "Je n'ai jamais donné mon accord.",
-                    "Où avez-vous obtenu mon numéro ?",
-                    "Comment avez-vous eu mes données ?",
-                    "Je suis inscrit sur Bloctel.",
-                    "Prouvez-moi que vous avez mon consentement.",
-                    "La dernière fois j'ai payé des frais de résiliation alors que c'était la facture de clôture — je ne retombe pas dans ce piège.",
-                    "Vous êtes encore un centre d'appels qui ne respecte pas la loi.",
-                    "Je retire mon autorisation.",
-                    "Je vais vous signaler à la DGCCRF.",
-                    "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie encore plus après ma dernière expérience.",
-                    "Envoyez-moi tout par mail, je ne décide rien au téléphone."
-                ]
+                backstory: "Tu as quitté ton ancien fournisseur pour Engie (3 mois). On t'a facturé des « frais de résiliation » — tu penses t'être fait avoir. Tu ne connais pas « facture de clôture » : l'agent doit l'expliquer.",
+                goal: "3 objections nouvelle loi (selon agent) + frais de résiliation. L'agent doit expliquer facture de clôture. Ne céder que si chaque objection est bien traitée.",
+                minObjections: 7,
+                expectedOutcome: "changement_fournisseur"
             },
             certif_fournisseur_mefiant: {
                 id: "certif_fournisseur_mefiant",
@@ -2102,7 +2123,8 @@ COMPORTEMENT ATTENDU :
                     "Jamais donné mon accord : empathie sur le harcèlement, puis rappel de l'échange avec le collègue et confirmation des économies possibles.",
                     "Retrait d'autorisation : proposer blacklist Génie-Opérateur + rappeler que le client peut rappeler lui-même.",
                     "DGCCRF / centre d'appels : reformuler — appel de suivi après entretien collègue, pas démarchage froid.",
-                    "Prouver le consentement : confirmer nom, adresse, rappeler l'échange avec le collègue (sans inventer de détails absents du dossier)."
+                    "Prouver le consentement : confirmer nom, adresse, rappeler l'échange avec le collègue (sans inventer de détails absents du dossier).",
+                    "Frais de résiliation : le client dit avoir payé des frais — expliquer que c'était une facture de clôture (solde de fin de contrat), pas une arnaque."
                 ]
             }
         };
@@ -2492,9 +2514,10 @@ COMPORTEMENT ATTENDU :
         }
 
         function getFixedScenarioStep() {
+            if (resolvedScenarioStep) return resolvedScenarioStep;
             const examCtx = getPendingExamStep();
-            if (examCtx) return examCtx.step;
-            return getSelectedTrainingScenario();
+            if (examCtx) return resolveScenarioStep(examCtx.step);
+            return resolveScenarioStep(getSelectedTrainingScenario());
         }
 
         function getScenarioMinObjections() {
@@ -2519,7 +2542,9 @@ COMPORTEMENT ATTENDU :
                 if (/retire mon autorisation/i.test(o)) return /retire mon autorisation|retire.*autorisation|retrait.*autorisation/i;
                 if (/dgccrf/i.test(o)) return /dgccrf|signaler/i;
                 if (/centre d'appel|respecte pas la loi/i.test(o)) return /centre d appel|respecte pas la loi/i;
-                if (/facture de clôture|clôture|résiliation.*clôture/i.test(o)) return /facture de clôture|facture de cloture|frais de résiliation|clôture|cloture|piège/i;
+                if (/facture de clôture|clôture|résiliation.*clôture|fait payer des frais|résiliation — je ne veux/i.test(o)) {
+                    return /frais de résiliation|résiliation|facturé|payé|fait payer|me faire avoir/i;
+                }
                 if (/intéresse pas|vient.*engie|trois mois|3 mois/i.test(o)) return /intéresse pas|vient.*engie|trois mois|3 mois|laissez-moi tranquille/i;
                 if (/frais de résiliation|résiliation/i.test(o)) return /frais de résiliation|résiliation/i;
                 if (/compliqu|galère/i.test(o)) return /compliqu|galère|dernière fois/i;
@@ -2637,8 +2662,15 @@ COMPORTEMENT ATTENDU :
             if (!agentAfter) return false;
             const agentReply = agentAfter.content || "";
             if (/\b(base de donn|fichier client|notre base|listing)\b/i.test(agentReply)) return false;
+            const prevObjection = step.objections[lastIdx] || "";
+            const isClotureObjection = /fait payer des frais de résiliation|frais de résiliation — je ne veux/i.test(prevObjection);
             const reformulated = /\b(je comprends|je vous comprends|tout à fait|effectivement|normal que|rassure|logique|d'accord pour|c'est vrai que|bien entendu)\b/i.test(agentReply);
-            const concrete = /\b(comparatif|gratuit|sans engagement|économ|€|euro|résiliation|sepa|génie|genie|collègue|collegue|conversation avec|entretien|18\s*%|facture de clôture|cloture|clôture|black.?list|bloctel|consentement|dgccrf|hauss|augmentation)\b/i.test(agentReply);
+            let concrete = /\b(comparatif|gratuit|sans engagement|économ|€|euro|résiliation|sepa|génie|genie|collègue|collegue|conversation avec|entretien|18\s*%|black.?list|bloctel|consentement|dgccrf|hauss|augmentation)\b/i.test(agentReply);
+            if (isClotureObjection) {
+                concrete = /\b(facture de clôture|facture de cloture|clôture|cloture|fin de contrat|solde|dernière facture|normal|pas des frais de résiliation|pas une résiliation)\b/i.test(agentReply);
+            } else {
+                concrete = concrete || /\b(facture de clôture|facture de cloture|clôture|cloture)\b/i.test(agentReply);
+            }
             if (agentIgnoredProspectQuestion()) return false;
             return (reformulated && concrete) || (concrete && agentReply.length >= 55);
         }
@@ -2656,15 +2688,20 @@ COMPORTEMENT ATTENDU :
 
         function buildTrainingScenarioPromptBlock(step) {
             if (!step) return "";
-            const objList = (step.objections || []).map(o => "- " + o).join("\n");
-            const behavior = buildScenarioBehaviorBlock(step);
+            const resolved = resolveScenarioStep(step) || step;
+            const objList = (resolved.objections || []).map(o => "- " + o).join("\n");
+            const behavior = buildScenarioBehaviorBlock(resolved);
+            const legalNote = resolved.assignedNouvelleLoi?.length
+                ? `\n- Tes 3 objections « nouvelle loi » pour cet agent : « ${resolved.assignedNouvelleLoi.join(" », « ")} »`
+                : "";
             return `
 
-MODE ENTRAÎNEMENT — ${step.label.toUpperCase()}
-Objectif : ${step.goal}
-${behavior ? behavior + "\n" : ""}- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+MODE ENTRAÎNEMENT — ${resolved.label.toUpperCase()}
+Objectif : ${resolved.goal}
+${behavior ? behavior + "\n" : ""}- Minimum ${resolved.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
 - Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
-- Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
+- Objection frais de résiliation : tu parles de « frais de résiliation » payés — tu ne connais PAS « facture de clôture ». C'est l'agent qui doit l'expliquer.${legalNote}
+- Utilise ces objections dans l'ordre (varie la formulation, ne les enchaîne pas) :
 ${objList}
 - Niveau AVANCÉ : reste exigeant même si l'agent est poli.
 - Si l'agent répète la même phrase, ignore ton objection ou reste vague → relance ou durcis ton ton.
@@ -2711,18 +2748,22 @@ ${objList}
 
         function buildExamPromptBlock(ctx) {
             if (!ctx) return "";
-            const step = ctx.step;
+            const step = resolveScenarioStep(ctx.step) || ctx.step;
             const n = ctx.stepIdx + 1;
             const total = ctx.campaign.steps.length;
             const objList = (step.objections || []).map(o => "- " + o).join("\n");
             const behavior = buildScenarioBehaviorBlock(step);
+            const legalNote = step.assignedNouvelleLoi?.length
+                ? `\n- Tes 3 objections « nouvelle loi » pour cet agent : « ${step.assignedNouvelleLoi.join(" », « ")} »`
+                : "";
             return `
 
 MODE EXAMEN — ${step.label.toUpperCase()} (${n}/${total})
 Objectif formateur : ${step.goal}
 ${behavior ? behavior + "\n" : ""}- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
 - Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
-- Utilise ces objections (varie, ne les dis pas toutes d'un coup, reformule) :
+- Objection frais de résiliation : tu parles de « frais de résiliation » payés — tu ne connais PAS « facture de clôture ». C'est l'agent qui doit l'expliquer.${legalNote}
+- Utilise ces objections dans l'ordre (varie la formulation, ne les enchaîne pas) :
 ${objList}
 - Niveau AVANCÉ : reste exigeant même si l'agent est poli.
 - Si l'agent répète la même phrase, ignore ton objection ou reste vague → relance ou durcis ton ton.
@@ -4021,7 +4062,10 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
             let base;
             if (Array.isArray(fb)) base = fb.slice();
             else base = (fb[lv] || fb.debutant || PROFILES.agressif.fallbacks.debutant).slice();
-            const law = lv === "debutant" ? NOUVELLE_LOI_OBJECTIONS_DEBUTANT : NOUVELLE_LOI_OBJECTIONS;
+            const law = getNouvelleLoiObjectionsForSession();
+            if (lv === "debutant") {
+                return base.slice(0, -2).concat(law.slice(0, 1)).concat(base.slice(-2));
+            }
             if (base.length <= 3) return base.concat(law);
             const tail = base.slice(-2);
             const head = base.slice(0, -2);
@@ -5106,10 +5150,15 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
             }
 
             if (agentIsCommercialPitch()) {
-                if (isGuidedScenarioActive() && profile === "mefiant_fournisseur") {
-                    return getScenarioObjectionReply();
+                if (isGuidedScenarioActive()) {
+                    const obj = getScenarioObjectionReply();
+                    if (obj) return obj;
                 }
-                return findUnusedFallback(list, l => /intéresse pas|pressé|changer|données/i.test(l), list[0]);
+                if (profile === "mefiant_fournisseur" || profile === "mefiant_rgpd") {
+                    const obj = getScenarioObjectionReply();
+                    if (obj) return obj;
+                }
+                return findUnusedFallback(list, l => /intéresse pas|pressé|changer|données|nouvelle loi|bloctel|consentement/i.test(l), list[0]);
             }
             return null;
         }
@@ -7883,6 +7932,7 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
 
         function resetUi() {
             callActive = false;
+            resolvedScenarioStep = null;
             document.body.classList.remove("call-active");
             updateLiveCaption("", "");
             isListening = false;
@@ -7930,7 +7980,9 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
                 if (calib) calib.checked = true;
             }
 
-            const guidedStep = examCtx?.step || trainingScenario;
+            const guidedStepRaw = examCtx?.step || trainingScenario;
+            resolvedScenarioStep = resolveScenarioStep(guidedStepRaw);
+            const guidedStep = resolvedScenarioStep || guidedStepRaw;
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
             const levelBlock = guidedStep?.minObjections
                 ? buildGuidedScenarioLevelBlock(guidedStep)
@@ -7955,7 +8007,7 @@ CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingSta
 
 ${CALL_STRUCTURE}
 ${buildNouvelleLoiProspectBlock()}
-${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : (trainingScenario ? buildTrainingScenarioPromptBlock(trainingScenario) : getTrainingEvolutionBlock(persona))}
+${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : (guidedStep?.minObjections ? buildTrainingScenarioPromptBlock(guidedStep) : getTrainingEvolutionBlock(persona))}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
 - LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
