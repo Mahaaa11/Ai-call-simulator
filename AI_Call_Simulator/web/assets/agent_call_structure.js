@@ -21,11 +21,11 @@ window.AGENT_CALL_STRUCTURE = {
     "phases": [
       {
         "id": "opening",
-        "label": "Accroche — Samuel se présente, facture d'électricité",
+        "label": "Accroche — suite échange collègue, reprise dossier, comparatif",
         "examples": [
-          "Oui, je suis Samuel de la Société Ogenies, je vous appelle concernant votre facture d'électricité, c'est bien vous ?",
-          "C'est Samuel de Société Ogenies, je vous appelle concernant vos factures d'électricité, c'est vous qui gérez ?",
-          "Bonjour, je suis Samuel de la société Ogenies. Je vous appelle concernant votre facture d'électricité."
+          "Bonjour, je suis Samuel de la société Ogenies. Je vous appelle suite à l'échange que vous avez eu avec mon collègue Florian concernant votre facture d'énergie. Je reprends donc votre dossier afin de lancer un comparatif et vous proposer une offre plus avantageuse. C'est bien vous ?",
+          "Nous avons pris votre contact suite à votre discussion avec mon collègue Camille pour votre facture d'énergie — je reprends votre dossier pour lancer un comparatif.",
+          "Bonjour, c'est Samuel d'Ogenies. Suite à votre échange avec mon collègue, je reprends votre dossier sur votre facture d'énergie pour vous proposer une offre plus avantageuse."
         ]
       },
       {

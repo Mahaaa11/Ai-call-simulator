@@ -1605,22 +1605,30 @@
         let callScenario = createCallScenario();
         const AGENT_SCRIPT_COMPACT_LINES = 38;
 
+        function buildColleagueOpeningCore() {
+            const c = getColleagueName();
+            return "Je vous appelle suite à l'échange que vous avez eu avec mon collègue " + c
+                + " concernant votre facture d'énergie. Je reprends donc votre dossier afin de lancer un comparatif et vous proposer une offre plus avantageuse.";
+        }
+
         function buildAgentOpening(level) {
             const profile = getProfile();
+            const agent = getAgentDisplayName();
+            const core = buildColleagueOpeningCore();
             const openings = {
                 debutant: {
-                    default: "Bonjour. Oui, je suis Samuel, de la société Ogenies. Je vous appelle concernant votre facture d'électricité. C'est bien vous que j'ai réussi à joindre ?",
-                    presse: "Bonjour, Samuel d'Ogenies — appel rapide sur votre facture d'électricité. C'est bien vous ?",
-                    agressif: "Bonjour, je suis Samuel d'Ogenies. Je vous appelle pour votre facture d'électricité — je serai bref. C'est bien vous ?",
-                    curieux: "Bonjour, je suis Samuel de la société Ogenies. Je vous contacte au sujet de votre facture d'électricité — est-ce le bon interlocuteur ?"
+                    default: "Bonjour. Oui, je suis " + agent + ", de la société Ogenies. " + core + " C'est bien vous que j'ai réussi à joindre ?",
+                    presse: "Bonjour, " + agent + " d'Ogenies. " + core + " Promis, je serai bref. C'est bien vous ?",
+                    agressif: "Bonjour, je suis " + agent + " d'Ogenies. " + core + " C'est bien vous ?",
+                    curieux: "Bonjour, je suis " + agent + " de la société Ogenies. " + core + " Est-ce le bon interlocuteur ?"
                 },
                 intermediaire: {
-                    default: "Bonjour, je suis Samuel de la société Ogenies. Je vous appelle concernant votre facture d'électricité — c'est bien vous ?",
-                    presse: "Bonjour, Samuel d'Ogenies, facture d'électricité — c'est bien vous ?",
-                    mefiant_rgpd: "Bonjour, Samuel d'Ogenies. Appel concernant votre contrat d'électricité — je ne dispose pas de vos coordonnées à l'avance. C'est bien vous ?"
+                    default: "Bonjour, je suis " + agent + " de la société Ogenies. " + core + " C'est bien vous ?",
+                    presse: "Bonjour, " + agent + " d'Ogenies. " + core + " Je serai rapide. C'est bien vous ?",
+                    mefiant_rgpd: "Bonjour, " + agent + " d'Ogenies. " + core + " C'est bien vous ?"
                 },
                 avance: {
-                    default: "Bonjour, Samuel d'Ogenies. Facture d'électricité — c'est bien vous ?"
+                    default: "Bonjour, " + agent + " d'Ogenies. " + core + " C'est bien vous ?"
                 }
             };
             const bucket = openings[level] || openings.intermediaire;
@@ -1698,11 +1706,11 @@
         }
 
         const AGENT_SCRIPT = `Tu es Samuel, conseiller commercial de la société Ogenies (Au Génie).
-CONTEXTE : Appel SORTANT énergie en France. Tu appelles le prospect pour sa facture d'électricité.
+CONTEXTE : Appel SORTANT énergie en France. Suite à un échange préalable avec un collègue sur la facture d'énergie, tu reprends le dossier pour lancer un comparatif et proposer une offre plus avantageuse.
 MISSION : Tu es l'AGENT COMMERCIAL uniquement. Ne joue JAMAIS le prospect.
 
 STRUCTURE OBLIGATOIRE (ordre des phases — respecte cette progression, ne saute pas d'étape) :
-1. ACCROCHE → 2. FOURNISSEUR → 3. MENSUALITÉ → 4. RÉGULARISATION (pain point)
+1. ACCROCHE (suite échange collègue, facture énergie, reprise dossier, comparatif) → 2. FOURNISSEUR → 3. MENSUALITÉ → 4. RÉGULARISATION (pain point)
 → 5. PROPOSITION DE VALEUR (comparateur indépendant)
 → 6. VÉRIFICATION IDENTITÉ (adresse, nom, code postal, email)
 → 7. QUALIFICATION LOGEMENT (Linky, gaz, étage, compteur…)
