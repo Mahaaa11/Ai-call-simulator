@@ -30,6 +30,7 @@ from mysql_store import (
     update_conversation_evaluation,
 )
 from ui.agent_session import get_agent_name, require_agent_login
+from ui.brand_theme import inject_global_css, render_hero
 
 _STREAMLIT_BOOT = """
 <script src="streamlit-component-lib.js"></script>
@@ -530,12 +531,20 @@ def run_simulator(
     target_frontend = frontend_dir or (COMPONENT_FRONTEND / "v1")
     _sync_component_index(html_path, target_frontend)
 
+    inject_global_css()
+    is_v2 = "prospect" in html_path.stem.lower() or frontend_dir and "v2" in str(frontend_dir)
+    render_hero(
+        "Simulateur d'appels énergie" if not is_v2 else "Mode Prospect — IA agent",
+        "Entraînez-vous sur des appels sortants avec évaluation en direct."
+        if not is_v2
+        else "Jouez le client difficile — observez comment l'IA traite vos objections.",
+        badge="Version 2 · IA Agent" if is_v2 else "Version 1 · Vous êtes l'agent",
+    )
+
     st.markdown(
         """
         <style>
-        header[data-testid="stHeader"] { background: transparent; }
         .block-container { padding-top: 0; padding-bottom: 0; max-width: 100%; }
-        iframe { border: none; }
         </style>
         """,
         unsafe_allow_html=True,

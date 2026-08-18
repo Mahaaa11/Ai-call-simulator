@@ -98,14 +98,10 @@ def render_agent_banner() -> None:
 
 
 def render_login_form(*, compact: bool = False) -> None:
-    title = "Identification agent" if compact else "👤 Identification agent"
     if not compact:
-        st.title(title)
-        st.caption(
-            "Indiquez votre nom pour associer vos simulations à votre profil agent."
-        )
+        st.markdown("#### Connexion rapide")
     else:
-        st.subheader(title)
+        st.subheader("Identification agent")
 
     with st.form("agent_login_form"):
         name = st.text_input(

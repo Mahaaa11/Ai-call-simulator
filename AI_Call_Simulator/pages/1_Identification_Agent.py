@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+from html import escape
 from pathlib import Path
 
 import streamlit as st
@@ -22,6 +23,7 @@ from ui.agent_session import (  # noqa: E402
     logout_agent,
     render_login_form,
 )
+from ui.brand_theme import inject_global_css, render_feature_cards, render_hero  # noqa: E402
 
 
 def _load_env() -> None:
@@ -61,25 +63,74 @@ def _mysql_from_secrets() -> bool:
     return True
 
 
-st.set_page_config(page_title="Identification agent", page_icon="👤", layout="centered")
-st.title("👤 Espace agent")
+st.set_page_config(page_title="Identification agent", page_icon="👤", layout="wide")
+inject_global_css()
+render_hero(
+    "Espace agent",
+    "Identifiez-vous pour lancer une simulation et enregistrer vos performances.",
+    badge="Lead & Connect · Training",
+)
 
 if is_logged_in():
     name = get_agent_name()
-    st.success(f"Vous êtes connecté en tant que **{name}**")
+    safe_name = escape(name)
+    st.markdown(
+        f"""
+        <div class="lc-card" style="border-left:4px solid #00827F;">
+          <h3>✅ Connecté · {safe_name}</h3>
+          <p>Votre nom sera associé à chaque appel simulé et à votre évaluation.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if _mysql_from_secrets():
         try:
             total = count_conversations_for_agent(name)
-            st.metric("Vos conversations enregistrées", total)
+            st.markdown(
+                f"""
+                <div class="lc-grid">
+                  <div class="lc-stat"><div class="num">{total}</div><div class="lbl">Conversations enregistrées</div></div>
+                  <div class="lc-stat"><div class="num">2</div><div class="lbl">Modes disponibles</div></div>
+                  <div class="lc-stat"><div class="num">70+</div><div class="lbl">Score certification</div></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         except Exception as exc:
             st.warning(f"Impossible de lire TiDB : {exc}")
 
-    st.markdown("---")
-    st.page_link("app.py", label="📞 Lancer une simulation", icon="📞")
+    st.markdown("#### Choisissez votre simulation")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(
+            """
+            <div class="lc-card">
+              <h3>📞 Mode Agent (v1)</h3>
+              <p>Vous vendez — l'IA joue le prospect Engie avec objections RGPD.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.page_link("app.py", label="Lancer Mode Agent →", icon="📞")
+    with c2:
+        st.markdown(
+            """
+            <div class="lc-card">
+              <h3>🎭 Mode Prospect (v2)</h3>
+              <p>Vous jouez le client — l'IA agent doit traiter vos objections.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/2_Mode_Prospect_IA.py", label="Lancer Mode Prospect →", icon="🎭")
+
     if st.button("Se déconnecter / changer de nom"):
         logout_agent()
         st.rerun()
 else:
+    render_feature_cards()
+    st.markdown('<div class="lc-card">', unsafe_allow_html=True)
     render_login_form()
+    st.markdown("</div>", unsafe_allow_html=True)
     st.caption("Après identification, vos appels seront enregistrés avec votre nom.")
