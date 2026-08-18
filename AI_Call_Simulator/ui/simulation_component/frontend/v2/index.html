@@ -1802,9 +1802,16 @@ RÈGLES FORMAT :
 - Paroles orales de Samuel, en FRANÇAIS uniquement.
 - INTERDIT : méta-commentaire, anglais, markdown, listes, didascalies.
 - 2 à 4 phrases (1-2 si prospect pressé).
-- Fais progresser l'appel à chaque tour sans répéter mot pour mot tes répliques précédentes.`;
+- Fais progresser l'appel à chaque tour sans répéter mot pour mot tes répliques précédentes.
+
+ÉCOUTE ET RAISONNEMENT (comme mode v1) :
+- Lis la DERNIÈRE réplique du prospect et réponds DIRECTEMENT à ce qu'il dit (question, doute, colère, refus).
+- Si le prospect contredit (ex. « je n'ai parlé à personne »), empathise et reformule — ne récite pas le script mot pour mot.
+- Les scripts d'objections ci-dessous sont des GUIDES : adapte le fond au contexte, avec tes propres mots.
+- Ne pose pas fournisseur / PDL / IBAN tant qu'une objection en cours n'est pas traitée.`;
 
         let systemPromptText = "";
+        let compactSystemPromptText = "";
         let chatTurns = [];
         let callActive = false;
         let callStartedAt = null;
@@ -1882,7 +1889,7 @@ RÈGLES FORMAT :
         }
 
         function getAgentMaxTokens(model) {
-            return isFreeOpenRouterModel(model) ? 320 : 420;
+            return isFreeOpenRouterModel(model) ? 380 : 480;
         }
 
         function getEvalMaxTokens(model) {
@@ -2105,6 +2112,54 @@ RÈGLES FORMAT :
                 + "\n- Ne prononce JAMAIS le nom du prospect tant qu'il ne s'est pas présenté."
                 + "\n- REFORMULE librement : la structure est fixe, le wording s'adapte au profil et au modèle LLM."
                 + loadCoachingTips();
+        }
+
+        function buildCompactAgentSystemPrompt() {
+            const c = getColleagueName();
+            const p = PROFILES[getProfile()];
+            return "Samuel, Ogenies, appel sortant énergie FR. Suite échange collègue " + c
+                + ", comparatif facture énergie, gratuit sans engagement. "
+                + "Écoute le prospect et réponds à SA dernière réplique. 2-4 phrases, reformule les scripts. "
+                + "Profil prospect : " + p.label + ". Niveau : " + getLevel() + ".";
+        }
+
+        function buildObjectionGuidanceHint(prospectText) {
+            if (!prospectText) return "";
+            const t = prospectTextNorm(prospectText);
+            const c = getColleagueName();
+            const hints = [];
+
+            if (/de quel collegue|quel collegue|parle avec personne|parle a personne|personne qui m a appel|rappelle pas/i.test(t)) {
+                hints.push("Il ne se souvient pas de " + c + " : empathise (c'est fréquent), rappelle facture énergie + comparatif sans engagement, sans insister.");
+            }
+            if (/d ou vous|dou vous|coordonnees|mon numero|chez qui|stock|comment vous savez|mes coord/i.test(t)) {
+                hints.push("Question origine du numéro : réponds CLAIREMENT — entretien avec " + c + ", pas achat de fichier, pas démarchage froid, pas de CB.");
+            }
+            if (/nouvelle loi|pas le droit|bloctel|consentement|dgccrf|arnaque|harcelement/i.test(t)) {
+                hints.push("Objection légale/méfiance : reformule, scripts collègue + hausse ~18 % + régularisation, gratuit sans engagement.");
+            }
+            if (/meme phrase|repeter|repondez|reponse claire|respectez quoi|carte bleue|cb/i.test(t)) {
+                hints.push("Il exige une réponse directe : réponds à la question posée, ne dis pas « je respecte votre choix » tant que la question n'est pas traitée.");
+            }
+            if (/interesse pas|pas interesse|demarch|faites confiance|voleur/i.test(t)) {
+                hints.push("Refus/méfiance : rassure (comparateur indépendant, gratuit, sans engagement), puis une question ouverte si le prospect accepte d'écouter.");
+            }
+            if (prospectIsBusy(prospectText)) {
+                hints.push("Pressé : rassure (bref, 2 min) ou propose un rappel s'il insiste.");
+            }
+            if (!hints.length) {
+                hints.push("Réponds d'abord à ce que le prospect vient de dire, puis avance d'une étape dans la structure si c'est cohérent.");
+            }
+            return "\n\nCONSIGNE TOUR ACTUEL :\n- " + hints.join("\n- ");
+        }
+
+        function buildTurnContextHint(prospectLine, model) {
+            if (!prospectLine) return "";
+            return "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 280) + " »"
+                + "\nÉTAPE : " + getDiscoveryStageHint()
+                + buildObjectionGuidanceHint(prospectLine)
+                + "\nSTYLE LLM : " + getModelStyleHint(model)
+                + getProfileAdaptationBlock(true);
         }
 
         function lastProspectText() {
@@ -2584,19 +2639,12 @@ RÈGLES FORMAT :
         }
 
         function resolveRuleBasedAgentReply(prospectText) {
-            const raw = (prospectText || "").trim();
-            const t = prospectTextNorm(raw);
-            if (!t) return null;
-
-            const objectionReply = resolveCriticalObjectionReply(raw);
-            if (objectionReply) return objectionReply;
-
             return null;
         }
 
         function getAgentFallbackReply(prospectText) {
-            const critical = resolveCriticalObjectionReply(prospectText);
-            if (critical) return critical;
+            const scripted = getObjectionHandlingReply(prospectText);
+            if (scripted) return scripted;
             const phase = getCallPhase();
             const confirm = pickRandom(getProfileAdaptation().confirm || ["D'accord", "Très bien", "C'est parfait"]);
             if (phase === "opening") {
@@ -2622,12 +2670,8 @@ RÈGLES FORMAT :
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
             const out = (reply || "").trim();
-            if (!out) return getAgentFallbackReply(prospectText);
-            const needsObjection = prospectRefuses(prospectText) || prospectIsHostile(prospectText)
-                || prospectHasLegalObjection(prospectText) || prospectIsBusy(prospectText);
-            if (needsObjection && !agentReplyTreatsObjection(out, prospectText)) {
-                const ruled = resolveRuleBasedAgentReply(prospectText);
-                return ruled || getAgentFallbackReply(prospectText);
+            if (!out || out.length < 8 || isAgentMetaLeak(out)) {
+                return getAgentFallbackReply(prospectText);
             }
             return out;
         }
@@ -2635,23 +2679,22 @@ RÈGLES FORMAT :
         function finalizeAgentReply(raw, prospectText) {
             let reply = cleanAgentReply(raw);
             if (isIncompleteSentence(reply)) {
-                const ruled = resolveRuleBasedAgentReply(prospectText);
-                reply = ruled || getAgentFallbackReply(prospectText);
+                reply = reply.replace(/[,;:]\s*(pour|afin|que|de|à|a)\s*$/i, ".").trim();
             }
-            if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
+            if (isIncompleteSentence(reply) || !reply || reply.length < 8 || isAgentMetaLeak(reply)) {
                 reply = getAgentFallbackReply(prospectText);
             }
             return ensureAgentReplyAddressesProspect(reply, prospectText);
         }
 
         function buildAgentTurnMessages() {
-            return chatTurns.slice(-12).map(t => {
+            return chatTurns.slice(-16).map(t => {
                 if (t.role === "assistant") {
-                    return { role: "assistant", content: t.content.slice(0, 400) };
+                    return { role: "assistant", content: t.content.slice(0, 500) };
                 }
                 return {
                     role: "user",
-                    content: ("[Le prospect au téléphone dit] : " + t.content).slice(0, 420)
+                    content: ("[Le prospect au téléphone dit] : " + t.content).slice(0, 520)
                 };
             });
         }
@@ -2897,43 +2940,42 @@ RÈGLES FORMAT :
         }
 
         function buildAgentOpenRouterMessages(plan, prospectLine, extra, model) {
-            const turnHint = prospectLine
-                ? "\n\nDERNIÈRE RÉPLIQUE PROSPECT : « " + prospectLine.slice(0, 200) + " »"
-                    + "\nÉTAPE : " + getDiscoveryStageHint()
-                    + "\nSTYLE LLM : " + getModelStyleHint(model)
-                    + getProfileAdaptationBlock(true)
-                    + "\nRéponds en français oral comme Samuel. Phrases COMPLÈTES (2-4 phrases), termine toujours ta dernière phrase. Ne raccroche pas tant que le prospect pose une question directe."
-                : "";
-            const systemBase = plan.compact
-                ? systemPromptText.split("\n").slice(0, AGENT_SCRIPT_COMPACT_LINES).join("\n")
-                : systemPromptText;
-            const compactSystem = systemBase + turnHint + (extra || "");
+            let system = plan.compact ? compactSystemPromptText : systemPromptText;
+            if (extra) system += "\n\n" + extra;
+            system += buildTurnContextHint(prospectLine, model);
+            if (!plan.compact) {
+                system += getAgentAntiRepeatContext();
+            }
+            system += "\n\nLANGUE ET STYLE (OBLIGATOIRE) :\n"
+                + "- Réponds UNIQUEMENT en français oral comme Samuel au téléphone.\n"
+                + "- Écoute la dernière réplique du prospect et réponds DIRECTEMENT à ce qu'il dit.\n"
+                + "- Ne répète JAMAIS mot pour mot tes répliques précédentes.\n"
+                + "- Phrases COMPLÈTES (2-4 phrases). Ne raccroche pas tant qu'une question directe reste sans réponse.\n"
+                + "- Scripts d'objections = GUIDES à reformuler selon le contexte, pas à réciter.";
             let turns = buildAgentTurnMessages();
             if (plan.maxTurns && turns.length > plan.maxTurns) {
                 turns = turns.slice(-plan.maxTurns);
             }
-            if (plan.compact) {
+            const trimLen = plan.compact ? 320 : null;
+            if (trimLen) {
                 turns = turns.map(t => ({
                     ...t,
-                    content: t.content.slice(0, plan.trimLen || 180)
+                    content: t.content.slice(0, trimLen)
                 }));
             }
-            return [{ role: "system", content: compactSystem }, ...turns];
+            return [{ role: "system", content: system }, ...turns];
         }
 
         function validateAgentLLMReply(reply, prospectLine) {
             const cleaned = cleanAgentReply(reply);
             if (!cleaned || cleaned.length < 8 || isAgentMetaLeak(cleaned)) return null;
             if (isAgentEcho(cleaned, prospectLine)) return null;
-            if (isAgentIgnoringObjection(cleaned, prospectLine)) return null;
+            if (isIncompleteSentence(cleaned)) return null;
             return cleaned;
         }
 
         async function callAgentLLM(apiKey, extra) {
             const prospectLine = lastProspectText();
-
-            const ruled = resolveRuleBasedAgentReply(prospectLine);
-            if (ruled) return ruled;
 
             if (shouldAllowGracefulClose(prospectLine)) {
                 return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
@@ -2943,14 +2985,14 @@ RÈGLES FORMAT :
             const retryPlans = isFreeOpenRouterModel(getModel())
                 ? [
                     { compact: false, maxTurns: null },
-                    { compact: true, maxTurns: 6 },
-                    { compact: true, maxTurns: 3 },
-                    { compact: true, maxTurns: 1 }
+                    { compact: false, maxTurns: 10 },
+                    { compact: true, maxTurns: 8 },
+                    { compact: true, maxTurns: 4 }
                 ]
                 : [
                     { compact: false, maxTurns: null },
-                    { compact: true, maxTurns: 8 },
-                    { compact: true, maxTurns: 4 }
+                    { compact: true, maxTurns: 12 },
+                    { compact: true, maxTurns: 6 }
                 ];
             let lastError = null;
 
@@ -2975,7 +3017,7 @@ RÈGLES FORMAT :
                     }
                 }
             }
-            if (lastError) console.warn("Agent LLM:", lastError.message);
+            if (lastError) console.warn("Agent LLM fallback:", lastError.message);
             return finalizeAgentReply(getAgentFallbackReply(prospectLine), prospectLine);
         }
 
@@ -3128,9 +3170,15 @@ RÈGLES FORMAT :
                 setAgentVisual("listening");
                 setStatus("À vous — posez une objection ou une question", "status-listening");
             } catch (e) {
-                chatTurns.pop();
-                alert("Erreur IA : " + e.message);
-                setStatus("Erreur API", "status-idle");
+                console.warn("Agent LLM error, fallback:", e.message);
+                const fallback = finalizeAgentReply(getAgentFallbackReply(text), text);
+                chatTurns.push({ role: "assistant", content: fallback });
+                addLog("Agent IA", fallback, "agent-msg");
+                void speakAgent(fallback);
+                updateLiveStats();
+                updateCallJourney();
+                setAgentVisual("listening");
+                setStatus("À vous — posez une objection ou une question (mode secours)", "status-listening");
             }
         }
 
@@ -3334,6 +3382,7 @@ ${transcript.slice(0, 2500)}`;
             if (keyErr) return alert(keyErr);
             callScenario = createCallScenario();
             systemPromptText = buildSystemPrompt();
+            compactSystemPromptText = buildCompactAgentSystemPrompt();
             const opening = buildAgentOpening(getLevel());
             chatTurns = [{ role: "assistant", content: opening }];
             callStartedAt = new Date().toISOString();
