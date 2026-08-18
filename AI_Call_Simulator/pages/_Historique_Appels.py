@@ -9,7 +9,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from ui.agent_session import get_agent_name, require_agent_login, require_history_access
+from ui.agent_session import get_agent_name, require_admin_access, require_agent_login
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
@@ -77,7 +77,7 @@ def _fmt_dt(value) -> str:
 
 
 st.set_page_config(page_title="Historique des appels", page_icon="📋", layout="wide")
-require_history_access()
+require_admin_access()
 st.title("📋 Historique des conversations")
 st.caption("Données lues depuis TiDB Cloud (base configurée dans Secrets Streamlit)")
 

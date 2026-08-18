@@ -5,48 +5,50 @@ from __future__ import annotations
 import streamlit as st
 
 SESSION_KEY = "logged_agent_name"
-HISTORY_UNLOCK_KEY = "history_admin_unlocked"
-DEFAULT_HISTORY_ACCESS_CODE = "2003"
+ADMIN_UNLOCK_KEY = "admin_access_unlocked"
+DEFAULT_ADMIN_ACCESS_CODE = "2003"
 
 
-def get_history_access_code() -> str:
+def get_admin_access_code() -> str:
     try:
-        code = st.secrets.get("HISTORY_ACCESS_CODE", "")
+        code = st.secrets.get("ADMIN_ACCESS_CODE", "")
+        if not code:
+            code = st.secrets.get("HISTORY_ACCESS_CODE", "")
     except Exception:
         code = ""
-    return str(code or DEFAULT_HISTORY_ACCESS_CODE).strip()
+    return str(code or DEFAULT_ADMIN_ACCESS_CODE).strip()
 
 
-def is_history_unlocked() -> bool:
-    return bool(st.session_state.get(HISTORY_UNLOCK_KEY))
+def is_admin_unlocked() -> bool:
+    return bool(st.session_state.get(ADMIN_UNLOCK_KEY))
 
 
-def unlock_history(code: str) -> bool:
-    if str(code or "").strip() == get_history_access_code():
-        st.session_state[HISTORY_UNLOCK_KEY] = True
+def unlock_admin(code: str) -> bool:
+    if str(code or "").strip() == get_admin_access_code():
+        st.session_state[ADMIN_UNLOCK_KEY] = True
         return True
     return False
 
 
-def lock_history() -> None:
-    st.session_state.pop(HISTORY_UNLOCK_KEY, None)
+def lock_admin() -> None:
+    st.session_state.pop(ADMIN_UNLOCK_KEY, None)
 
 
-def require_history_access() -> None:
+def require_admin_access() -> None:
     """Stop the page until the admin access code is entered."""
-    if is_history_unlocked():
+    if is_admin_unlocked():
         col1, col2 = st.columns([5, 1])
         with col1:
             st.caption("Accès administration déverrouillé.")
         with col2:
-            if st.button("Verrouiller", key="history_lock_btn"):
-                lock_history()
+            if st.button("Verrouiller", key="admin_lock_btn"):
+                lock_admin()
                 st.rerun()
         return
 
     st.title("🔒 Accès restreint")
     st.caption("Cette section est réservée à l'administration.")
-    with st.form("history_access_form"):
+    with st.form("admin_access_form"):
         code = st.text_input(
             "Code d'accès",
             type="password",
@@ -55,11 +57,14 @@ def require_history_access() -> None:
         )
         submit = st.form_submit_button("Déverrouiller", type="primary", use_container_width=True)
         if submit:
-            if unlock_history(code):
+            if unlock_admin(code):
                 st.rerun()
             st.error("Code incorrect.")
     st.stop()
 
+
+# Alias rétrocompatibilité
+require_history_access = require_admin_access
 
 def get_agent_name() -> str:
     return str(st.session_state.get(SESSION_KEY) or "").strip()

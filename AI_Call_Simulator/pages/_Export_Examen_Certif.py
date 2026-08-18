@@ -9,6 +9,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from ui.agent_session import require_admin_access
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
 ENV_PATH = PROJECT_ROOT / ".env"
@@ -64,6 +66,7 @@ def _mysql_from_secrets() -> bool:
 
 
 st.set_page_config(page_title="Export examen certification", page_icon="📊", layout="wide")
+require_admin_access()
 st.title("📊 Export examen certification")
 st.caption("Archive — examen du 17/07/2026 terminé. Export des agents certifiés (score ≥ 70/100).")
 

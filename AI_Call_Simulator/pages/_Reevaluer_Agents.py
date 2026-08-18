@@ -9,6 +9,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from ui.agent_session import require_admin_access
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WEB_DIR = PROJECT_ROOT / "web"
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
@@ -64,6 +66,7 @@ def _fmt_dt(value) -> str:
 
 
 st.set_page_config(page_title="Réévaluer agents", page_icon="🔄", layout="wide")
+require_admin_access()
 st.title("🔄 Réévaluer les dernières conversations")
 st.caption(
     "Grille v2 : origine du numéro (jamais « base de données »), reformulation des objections, closing. "
