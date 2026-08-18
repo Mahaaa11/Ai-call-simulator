@@ -1780,6 +1780,8 @@ IDENTITÉ PROSPECT :
 - INTERDIT de deviner un nom avant qu'il se présente.
 
 OBJECTIONS — RÈGLE D'OR : reformule l'objection, réponds avec le script adapté ci-dessous, PUIS reprends la phase en cours. Ne demande jamais fournisseur/PDL/IBAN tant que l'objection n'est pas traitée.
+- Ne dis JAMAIS « bonne journée » / « je respecte votre choix » tant que le prospect pose une question directe (origine du numéro, collègue, loi, arnaque).
+- Termine toujours tes phrases — jamais de réponse coupée en milieu de phrase.
 
 PRESSÉ / OCCUPÉ :
 - 1re fois : « Rassurez-vous, ça ne sera pas long, je vais être bref et précis. »
@@ -1880,7 +1882,7 @@ RÈGLES FORMAT :
         }
 
         function getAgentMaxTokens(model) {
-            return isFreeOpenRouterModel(model) ? 200 : 250;
+            return isFreeOpenRouterModel(model) ? 320 : 420;
         }
 
         function getEvalMaxTokens(model) {
@@ -2204,14 +2206,31 @@ RÈGLES FORMAT :
 
         function prospectHasLegalObjection(text) {
             const t = prospectTextNorm(text);
-            return /nouvelle loi|pas le droit de m appeler|pas le droit.*appel/i.test(t)
+            return /nouvelle loi|pas le droit de m appeler|pas le droit.*appel|conscient.*loi/i.test(t)
                 || /bloctel/i.test(t)
                 || /jamais donne mon accord|jamais donne.*accord|donne mon accord/i.test(t)
                 || /obtenu mon numero|obtenu mes donnees|eu mes donnees|donnees personnelles/i.test(t)
+                || /d ou vous avez|dou vous avez|ou vous avez eu|ou vous les avez|coordonnees|mon numero|de chez qui|stock/i.test(t)
+                || /de quel collegue|quel collegue|parle avec personne|parle a personne|discute avec personne/i.test(t)
                 || /retire mon autorisation|retrait.*autorisation/i.test(t)
                 || /dgccrf/i.test(t)
                 || /centre d appel|centre d appels/i.test(t)
                 || /prouvez|consentement/i.test(t);
+        }
+
+        function prospectDemandsAnswer(text) {
+            const t = prospectTextNorm(text);
+            return /repondez|reponse claire|repondez moi|d ou vous|dou vous|ou vous avez|coordonnees|mon numero|chez qui|stock|nouvelle loi|pas le droit|meme phrase|repeter|de quel collegue|respectez quoi/i.test(t);
+        }
+
+        function prospectComplainsAboutRepeat(text) {
+            const t = prospectTextNorm(text);
+            return /meme phrase|repeter|repete|encore la meme|arreter de me dire|arretez de me dire|respectez quoi/i.test(t);
+        }
+
+        function agentAlreadyUsedClosing() {
+            return chatTurns.some(t => t.role === "assistant"
+                && /respecte votre choix.*bonne journee/i.test(prospectTextNorm(t.content)));
         }
 
         function prospectIsBusy(text) {
@@ -2230,8 +2249,8 @@ RÈGLES FORMAT :
 
         function isAgentIgnoringObjection(reply, prospectText) {
             const r = prospectTextNorm(reply);
-            if (prospectHasLegalObjection(prospectText)) {
-                return !/\b(collegue|collègue|entretien|18\s*%|bloctel|black.?list|consentement|dgccrf|electricite|facture|harcelement|hiver|augmentation|regul|genie|génie)\b/i.test(r);
+            if (prospectHasLegalObjection(prospectText) || prospectDemandsAnswer(prospectText)) {
+                return !/\b(collegue|collègue|entretien|18\s*%|bloctel|black.?list|consentement|dgccrf|electricite|facture|harcelement|hiver|augmentation|regul|genie|génie|coordonnees|numero|repondez|clairement|demarchage)\b/i.test(r);
             }
             if (prospectIsBusy(prospectText)) {
                 const busyCount = countProspectBusyObjections();
@@ -2249,15 +2268,39 @@ RÈGLES FORMAT :
         }
 
         function countAgentObjectionResponses() {
-            return chatTurns.filter(t => t.role === "assistant" && /comprends|pas une vente|gratuit|sans engagement|comparateur|verif|deux minutes|oblige/i.test(prospectTextNorm(t.content))).length;
+            return chatTurns.filter(t => t.role === "assistant"
+                && /\b(collegue|collègue|entretien|18\s*%|bloctel|consentement|dgccrf|regularis|comparateur|demarchage|coordonnees|numero)\b/i.test(t.content)
+                && !/respecte votre choix.*bonne journee/i.test(prospectTextNorm(t.content))
+            ).length;
         }
 
         function shouldCloseAfterObjections() {
+            const last = lastProspectText();
+            if (prospectDemandsAnswer(last) || prospectHasLegalObjection(last) || prospectComplainsAboutRepeat(last)) {
+                return false;
+            }
+            if (agentAlreadyUsedClosing() && (prospectIsHostile(last) || prospectDemandsAnswer(last))) {
+                return false;
+            }
             const objCount = countProspectObjections();
             const attempts = countAgentObjectionResponses();
             const level = getLevel();
-            const minObj = level === "avance" ? 4 : level === "intermediaire" ? 3 : 3;
-            return objCount >= minObj && attempts >= 2;
+            const minObj = level === "avance" ? 6 : 5;
+            const minAttempts = level === "avance" ? 4 : 3;
+            return objCount >= minObj && attempts >= minAttempts && prospectWantsToLeave(last);
+        }
+
+        function shouldAllowGracefulClose(prospectText) {
+            if (prospectDemandsAnswer(prospectText) || prospectHasLegalObjection(prospectText) || prospectComplainsAboutRepeat(prospectText)) {
+                return false;
+            }
+            if (agentAlreadyUsedClosing() && prospectIsHostile(prospectText)) {
+                return false;
+            }
+            if (prospectExplicitHangUp(prospectText) && countAgentObjectionResponses() >= 2) {
+                return true;
+            }
+            return shouldCloseAfterObjections();
         }
 
         function prospectExplicitHangUp(text) {
@@ -2274,14 +2317,35 @@ RÈGLES FORMAT :
 
         function getObjectionHandlingReply(prospectText) {
             const t = prospectTextNorm(prospectText);
-            const attempts = countAgentObjectionResponses();
             const colleague = getColleagueName();
             const agentName = getAgentDisplayName();
             const identity = getProspectIdentityRef();
             const address = getProspectAddressRef();
             const contactScript = colleagueContactScript();
 
-            if (shouldCloseAfterObjections() || (prospectExplicitHangUp(prospectText) && attempts >= 1)) {
+            if (/de quel collegue|quel collegue|parle avec personne|parle a personne|discute avec personne|personne qui m a appel/i.test(t)) {
+                return pickUnusedReply([
+                    "Je comprends, vous n'avez peut-être pas le souvenir de cet échange — c'est fréquent. Mon collègue " + colleague + " a noté un entretien sur votre facture d'énergie. Je reprends le dossier pour un comparatif gratuit, sans engagement.",
+                    "Tout à fait, je reformule : ce n'est pas un appel à froid. Vous aviez échangé avec mon collègue " + colleague + " sur votre facture d'énergie ; je reprends simplement le dossier pour voir si une offre plus avantageuse est possible."
+                ]);
+            }
+
+            if (/d ou vous avez|dou vous avez|ou vous avez eu|ou vous les avez|coordonnees|mon numero|chez qui|stock|comment vous savez/i.test(t)) {
+                return pickUnusedReply([
+                    "Je vous réponds clairement : votre contact provient de l'échange avec mon collègue " + colleague + " sur votre facture d'énergie — ce n'est pas un fichier acheteur. Mon appel sert à confirmer quelques points ou à vous indiquer la différence sur votre facture de régularisation.",
+                    "Nous n'achetons pas de listes : vous aviez parlé avec mon collègue " + colleague + " pour votre facture d'énergie. Je reprends le dossier pour un comparatif gratuit. Nous ne demandons jamais de carte bancaire au téléphone.",
+                    "Votre numéro nous a été communiqué lors de cet entretien avec " + colleague + ". Je ne stocke rien de plus que ce qui est nécessaire au comparatif — et vous pouvez demander le retrait de vos coordonnées à tout moment."
+                ]);
+            }
+
+            if (/meme phrase|repeter|repete|repondez|reponse claire|respectez quoi|arreter de me dire|arretez de me dire/i.test(t)) {
+                return pickUnusedReply([
+                    "Vous avez raison, je vais être clair : nous vous contactons suite à l'échange avec mon collègue " + colleague + " sur votre facture d'énergie, pas en démarchage à froid. C'est gratuit, sans engagement, et je ne vous demanderai jamais votre carte bancaire.",
+                    "Je comprends votre exigence. Concrètement : votre numéro vient de l'entretien avec " + colleague + ". Je reprends le dossier pour un comparatif. Si vous le souhaitez, je peux aussi vous expliquer comment retirer votre autorisation de contact."
+                ]);
+            }
+
+            if (shouldAllowGracefulClose(prospectText)) {
                 return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
             }
 
@@ -2327,7 +2391,8 @@ RÈGLES FORMAT :
             if (/obtenu mon numero|obtenu mes donnees|eu mes donnees|comment avez vous eu/i.test(t)) {
                 return pickUnusedReply([
                     "Vous avez eu une conversation avec mon collègue " + colleague
-                        + " pour votre facture d'électricité. Mon appel est simplement pour confirmer quelques détails ou vous communiquer la différence que vous pouvez avoir sur votre facture de régularisation."
+                        + " pour votre facture d'électricité. Mon appel est simplement pour confirmer quelques détails ou vous communiquer la différence que vous pouvez avoir sur votre facture de régularisation.",
+                    "Je vous réponds directement : le contact vient de l'entretien avec " + colleague + " sur votre facture d'énergie. Je reprends le dossier pour le comparatif — rien n'est obligatoire."
                 ]);
             }
 
@@ -2464,6 +2529,15 @@ RÈGLES FORMAT :
             return "";
         }
 
+        function isIncompleteSentence(text) {
+            const t = (text || "").trim();
+            if (!t) return true;
+            if (/[,;:]\s*(pour|afin|que|de|à|a)\s*$/i.test(t)) return true;
+            if (/\b(pour que je sache|afin de|juste pour|sache a|savoir a)\s*$/i.test(t)) return true;
+            if (!/[.!?…]$/.test(t) && t.length > 50) return true;
+            return false;
+        }
+
         function cleanAgentReply(raw) {
             if (!raw) return "";
             let text = raw
@@ -2560,6 +2634,10 @@ RÈGLES FORMAT :
 
         function finalizeAgentReply(raw, prospectText) {
             let reply = cleanAgentReply(raw);
+            if (isIncompleteSentence(reply)) {
+                const ruled = resolveRuleBasedAgentReply(prospectText);
+                reply = ruled || getAgentFallbackReply(prospectText);
+            }
             if (!reply || reply.length < 8 || isAgentMetaLeak(reply)) {
                 reply = getAgentFallbackReply(prospectText);
             }
@@ -2824,7 +2902,7 @@ RÈGLES FORMAT :
                     + "\nÉTAPE : " + getDiscoveryStageHint()
                     + "\nSTYLE LLM : " + getModelStyleHint(model)
                     + getProfileAdaptationBlock(true)
-                    + "\nRéponds en français oral comme Samuel. Structure fixe, formulation originale (2-4 phrases)."
+                    + "\nRéponds en français oral comme Samuel. Phrases COMPLÈTES (2-4 phrases), termine toujours ta dernière phrase. Ne raccroche pas tant que le prospect pose une question directe."
                 : "";
             const systemBase = plan.compact
                 ? systemPromptText.split("\n").slice(0, AGENT_SCRIPT_COMPACT_LINES).join("\n")
@@ -2854,7 +2932,10 @@ RÈGLES FORMAT :
         async function callAgentLLM(apiKey, extra) {
             const prospectLine = lastProspectText();
 
-            if (shouldCloseAfterObjections() || (prospectExplicitHangUp(prospectLine) && countAgentObjectionResponses() >= 1)) {
+            const ruled = resolveRuleBasedAgentReply(prospectLine);
+            if (ruled) return ruled;
+
+            if (shouldAllowGracefulClose(prospectLine)) {
                 return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
             }
 
@@ -2881,7 +2962,7 @@ RÈGLES FORMAT :
                     try {
                         const raw = await callOpenRouter(messages, apiKey, model, maxTokens, temperature, false);
                         const reply = validateAgentLLMReply(raw, prospectLine);
-                        if (reply) return reply;
+                        if (reply) return finalizeAgentReply(reply, prospectLine);
                     } catch (e) {
                         lastError = e;
                         const errMsg = e.message || String(e);
@@ -2895,7 +2976,7 @@ RÈGLES FORMAT :
                 }
             }
             if (lastError) console.warn("Agent LLM:", lastError.message);
-            return getAgentFallbackReply(prospectLine);
+            return finalizeAgentReply(getAgentFallbackReply(prospectLine), prospectLine);
         }
 
         function cleanSpeech(t) {
