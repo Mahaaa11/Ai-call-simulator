@@ -21,6 +21,7 @@ def inject_sidebar_css() -> None:
             background: linear-gradient(180deg, #002D58 0%, #003d75 55%, #004a8f 100%);
             border-right: none;
             box-shadow: 4px 0 24px rgba(0, 45, 88, 0.18);
+            color: #ffffff !important;
         }
 
         section[data-testid="stSidebar"] > div {
@@ -34,11 +35,11 @@ def inject_sidebar_css() -> None:
         section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::before {
             content: "Lead \\& Connect";
             display: block;
-            padding: 1rem 0.85rem 0.35rem;
+            padding: 1rem 0.85rem 0.15rem;
             font-size: 1.15rem;
             font-weight: 800;
             letter-spacing: 0.02em;
-            color: #ffffff;
+            color: #ffffff !important;
         }
 
         section[data-testid="stSidebar"] [data-testid="stSidebarNav"]::after {
@@ -47,7 +48,7 @@ def inject_sidebar_css() -> None:
             padding: 0 0.85rem 1rem;
             font-size: 0.78rem;
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.62);
+            color: rgba(255, 255, 255, 0.62) !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
             margin-bottom: 0.65rem;
         }
@@ -56,26 +57,56 @@ def inject_sidebar_css() -> None:
             gap: 0.35rem;
         }
 
-        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a {
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] span,
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] p,
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] label,
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] small {
+            color: rgba(255, 255, 255, 0.92) !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a,
+        section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"] {
             border-radius: 12px !important;
             margin: 0 0.15rem !important;
             padding: 0.65rem 0.85rem !important;
             font-weight: 600 !important;
             font-size: 0.92rem !important;
-            color: rgba(255, 255, 255, 0.88) !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
             background: transparent !important;
-            transition: background 0.15s ease, transform 0.15s ease;
+            transition: background 0.15s ease;
         }
 
-        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] [data-testid="stNavSectionHeader"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] [data-testid="stSidebarNavSeparator"] {
+            color: rgba(255, 255, 255, 0.55) !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.08em !important;
+            text-transform: uppercase !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a span,
+        section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"] span {
             color: #ffffff !important;
         }
 
-        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"] {
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a:hover,
+        section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"]:hover {
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #ffffff !important;
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"],
+        section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"][aria-current="page"] {
             background: linear-gradient(135deg, #00827F 0%, #006b68 100%) !important;
             color: #ffffff !important;
             box-shadow: 0 6px 18px rgba(0, 130, 127, 0.35);
+        }
+
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"] span,
+        section[data-testid="stSidebar"] a[data-testid="stSidebarNavLink"][aria-current="page"] span {
+            color: #ffffff !important;
         }
 
         section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {

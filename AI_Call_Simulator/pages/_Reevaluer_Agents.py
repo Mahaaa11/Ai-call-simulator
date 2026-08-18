@@ -29,6 +29,9 @@ from mysql_store import (  # noqa: E402
 from reevaluate_agents import reevaluate_conversation  # noqa: E402
 
 
+from ui.brand_theme import safe_page_config  # noqa: E402
+
+
 def _load_env() -> None:
     if not ENV_PATH.exists():
         return
@@ -65,7 +68,7 @@ def _fmt_dt(value) -> str:
     return str(value)[:19]
 
 
-st.set_page_config(page_title="Réévaluer agents", page_icon="🔄", layout="wide")
+safe_page_config(page_title="Réévaluer agents", page_icon="🔄", layout="wide")
 require_admin_access()
 st.title("🔄 Réévaluer les dernières conversations")
 st.caption(

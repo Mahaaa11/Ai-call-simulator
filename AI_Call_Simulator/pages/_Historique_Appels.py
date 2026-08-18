@@ -33,6 +33,9 @@ from mysql_store import (
 from reevaluate_agents import reevaluate_conversation
 
 
+from ui.brand_theme import safe_page_config  # noqa: E402
+
+
 def _load_env() -> None:
     if not ENV_PATH.exists():
         return
@@ -76,7 +79,7 @@ def _fmt_dt(value) -> str:
     return str(value)[:19]
 
 
-st.set_page_config(page_title="Historique des appels", page_icon="📋", layout="wide")
+safe_page_config(page_title="Historique des appels", page_icon="📋", layout="wide")
 require_admin_access()
 st.title("📋 Historique des conversations")
 st.caption("Données lues depuis TiDB Cloud (base configurée dans Secrets Streamlit)")
