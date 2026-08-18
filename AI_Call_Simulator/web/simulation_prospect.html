@@ -1435,7 +1435,7 @@
             },
             presse: {
                 label: "Pressé",
-                agentContext: "Le prospect manque de temps. Sois ultra-bref, une question à la fois, va droit au but.",
+                agentContext: "Le prospect manque de temps. 1re objection : rassurer « bref et précis ». S'il insiste vraiment : proposer un rappel. Sinon ultra-bref, une question à la fois.",
                 objections: {
                     debutant: ["Je suis pressé, faites court.", "C'est pour quoi ?", "D'accord mais vite."],
                     intermediaire: ["Je suis pressé.", "Je suis satisfait de mon fournisseur.", "Pas envie de démarches.", "Je veux voir l'offre d'abord."],
@@ -1453,7 +1453,7 @@
             },
             mefiant_rgpd: {
                 label: "Méfiant RGPD",
-                agentContext: "Le prospect questionne l'origine des données et la protection RGPD. Explique clairement source légale, pas de vente forcée.",
+                agentContext: "Le prospect questionne la légalité (nouvelle loi, Bloctel, consentement, DGCCRF). Utilise les scripts collègue + hausse 18 % + facture régul. Jamais « base de données ».",
                 objections: {
                     debutant: ["Comment avez-vous eu mon numéro ?", "Mes données sont protégées ?", "Qui êtes-vous ?"],
                     intermediaire: ["Comment avez-vous eu mes données ?", "Pourquoi accéder à ma consommation ?", "Pourquoi mon IBAN ?"],
@@ -1475,8 +1475,59 @@
         const SCENARIO_SUPPLIERS = ["EDF", "Engie", "TotalEnergies", "Vattenfall", "Ekwateur"];
         const SCENARIO_FIRST = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas"];
         const SCENARIO_LAST = ["Dupont", "Martin", "Bernard", "Leroy", "Moreau", "Petit"];
+        const COLLEAGUE_NAMES = ["Florian", "Camille", "Julien", "Julia", "Charles", "Adèle"];
+
+        function hashAgentName(name) {
+            let h = 0;
+            const s = String(name || "samuel").toLowerCase().trim();
+            for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i) | 0;
+            return Math.abs(h);
+        }
+
+        function getColleagueName() {
+            const cfg = getCfg();
+            return COLLEAGUE_NAMES[hashAgentName(cfg.agentName || "samuel") % COLLEAGUE_NAMES.length];
+        }
+
+        function getAgentDisplayName() {
+            return (getCfg().agentName || "Samuel").trim() || "Samuel";
+        }
+
+        function getProspectIdentityRef() {
+            const s = callScenario;
+            return (s && s.firstName && s.lastName) ? (s.firstName + " " + s.lastName) : "Monsieur/Madame";
+        }
+
+        function getProspectAddressRef() {
+            const turns = prospectUserTurns().join(" ");
+            const m = turns.match(/\d{1,4}[^,\n]{3,80},\s*\d{5}\s+[A-Za-zÀ-ÿ\-'\s]+/);
+            if (m) return m[0].trim();
+            const s = callScenario;
+            return s ? ("l'adresse que vous m'avez communiquée lors de votre échange (" + s.city + ")") : "l'adresse communiquée lors de votre échange avec mon collègue";
+        }
+
+        function colleagueContactScript() {
+            const c = getColleagueName();
+            return "Nous avons pris votre contact suite à votre discussion avec mon collègue " + c
+                + " pour votre facture d'électricité et l'augmentation qui s'applique dessus avec l'hiver qui arrive.";
+        }
 
         function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+        function buildLegalObjectionScriptBlock() {
+            const c = getColleagueName();
+            const agent = getAgentDisplayName();
+            return "\n\nSCRIPTS OBJECTIONS LÉGALES (reformule avec tes mots — ne saute jamais l'objection) :"
+                + "\n- Nouvelle loi / pas le droit d'appeler / centre d'appels : contact suite entretien collègue " + c + ", facture électricité, hausse ~18 %, hiver."
+                + "\n- Jamais donné mon accord : empathie harcèlement malgré l'État → entretien " + c + ", hausse 18 %, confirmer infos pour estimation économies."
+                + "\n- Où avez-vous eu mon numéro : conversation avec " + c + " pour facture électricité — confirmer détails ou différence facture de régul."
+                + "\n- Retrait autorisation : blacklist Génie-Opérateur + recontact possible en demandant " + agent + "."
+                + "\n- DGCCRF : reformuler frustration → suite entretien " + c + ", confirmer échanges, différence facture après changement fournisseur."
+                + "\n- Bloctel : cas différent — contact suite entretien " + c + " (facture, hausse, hiver)."
+                + "\n- Prouver consentement : échange avec " + c + ", confirmer identité/adresse si connues."
+                + "\n- Pressé/occupé (1re fois) : rassurer — bref et précis, pas long."
+                + "\n- Pressé/occupé (insiste vraiment) : proposer un rappel à un moment qui convient.";
+        }
 
         function createCallScenario() {
             const bill = pickRandom([58, 62, 65, 72, 78, 84, 91]);
@@ -1635,8 +1686,22 @@ IDENTITÉ PROSPECT :
 - Tu ne connais PAS le nom du prospect au début (appels non nominatifs).
 - INTERDIT de deviner un nom avant qu'il se présente.
 
-OBJECTIONS : traite d'abord (empathie + valeur), puis reprends la phase en cours.
-- Arnaque / RGPD / pas intéressé / pressé : adapte ta réponse au profil, puis relance.
+OBJECTIONS — RÈGLE D'OR : reformule l'objection, réponds avec le script adapté ci-dessous, PUIS reprends la phase en cours. Ne demande jamais fournisseur/PDL/IBAN tant que l'objection n'est pas traitée.
+
+PRESSÉ / OCCUPÉ :
+- 1re fois : « Rassurez-vous, ça ne sera pas long, je vais être bref et précis. »
+- Si le client insiste vraiment (pas dispo, réunion, rappeler) : propose un rappel à un créneau qui lui convient.
+
+NOUVELLE LOI / BLOCTEL / CONSENTEMENT (reformule, ne récite pas mot pour mot) :
+- Pas le droit d'appeler / centre d'appels : contact suite à discussion avec un collègue — facture électricité, hausse ~18 %, hiver.
+- Jamais donné mon accord : empathie harcélé malgré l'État → entretien collègue, hausse 18 %, plus gros du chemin fait, confirmer infos pour estimation économies.
+- Numéro / données : conversation collègue pour facture électricité — confirmer détails ou différence sur facture de régul.
+- Retrait autorisation : blacklist Génie-Opérateur + le client peut nous recontacter lui-même.
+- DGCCRF : reformuler frustration → suite entretien collègue, confirmer ce qui a été dit, différence facture après changement fournisseur.
+- Bloctel : cas différent du démarchage — contact suite entretien collègue (facture, hausse, hiver).
+- Prouver consentement : échange collègue, confirmer nom/adresse si connus, rappeler l'entretien préalable.
+
+INTERDIT : « base de données », « fichier clients », ignorer une objection pour enchaîner sur une question commerciale.
 
 RÈGLES FORMAT :
 - Paroles orales de Samuel, en FRANÇAIS uniquement.
@@ -1929,6 +1994,7 @@ RÈGLES FORMAT :
             const s = callScenario;
             return AGENT_SCRIPT
                 + formatRealAgentCallStructureBlock()
+                + buildLegalObjectionScriptBlock()
                 + getProfileAdaptationBlock(false)
                 + getLevelAdaptationBlock()
                 + "\n\nPROFIL DU PROSPECT (joué par l'humain) : " + p.label
@@ -2043,10 +2109,50 @@ RÈGLES FORMAT :
             return /arnaque|escroc|fraude|voleur|pipeau|milliers d appel|spam|arnaqueur/i.test(t);
         }
 
+        function prospectHasLegalObjection(text) {
+            const t = prospectTextNorm(text);
+            return /nouvelle loi|pas le droit de m appeler|pas le droit.*appel/i.test(t)
+                || /bloctel/i.test(t)
+                || /jamais donne mon accord|jamais donne.*accord|donne mon accord/i.test(t)
+                || /obtenu mon numero|obtenu mes donnees|eu mes donnees|donnees personnelles/i.test(t)
+                || /retire mon autorisation|retrait.*autorisation/i.test(t)
+                || /dgccrf/i.test(t)
+                || /centre d appel|centre d appels/i.test(t)
+                || /prouvez|consentement/i.test(t);
+        }
+
+        function prospectIsBusy(text) {
+            const t = prospectTextNorm(text);
+            return /presse|occup|pas le temps|deux minutes|faites court|faites vite|soyez bref|brief|reunion|dois partir|pas dispo|indisponible/i.test(t);
+        }
+
+        function prospectInsistsUnavailable(text) {
+            const t = prospectTextNorm(text);
+            return /rappel|rappelez|rappeler|autre moment|autre jour|pas dispo|indisponible|reunion|dois partir|je n ai pas le temps|zero temps|aucun temps/i.test(t);
+        }
+
+        function countProspectBusyObjections() {
+            return prospectUserTurns().filter(t => prospectIsBusy(t)).length;
+        }
+
         function isAgentIgnoringObjection(reply, prospectText) {
+            const r = prospectTextNorm(reply);
+            if (prospectHasLegalObjection(prospectText)) {
+                return !/\b(collegue|collègue|entretien|18\s*%|bloctel|black.?list|consentement|dgccrf|electricite|facture|harcelement|hiver|augmentation|regul|genie|génie)\b/i.test(r);
+            }
+            if (prospectIsBusy(prospectText)) {
+                const busyCount = countProspectBusyObjections();
+                if (prospectInsistsUnavailable(prospectText) || busyCount >= 2) {
+                    return !/\b(rappel|creneau|moment|disponib|quand|horaire)\b/i.test(r);
+                }
+                return !/\b(bref|precis|court|rapide|pas long|reassur|deux minutes|serai bref)\b/i.test(r);
+            }
             if (!prospectRefuses(prospectText) && !prospectIsHostile(prospectText)) return false;
-            const r = (reply || "").toLowerCase();
-            return /pour avancer|chez quel fournisseur|combien payez|depuis combien|montant mensuel|facture d'électricité|point de livraison|pdl/i.test(r);
+            return /pour avancer|chez quel fournisseur|combien payez|depuis combien|montant mensuel|facture d electricite|point de livraison|pdl/i.test(r);
+        }
+
+        function agentReplyTreatsObjection(reply, prospectText) {
+            return !isAgentIgnoringObjection(reply, prospectText);
         }
 
         function countAgentObjectionResponses() {
@@ -2076,9 +2182,84 @@ RÈGLES FORMAT :
         function getObjectionHandlingReply(prospectText) {
             const t = prospectTextNorm(prospectText);
             const attempts = countAgentObjectionResponses();
+            const colleague = getColleagueName();
+            const agentName = getAgentDisplayName();
+            const identity = getProspectIdentityRef();
+            const address = getProspectAddressRef();
+            const contactScript = colleagueContactScript();
 
             if (shouldCloseAfterObjections() || (prospectExplicitHangUp(prospectText) && attempts >= 1)) {
                 return "D'accord, je respecte votre choix. Merci pour votre temps — bonne journée à vous.";
+            }
+
+            if (prospectIsBusy(prospectText)) {
+                const busyCount = countProspectBusyObjections();
+                if (prospectInsistsUnavailable(prospectText) || busyCount >= 2) {
+                    return pickUnusedReply([
+                        "Je comprends tout à fait, vous n'êtes pas disponible maintenant. Souhaitez-vous que je vous rappelle à un moment qui vous convient ?",
+                        "Pas de souci, je ne veux pas vous retenir. On peut fixer un rappel quand vous serez libre — quel créneau vous arrangerait ?",
+                        "Compris. Je vous propose un rappel à l'heure qui vous convient — vous préférez plutôt en fin de journée ou demain matin ?"
+                    ]);
+                }
+                return pickUnusedReply([
+                    "Rassurez-vous, ça ne sera pas long — je vais être bref et précis.",
+                    "Je comprends, vous manquez de temps. Promis, je serai bref et précis : deux minutes pour vérifier si vous payez le juste tarif.",
+                    "Compris. Je fais court et précis : une rapide vérification tarifaire, gratuit et sans engagement."
+                ]);
+            }
+
+            if (/nouvelle loi|pas le droit de m appeler|pas le droit.*appel/i.test(t)) {
+                return pickUnusedReply([contactScript]);
+            }
+
+            if (/centre d appel|centre d appels|respecte pas la loi/i.test(t)) {
+                return pickUnusedReply([contactScript]);
+            }
+
+            if (/bloctel/i.test(t)) {
+                return pickUnusedReply([
+                    "Effectivement Bloctel interdit le démarchage téléphonique aux personnes inscrites dans ses listes, mais aujourd'hui nous parlons d'un cas différent. "
+                        + contactScript
+                ]);
+            }
+
+            if (/jamais donne mon accord|jamais donne.*accord|donne mon accord/i.test(t)) {
+                return pickUnusedReply([
+                    "Je comprends Monsieur/Madame que vous n'ayez pas le souvenir de cet appel — vous êtes harcelé encore malgré les interventions de l'État dans ce sens. "
+                        + "Sachez que je vous appelle suite à votre entretien avec mon collègue " + colleague
+                        + " concernant la hausse de 18 % qui s'applique sur votre facture. Vous avez déjà fait le plus gros du chemin : j'ai juste à confirmer quelques informations pour vous donner l'estimation des économies que vous pouvez faire."
+                ]);
+            }
+
+            if (/obtenu mon numero|obtenu mes donnees|eu mes donnees|comment avez vous eu/i.test(t)) {
+                return pickUnusedReply([
+                    "Vous avez eu une conversation avec mon collègue " + colleague
+                        + " pour votre facture d'électricité. Mon appel est simplement pour confirmer quelques détails ou vous communiquer la différence que vous pouvez avoir sur votre facture de régularisation."
+                ]);
+            }
+
+            if (/retire mon autorisation|retrait.*autorisation/i.test(t)) {
+                return pickUnusedReply([
+                    "Bien entendu, je vais bien le mentionner et vous mettre dans une blacklist pour qu'aucun Génie-Opérateur ne vous recontacte. "
+                        + "Cependant, vous pouvez toujours nous recontacter vous-même en cas de besoin et demander " + agentName + "."
+                ]);
+            }
+
+            if (/dgccrf/i.test(t)) {
+                return pickUnusedReply([
+                    "Je comprends votre position et je comprends que vous soyez frustré par les enchaînements d'appels sans raison. "
+                        + "Sachez que cet appel est la suite de votre conversation avec mon collègue " + colleague
+                        + " : mon appel a pour but de confirmer ce qui a été dit entre vous et vous communiquer la différence de votre facture après changement de fournisseur, si vous êtes d'accord."
+                ]);
+            }
+
+            if (/prouvez|consentement/i.test(t) && !/retire mon autorisation/i.test(t)) {
+                return pickUnusedReply([
+                    "Bien sûr, vous avez échangé avec mon collègue " + colleague
+                        + " à qui vous avez communiqué quelques informations importantes pour étudier votre comparatif. "
+                        + "Vous êtes bien " + identity + ", résidant à " + address + " ? "
+                        + "C'est tout ce que j'ai eu — je ne sais pas si vous vous en souvenez, mais vous aviez parlé avec mon collègue " + colleague + "."
+                ]);
             }
 
             if (prospectAccusesScam(prospectText)) {
@@ -2125,8 +2306,8 @@ RÈGLES FORMAT :
         function getDiscoveryStageHint() {
             const last = lastProspectText();
             const adapt = getProfileAdaptation();
-            if (prospectRefuses(last) || prospectIsHostile(last)) {
-                return "TRAITE l'objection (" + adapt.tone + "). Ne demande PAS fournisseur/facture tant que le prospect n'est pas apaisé. Reformule avec tes propres mots.";
+            if (prospectRefuses(last) || prospectIsHostile(last) || prospectHasLegalObjection(last) || prospectIsBusy(last)) {
+                return "TRAITE l'objection en premier (" + adapt.tone + "). Utilise reformulation + script légal si RGPD/Bloctel/consentement. Ne demande PAS fournisseur/facture/PDL tant que l'objection n'est pas traitée.";
             }
             const phase = getCallPhase();
             const hints = {
@@ -2275,11 +2456,12 @@ RÈGLES FORMAT :
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
             const out = (reply || "").trim();
             if (!out) return getAgentFallbackReply(prospectText);
-            if (isAgentIgnoringObjection(out, prospectText)) {
-                return getAgentFallbackReply(prospectText);
+            const needsObjection = prospectRefuses(prospectText) || prospectIsHostile(prospectText)
+                || prospectHasLegalObjection(prospectText) || prospectIsBusy(prospectText);
+            if (needsObjection && !agentReplyTreatsObjection(out, prospectText)) {
+                const ruled = resolveRuleBasedAgentReply(prospectText);
+                return ruled || getAgentFallbackReply(prospectText);
             }
-            const ruled = resolveRuleBasedAgentReply(prospectText);
-            if (ruled && isAgentIgnoringObjection(out, prospectText)) return ruled;
             return out;
         }
 
