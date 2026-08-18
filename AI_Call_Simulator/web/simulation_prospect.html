@@ -1314,7 +1314,7 @@
                     <p class="hint" id="speechPreview" style="min-height:20px;color:#7dffe8;font-weight:600;"></p>
                 </div>
                 <button type="button" id="talkBtn" disabled>🎤 Parler en tant que prospect</button>
-                <p class="hint" style="text-align:center;">Micro : parlez puis recliquez Envoyer. <strong>Corrigez la transcription</strong> dans le champ avant d'envoyer.</p>
+                <p class="hint" style="text-align:center;">Micro : le texte s'affiche <strong>en direct</strong> pendant que vous parlez. Cliquez Arrêter puis Envoyer (corrigez si besoin).</p>
                 <label for="textInput">Votre réplique prospect</label>
                 <div class="text-row">
                     <input type="text" id="textInput" placeholder="Ex : Ça ne m'intéresse pas…" disabled>
@@ -1662,10 +1662,10 @@ RÈGLES FORMAT :
         try {
             if (SpeechRecognition) {
                 recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
+                recognition.continuous = true;
+                recognition.interimResults = true;
                 recognition.lang = "fr-FR";
-                recognition.maxAlternatives = 3;
+                recognition.maxAlternatives = 1;
                 speechRecAvailable = true;
             }
         } catch (_) {
@@ -2358,7 +2358,8 @@ RÈGLES FORMAT :
             const finals = [];
             let interim = "";
             for (let i = 0; i < results.length; i++) {
-                const piece = pickBestSpeechAlternative(results[i]);
+                const alt = results[i][0];
+                const piece = alt && alt.transcript ? alt.transcript.trim() : "";
                 if (!piece) continue;
                 if (results[i].isFinal) finals.push(piece);
                 else interim = piece;
@@ -2646,17 +2647,27 @@ RÈGLES FORMAT :
             speechPreview.textContent = text ? ("🎙️ « " + text + " »") : "";
         }
 
+        function updateLiveTranscript(rawText) {
+            const display = normalizeProspectTranscript(rawText) || String(rawText || "").trim();
+            updateSpeechPreview(display);
+            if (textInput && isListening) {
+                textInput.value = display;
+                try { textInput.setSelectionRange(display.length, display.length); } catch (_) {}
+            }
+        }
+
         function startSpeechListen() {
             if (!recognition) throw new Error("Micro non disponible — utilisez Chrome ou le champ texte");
             speechTranscript = "";
             lastRecognitionResults = null;
             updateSpeechPreview("");
+            if (textInput) textInput.value = "";
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.onresult = (e) => {
                 lastRecognitionResults = e.results;
                 speechTranscript = buildSpeechTranscriptFromResults(e.results);
-                if (speechTranscript) updateSpeechPreview(speechTranscript);
+                if (speechTranscript) updateLiveTranscript(speechTranscript);
             };
             recognition.onerror = (e) => {
                 if (e.error === "aborted") return;
@@ -2691,26 +2702,35 @@ RÈGLES FORMAT :
         function stopSpeechListen() {
             return new Promise((resolve, reject) => {
                 if (!recognition) return reject(new Error("Micro non disponible"));
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.onend = () => {
-                    isListening = false;
+                isListening = false;
+                let settled = false;
+                const finish = (rawText) => {
+                    if (settled) return;
+                    settled = true;
                     recordTimer.textContent = "";
                     talkBtn.textContent = "🎤 Parler en tant que prospect";
                     talkBtn.style.background = "";
-                    if (lastRecognitionResults) {
-                        speechTranscript = buildSpeechTranscriptFromResults(lastRecognitionResults);
-                    }
-                    const text = speechTranscript.trim();
                     updateSpeechPreview("");
-                    if (text) resolve(text);
+                    const cleaned = normalizeProspectTranscript(rawText) || String(rawText || "").trim();
+                    if (textInput) textInput.value = cleaned;
+                    if (cleaned) resolve(cleaned);
                     else reject(new Error("Aucune voix détectée — parlez plus fort ou tapez votre réplique"));
                 };
+                recognition.onend = () => {
+                    let text = speechTranscript.trim();
+                    if (lastRecognitionResults) {
+                        text = buildSpeechTranscriptFromResults(lastRecognitionResults) || text;
+                    }
+                    finish(text);
+                };
+                const pending = speechTranscript.trim();
+                setTimeout(() => {
+                    if (!settled && pending) finish(pending);
+                }, pending ? 150 : 700);
                 try {
                     recognition.stop();
                 } catch (e) {
-                    isListening = false;
-                    reject(new Error("Micro : " + e.message));
+                    finish(pending);
                 }
             });
         }
