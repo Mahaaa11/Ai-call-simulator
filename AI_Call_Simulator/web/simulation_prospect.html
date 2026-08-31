@@ -1303,8 +1303,15 @@
             <summary>Options avancées (modèle IA agent)</summary>
             <label for="nvidiaModelSelect">Modèle OpenRouter (agent IA)</label>
             <select id="nvidiaModelSelect">
-                <optgroup label="Gratuits — recommandés">
-                    <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit) — actuel</option>
+                <optgroup label="Payants — recommandés (crédits OpenRouter)">
+                    <option value="google/gemini-2.5-flash" selected>Gemini 2.5 Flash — recommandé</option>
+                    <option value="openai/gpt-4o-mini">GPT-4o mini — fiable, économique</option>
+                    <option value="anthropic/claude-3.5-haiku">Claude 3.5 Haiku — rapide</option>
+                    <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
+                    <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B — rapide</option>
+                </optgroup>
+                <optgroup label="Gratuits — quota limité">
+                    <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit)</option>
                     <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (gratuit)</option>
                     <option value="google/gemma-4-31b-it:free">Gemma 4 31B (gratuit)</option>
                     <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen3 Next 80B (gratuit)</option>
@@ -1315,12 +1322,8 @@
                     <option value="nvidia/nemotron-3-nano-30b-a3b:free">Nemotron 3 Nano 30B (gratuit)</option>
                     <option value="openrouter/free">OpenRouter Free Router (aléatoire)</option>
                 </optgroup>
-                <optgroup label="Payants NVIDIA">
-                    <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
-                    <option value="nvidia/nemotron-3-nano-30b-a3b">Nemotron 3 Nano 30B</option>
-                </optgroup>
             </select>
-            <p class="hint">Quota gratuit OpenRouter : ~50 req/jour sans crédits, 1000/jour avec 5$ de crédits.</p>
+            <p class="hint">Modèle payant par défaut (Gemini 2.5 Flash) — plus stable pour l'agent Samuel. Vos 5$ OpenRouter couvrent des centaines d'appels d'entraînement.</p>
             <button type="button" id="benchmarkModelsBtn" class="benchmark-models-btn">⚡ Comparer 4 modèles gratuits (test rapide)</button>
             <div id="benchmarkModelsResult" class="benchmark-models-result" style="display:none;"></div>
         </details>
@@ -1401,14 +1404,15 @@
     <script>
     (function () {
         const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+        const DEFAULT_AGENT_MODEL = "google/gemini-2.5-flash";
+        const AGENT_MODEL_STORAGE_KEY = "simulator_v2_agent_model";
         const OPENROUTER_FALLBACK_MODELS = [
-            "meta-llama/llama-3.3-70b-instruct:free",
-            "google/gemma-4-31b-it:free",
-            "qwen/qwen3-next-80b-a3b-instruct:free",
-            "openai/gpt-oss-120b:free",
-            "nvidia/nemotron-3-super-120b-a12b:free",
-            "nvidia/nemotron-3-nano-30b-a3b:free",
-            "nvidia/nemotron-3-super-120b-a12b"
+            "google/gemini-2.5-flash",
+            "openai/gpt-4o-mini",
+            "nvidia/nemotron-3-super-120b-a12b",
+            "anthropic/claude-3.5-haiku",
+            "nvidia/nemotron-3-nano-30b-a3b",
+            "meta-llama/llama-3.3-70b-instruct:free"
         ];
         const BENCHMARK_FREE_MODELS = [
             "nvidia/nemotron-3-super-120b-a12b:free",
@@ -1663,11 +1667,11 @@
             if (/llama|nemotron|hermes/i.test(m)) {
                 return "Formulations directes et orales ; varie le vocabulaire d'un tour à l'autre.";
             }
-            if (/gemma|qwen/i.test(m)) {
+            if (/gemma|qwen|gemini/i.test(m)) {
                 return "Ton clair et pédagogique si le prospect questionne ; ne récite pas un script.";
             }
-            if (/gpt-oss|deepseek/i.test(m)) {
-                return "Réponses concises et naturelles ; évite les formulations identiques à chaque appel.";
+            if (/gpt-4|claude|deepseek/i.test(m)) {
+                return "Réponses concises, naturelles et bien structurées ; respecte l'ordre des phases de l'appel.";
             }
             return "Reformule chaque phase avec tes propres mots — le structure guide, le wording est libre.";
         }
@@ -1843,7 +1847,24 @@ RÈGLES FORMAT :
             const k = (getCfg().openrouterApiKey || document.getElementById("apiKey").value || "").trim();
             return k;
         }
-        function getModel() { return document.getElementById("nvidiaModelSelect").value; }
+        function getModel() {
+            const sel = document.getElementById("nvidiaModelSelect");
+            return (sel && sel.value) || DEFAULT_AGENT_MODEL;
+        }
+
+        function initAgentModelSelect() {
+            const sel = document.getElementById("nvidiaModelSelect");
+            if (!sel) return;
+            try {
+                const saved = localStorage.getItem(AGENT_MODEL_STORAGE_KEY);
+                if (saved && [...sel.options].some(o => o.value === saved)) {
+                    sel.value = saved;
+                }
+            } catch (_) {}
+            sel.addEventListener("change", () => {
+                try { localStorage.setItem(AGENT_MODEL_STORAGE_KEY, sel.value); } catch (_) {}
+            });
+        }
 
         function extractOpenRouterText(data, allowReasoning) {
             const msg = data.choices?.[0]?.message;
@@ -3739,6 +3760,7 @@ ${transcript.slice(0, 2500)}`;
         (async function initProspect() {
             stopCallTimer();
             initMicStatus();
+            initAgentModelSelect();
             const cfg = getCfg();
             if (cfg.openrouterApiKey || cfg.streamlitSave || cfg.mysqlEnabled || isStreamlitCloud()) {
                 onStreamlitConfigApplied();
