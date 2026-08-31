@@ -23,7 +23,7 @@ window.AGENT_CALL_STRUCTURE = {
         "id": "opening",
         "label": "Accroche — suite échange collègue, reprise dossier, comparatif",
         "examples": [
-          "Bonjour, je suis Samuel de la société Ogenies. Je vous appelle suite à l'échange que vous avez eu avec mon collègue Florian concernant votre facture d'énergie. Je reprends donc votre dossier afin de lancer un comparatif et vous proposer une offre plus avantageuse. C'est bien vous ?",
+          "Bonjour, je suis Samuel de la société Ogenies. Je vous appelle suite à l'échange que vous avez eu avec mon collègue Florian concernant votre facture d'énergie. Je reprends donc votre dossier afin de lancer un comparatif et vous proposer une offre plus avantageuse.",
           "Nous avons pris votre contact suite à votre discussion avec mon collègue Camille pour votre facture d'énergie — je reprends votre dossier pour lancer un comparatif.",
           "Bonjour, c'est Samuel d'Ogenies. Suite à votre échange avec mon collègue, je reprends votre dossier sur votre facture d'énergie pour vous proposer une offre plus avantageuse."
         ]
@@ -63,11 +63,11 @@ window.AGENT_CALL_STRUCTURE = {
       },
       {
         "id": "consumption",
-        "label": "Consommation — PDL ou adresse Enedis (obligatoire avant chiffre)",
+        "label": "Consommation — PDL ou adresse (obligatoire avant chiffre)",
         "examples": [
-          "Pour vous proposer une offre adaptée, j'ai besoin de votre consommation réelle. Avez-vous le PDL — référence point de livraison en 14 chiffres — sur une facture ?",
-          "Avant de vous annoncer un tarif, je dois verrouiller votre consommation : soit le PDL, soit je reprends l'adresse complète pour interroger Enedis.",
-          "Sans PDL ou adresse pour la conso, je ne peux pas vous proposer un montant fiable. Vous avez une facture sous la main ?"
+          "Pour vous proposer une offre adaptée, j'ai besoin de votre consommation. Avez-vous le PDL — référence point de livraison en 14 chiffres — sur une facture ? Sinon, je peux m'en sortir avec votre adresse.",
+          "Avant de vous annoncer un tarif, je dois verrouiller votre consommation : soit le PDL, soit je reprends l'adresse complète.",
+          "Pas de souci si vous n'avez pas le PDL : avec votre adresse, je récupère la consommation et je vous propose une offre adaptée."
         ]
       },
       {

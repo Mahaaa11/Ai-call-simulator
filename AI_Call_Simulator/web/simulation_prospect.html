@@ -1537,7 +1537,7 @@
         }
 
         function getAgentDisplayName() {
-            return (getCfg().agentName || "Samuel").trim() || "Samuel";
+            return "Samuel";
         }
 
         function getProspectIdentityRef() {
@@ -1618,22 +1618,21 @@
 
         function buildAgentOpening(level) {
             const profile = getProfile();
-            const agent = getAgentDisplayName();
             const core = buildColleagueOpeningCore();
             const openings = {
                 debutant: {
-                    default: "Bonjour. Oui, je suis " + agent + ", de la société Ogenies. " + core + " C'est bien vous que j'ai réussi à joindre ?",
-                    presse: "Bonjour, " + agent + " d'Ogenies. " + core + " Promis, je serai bref. C'est bien vous ?",
-                    agressif: "Bonjour, je suis " + agent + " d'Ogenies. " + core + " C'est bien vous ?",
-                    curieux: "Bonjour, je suis " + agent + " de la société Ogenies. " + core + " Est-ce le bon interlocuteur ?"
+                    default: "Bonjour, je suis Samuel, de la société Ogenies. " + core,
+                    presse: "Bonjour, Samuel d'Ogenies. " + core + " Promis, je serai bref.",
+                    agressif: "Bonjour, Samuel d'Ogenies. " + core,
+                    curieux: "Bonjour, je suis Samuel de la société Ogenies. " + core
                 },
                 intermediaire: {
-                    default: "Bonjour, je suis " + agent + " de la société Ogenies. " + core + " C'est bien vous ?",
-                    presse: "Bonjour, " + agent + " d'Ogenies. " + core + " Je serai rapide. C'est bien vous ?",
-                    mefiant_rgpd: "Bonjour, " + agent + " d'Ogenies. " + core + " C'est bien vous ?"
+                    default: "Bonjour, Samuel d'Ogenies. " + core,
+                    presse: "Bonjour, Samuel d'Ogenies. " + core + " Je serai rapide.",
+                    mefiant_rgpd: "Bonjour, Samuel d'Ogenies. " + core
                 },
                 avance: {
-                    default: "Bonjour, " + agent + " d'Ogenies. " + core + " C'est bien vous ?"
+                    default: "Bonjour, Samuel d'Ogenies. " + core
                 }
             };
             const bucket = openings[level] || openings.intermediaire;
@@ -1728,8 +1727,9 @@ STRUCTURE OBLIGATOIRE (ordre strict — ne saute JAMAIS d'étape) :
 5. QUALIFICATION LOGEMENT (Linky, gaz, étage, surface, occupants, chauffage, kWh/an)
 6. RÉCUPÉRATION CONSOMMATION — OBLIGATOIRE AVANT TOUT CHIFFRE D'OFFRE :
    - Demande le PDL (référence point de livraison, 14 chiffres sur la facture), OU
-   - Confirme l'adresse complète pour interroger Enedis et récupérer la consommation réelle.
-   - INTERDIT de proposer un montant en € tant que la conso n'est pas récupérée ou en cours de récupération.
+   - Si le client ne veut pas donner le PDL : confirme l'adresse — tu peux récupérer la consommation à partir de l'adresse.
+   - INTERDIT de mentionner Enedis, d'expliquer comment tu contactes Enedis, ou tout détail technique.
+   - INTERDIT de proposer un montant en € tant que la conso n'est pas récupérée ou verrouillée (PDL ou adresse confirmée).
 7. PRÉSENTATION FOURNISSEUR — OBLIGATOIRE AVANT L'OFFRE :
    - Présente OHM Energy (O-H-M Energy) : fournisseur 100 % français, producteur d'électricité vertueuse,
      production propre, tarifs compétitifs. Reformule avec tes mots.
@@ -1749,13 +1749,18 @@ FORMULATIONS LIBRES (crucial) :
 CONTENU MINIMUM PAR PHASE (à couvrir, formulation libre) :
 - Découverte : fournisseur actuel, montant mensuel, régularisation annuelle.
 - Qualification : logement, Linky, consommation, chauffage.
-- Conso/PDL : PDL 14 chiffres ou adresse pour Enedis — explique pourquoi c'est nécessaire.
+- Conso/PDL : PDL 14 chiffres ou adresse si refus PDL — sans mentionner Enedis.
 - Fournisseur : OHM Energy (O-H-M), 100 % français, énergie vertueuse, tarifs compétitifs.
-- Offre : Home Energy chez OHM, mensualité fixe vs facture actuelle, cadeau 50 €.
+- Offre : Home Energy chez OHM, mensualité fixe vs facture actuelle, cadeau 50 € — dès que PDL ou adresse + qualification sont OK.
 - Closing : accord explicite avant IBAN / code SMS.
+
+IDENTITÉ AGENT :
+- Tu t'appelles TOUJOURS Samuel — jamais un autre prénom (Emilie, etc.).
+- INTERDIT : « C'est bien vous ? », « C'est bien vous que j'ai réussi à joindre ? », « Est-ce le bon interlocuteur ? »
 
 INTERDIT :
 - Proposer un prix (72 €, 85 €…) ou « Home Energy » comme offre chiffrée AVANT d'avoir le PDL ou l'adresse pour la conso.
+- Mentionner Enedis ou expliquer comment la consommation est récupérée techniquement.
 - Présenter Home Energy comme nom de fournisseur — le fournisseur c'est OHM Energy ; Home Energy c'est le nom du contrat/offre.
 - Reposer une question déjà traitée (Linky, mensualité…) sauf si le prospect n'a pas répondu.
 
@@ -2091,7 +2096,7 @@ RÈGLES FORMAT :
                 + "\n- Pose des questions en découverte ; n'invente jamais les réponses du prospect."
                 + "\n- Les exemples ci-dessus illustrent la STRUCTURE — reformule librement selon le profil prospect."
                 + "\n- Traite la régularisation comme pain point avant de proposer l'offre."
-                + "\n- Qualifie le logement (Linky, surface, chauffage) puis PDL/adresse Enedis AVANT toute proposition chiffrée."
+                + "\n- Qualifie le logement (Linky, surface, chauffage) puis PDL ou adresse AVANT toute proposition chiffrée."
                 + "\n- Présente OHM Energy (O-H-M) puis l'offre Home Energy."
                 + "\n- Closing structuré : IBAN → code SMS → récap réglementaire complet.";
         }
@@ -2149,16 +2154,23 @@ RÈGLES FORMAT :
                 hints.push("Refus/méfiance : rassure (comparateur indépendant, gratuit, sans engagement), puis une question ouverte si le prospect accepte d'écouter.");
             }
             if (prospectAskedEstimationMethod(prospectText)) {
-                hints.push("Question consommation / estimation / PDL : explique qu'il faut d'abord PDL (14 chiffres) ou adresse Enedis — INTERDIT d'annoncer un € avant. Ensuite OHM Energy, puis offre Home Energy chiffrée.");
+                hints.push("Question consommation / estimation / PDL : PDL ou adresse si refus — sans mentionner Enedis. Puis OHM Energy, puis offre Home Energy chiffrée.");
+            }
+            if (prospectRefusesPdl(prospectText)) {
+                hints.push("Refus PDL : rassure — pas besoin du PDL, récupère la consommation à partir de l'adresse. NE mentionne PAS Enedis.");
             }
             if (/homme nrj|home energy|ohm|nrj|quel fournisseur|c est qui.*fournisseur/i.test(t)) {
                 hints.push("Clarifie : le FOURNISSEUR = OHM Energy (O-H-M) ; l'OFFRE = contrat Home Energy (HP/HC, 6 kVA). Présente OHM avant le montant.");
             }
             if (!agentCollectedPdlOrAddressForConso() && qualificationSeemsComplete()) {
-                hints.push("AVANT toute offre chiffrée : demande le PDL (14 chiffres) ou l'adresse pour récupérer la consommation Enedis.");
+                hints.push("AVANT toute offre chiffrée : demande le PDL (14 chiffres) ou confirme l'adresse pour récupérer la consommation.");
             }
             if (agentCollectedPdlOrAddressForConso() && !agentPresentedOhmSupplier()) {
-                hints.push("Conso en cours / PDL obtenu : présente MAINTENANT OHM Energy (100 % français, énergie vertueuse, tarifs compétitifs) AVANT le montant.");
+                hints.push("Conso verrouillée (PDL ou adresse) : présente MAINTENANT OHM Energy, puis enchaîne sur l'offre chiffrée.");
+            }
+            if (agentCollectedPdlOrAddressForConso() && agentPresentedOhmSupplier()
+                && !agentSaid(/home energy|mensualit.*fixe|offre avantageuse/i)) {
+                hints.push("Toutes les infos sont là : propose MAINTENANT l'offre Home Energy chiffrée chez OHM.");
             }
             if (prospectIsBusy(prospectText)) {
                 hints.push("Pressé : rassure (bref, 2 min) ou propose un rappel s'il insiste.");
@@ -2235,13 +2247,21 @@ RÈGLES FORMAT :
                 && (/electri|chauffage|occupant|60|70|80|90/i.test(all) || /tout en electri/i.test(all));
         }
 
+        function prospectRefusesPdl(text) {
+            const t = prospectTextNorm(text || lastProspectText());
+            return /pas.*pdl|sans.*pdl|donne.*pas|n ai pas.*pdl|pas le pdl|pas envie|je veux pas.*donner|pas la facture|sans facture|adresse suffit|recuperer.*adresse|a partir de l adresse|depuis l adresse/i.test(t);
+        }
+
+        function agentConfirmedConsoViaAddress() {
+            return agentSaid(/a partir de (votre )?adresse|avec (votre )?adresse|adresse.*consomm|consomm.*adresse|recuperer.*consomm|recupere.*consomm|je peux.*adresse|verrouiller.*adresse/i);
+        }
+
         function agentCollectedPdlOrAddressForConso() {
             if (prospectProvidedPdl()) return true;
-            if (prospectProvidedAddressForConso() && agentSaid(/enedis|consommation|recuper|pdl|14 chiffres|point de livraison/i)) {
-                return true;
-            }
-            if (agentSaid(/je vais interroger|recuperer votre consomm|consommation reelle|consommation réelle/i)) {
-                return true;
+            if (agentConfirmedConsoViaAddress()) {
+                return prospectProvidedAddressForConso()
+                    || agentSaid(/vous etes au|meme adresse|adresse.*confirm/i)
+                    || !!(callScenario && callScenario.address);
             }
             return false;
         }
@@ -2257,9 +2277,18 @@ RÈGLES FORMAT :
 
         function getConsumptionCollectionReply() {
             return pickUnusedReply([
-                "Pour vous proposer une offre vraiment adaptée, j'ai besoin de votre consommation réelle. Avez-vous une facture sous la main ? Le PDL — référence point de livraison en 14 chiffres — me permet de la récupérer chez Enedis.",
-                "Avant de vous annoncer un tarif, je dois verrouiller votre consommation : soit vous me donnez le PDL sur votre facture, soit je reprends l'adresse complète pour interroger Enedis. Qu'est-ce qui vous arrange ?",
-                "C'est l'étape indispensable : sans PDL ou adresse pour la conso, je ne peux pas vous proposer un montant fiable. Vous avez le numéro PDL en 14 chiffres ?"
+                "Pour vous proposer une offre vraiment adaptée, j'ai besoin de votre consommation. Avez-vous le PDL — référence point de livraison en 14 chiffres — sur une facture ? Sinon, je peux m'en sortir avec votre adresse.",
+                "Avant de vous annoncer un tarif, je dois verrouiller votre consommation : soit le PDL sur votre facture, soit je reprends l'adresse complète. Qu'est-ce qui vous arrange ?",
+                "C'est l'étape indispensable pour chiffrer l'offre : le PDL en 14 chiffres sur facture, ou votre adresse si vous ne l'avez pas sous la main. Vous avez une facture ?"
+            ]);
+        }
+
+        function getPdlRefusalReply() {
+            const addrHint = callScenario?.address || getProspectAddressRef();
+            return pickUnusedReply([
+                "Pas de souci, ce n'est pas obligatoire : avec votre adresse je peux récupérer votre consommation. Vous confirmez que vous êtes bien au " + addrHint + " ?",
+                "Aucun problème si vous n'avez pas le PDL — je peux récupérer la consommation à partir de l'adresse du logement. On reprend votre adresse ?",
+                "Très bien, pas besoin de chercher la facture : à partir de votre adresse, je récupère la consommation et je vous propose une offre adaptée. Vous êtes toujours à la même adresse ?"
             ]);
         }
 
@@ -2503,12 +2532,16 @@ RÈGLES FORMAT :
                 ]);
             }
 
+            if (prospectRefusesPdl(prospectText)) {
+                return getPdlRefusalReply();
+            }
+
             if (prospectAskedEstimationMethod(prospectText)) {
                 if (!agentCollectedPdlOrAddressForConso()) {
                     return pickUnusedReply([
-                        "Très bonne question : avant de vous annoncer un montant, je dois récupérer votre consommation réelle — le PDL en 14 chiffres sur votre facture, ou votre adresse pour interroger Enedis. Vous avez une facture sous la main ?",
-                        "Vous avez raison de demander : je ne peux pas proposer un tarif fiable sans votre conso. Soit le PDL sur facture, soit je reprends l'adresse complète pour Enedis — qu'est-ce qui vous arrange ?",
-                        "Exactement : sans PDL ou adresse pour la conso, je ne peux pas chiffrer l'offre. Le numéro PDL en 14 chiffres se trouve sur votre facture d'électricité — vous l'avez sous la main ?"
+                        "Très bonne question : avant de vous annoncer un montant, je dois récupérer votre consommation — le PDL en 14 chiffres sur votre facture, ou votre adresse si vous ne l'avez pas. Vous avez une facture sous la main ?",
+                        "Vous avez raison de demander : je ne peux pas proposer un tarif fiable sans votre conso. Soit le PDL sur facture, soit je reprends l'adresse — qu'est-ce qui vous arrange ?",
+                        "Exactement : sans PDL ou adresse, je ne peux pas chiffrer l'offre. Le numéro PDL se trouve sur votre facture — ou je peux m'en sortir avec l'adresse."
                     ]);
                 }
                 if (!agentPresentedOhmSupplier()) {
@@ -2637,7 +2670,7 @@ RÈGLES FORMAT :
             const last = lastProspectText();
             const adapt = getProfileAdaptation();
             if (prospectAskedEstimationMethod(last)) {
-                return "OBJECTION ESTIMATION / CONSO : explique qu'il faut d'abord PDL ou adresse Enedis — NE propose PAS de montant en € tant que la conso n'est pas récupérée. Puis OHM Energy, puis offre Home Energy.";
+                return "OBJECTION ESTIMATION / CONSO : PDL ou adresse si refus — sans Enedis. Puis OHM Energy, puis offre Home Energy chiffrée dès que tout est verrouillé.";
             }
             if (prospectRefuses(last) || prospectIsHostile(last) || prospectHasLegalObjection(last) || prospectIsBusy(last)) {
                 return "TRAITE l'objection en premier (" + adapt.tone + "). Utilise reformulation + script légal si RGPD/Bloctel/consentement. Ne demande PAS fournisseur/facture/PDL tant que l'objection n'est pas traitée.";
@@ -2648,9 +2681,9 @@ RÈGLES FORMAT :
                 discovery: "Phase DÉCOUVERTE : fournisseur → mensualité → régularisation. " + adapt.focus + " Formulation libre.",
                 identity: "Phase IDENTITÉ : adresse, nom, code postal, email. Une question à la fois. " + adapt.pace,
                 qualification: "Phase QUALIFICATION : logement, Linky, surface, chauffage, kWh. Varie tes questions.",
-                consumption: "Phase CONSO/PDL : demande PDL (14 chiffres) OU adresse pour Enedis. INTERDIT de proposer un € avant cette étape.",
-                supplier: "Phase FOURNISSEUR : présente OHM Energy (O-H-M), 100 % français, énergie vertueuse, tarifs compétitifs. Puis enchaîne vers l'offre.",
-                offer: "Phase OFFRE : « Avec OHM, j'ai trouvé… » → contrat Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, 50 €, 14 jours. " + adapt.pace,
+                consumption: "Phase CONSO/PDL : PDL (14 chiffres) OU adresse si refus PDL. Sans mentionner Enedis. INTERDIT de proposer un € avant.",
+                supplier: "Phase FOURNISSEUR : présente OHM Energy (O-H-M), puis enchaîne IMMÉDIATEMENT vers l'offre chiffrée.",
+                offer: "Phase OFFRE : toutes les infos sont là — « Avec OHM, j'ai trouvé… » → Home Energy, HP/HC, 6 kVA, mensualité fixe, 2 ans, 50 €, 14 jours. " + adapt.pace,
                 closing: "Phase CLOSING : IBAN, code SMS, récap réglementaire. " + adapt.pace
             };
             return "PHASE : " + phase.toUpperCase() + ". " + (hints[phase] || hints.discovery)
@@ -2729,6 +2762,14 @@ RÈGLES FORMAT :
                 const oral = extractOralFrench(text);
                 if (oral) text = oral;
             }
+            text = text
+                .replace(/\b(emilie|émilie)\b/gi, "Samuel")
+                .replace(/\bc['']est bien vous\b[^.?]*[.?]?/gi, "")
+                .replace(/\best-ce le bon interlocuteur\b[^.?]*[.?]?/gi, "")
+                .replace(/\b(interroger|contacter|appeler)\s+enedis\b/gi, "récupérer la consommation")
+                .replace(/\benedis\b/gi, "")
+                .replace(/\s{2,}/g, " ")
+                .trim();
             return text.slice(0, 500);
         }
 
@@ -2788,7 +2829,8 @@ RÈGLES FORMAT :
 
             if (prospectAskedEstimationMethod(prospectText)) {
                 if (!agentCollectedPdlOrAddressForConso()) {
-                    return "Très bonne question : avant de vous annoncer un montant, je dois récupérer votre consommation réelle — soit le PDL en 14 chiffres sur votre facture, soit votre adresse pour interroger Enedis. Vous avez une facture sous la main ?";
+                    if (prospectRefusesPdl(prospectText)) return getPdlRefusalReply();
+                    return "Très bonne question : avant de vous annoncer un montant, je dois récupérer votre consommation — le PDL en 14 chiffres sur votre facture, ou votre adresse si vous ne l'avez pas. Vous avez une facture sous la main ?";
                 }
                 if (!agentPresentedOhmSupplier()) {
                     return getOhmSupplierPitchReply();
@@ -2824,15 +2866,20 @@ RÈGLES FORMAT :
                 return confirm + ". Votre chauffage et l'eau chaude sont bien tout électrique ?";
             }
             if (phase === "consumption") {
+                if (prospectRefusesPdl(prospectText)) return getPdlRefusalReply();
                 return getConsumptionCollectionReply();
             }
             if (phase === "supplier") {
-                return getOhmSupplierPitchReply();
+                const pitch = getOhmSupplierPitchReply();
+                if (agentCollectedPdlOrAddressForConso()) {
+                    return pitch + " " + getHomeEnergyOfferReply();
+                }
+                return pitch;
             }
             if (phase === "offer") {
                 return getHomeEnergyOfferReply();
             }
-            return confirm + ". Pour avancer : avez-vous le PDL en 14 chiffres sur une facture, ou je reprends votre adresse pour Enedis ?";
+            return confirm + ". Pour avancer : avez-vous le PDL en 14 chiffres sur une facture, ou je reprends votre adresse ?";
         }
 
         function ensureAgentReplyAddressesProspect(reply, prospectText) {
