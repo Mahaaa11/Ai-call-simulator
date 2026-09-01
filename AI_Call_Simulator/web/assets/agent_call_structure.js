@@ -101,6 +101,18 @@ window.AGENT_CALL_STRUCTURE = {
         ]
       },
       {
+        "id": "objection_nouvelle_loi",
+        "label": "Objections nouvelle loi — scripts obligatoires",
+        "examples": [
+          "Nous avons pris votre contact suite à votre discussion avec mon collègue pour votre facture d'électricité et l'augmentation qui s'applique dessus avec l'hiver qui arrive.",
+          "Je comprends Madame/Monsieur que vous n'ayez pas le souvenir de cet appel — vous êtes harcelé malgré les interventions de l'État. Je vous appelle suite à votre entretien avec mon collègue concernant la hausse de 18 % sur votre facture.",
+          "Vous avez eu une conversation avec mon collègue pour votre facture d'électricité. Mon appel est pour confirmer quelques détails ou vous communiquer la différence sur votre facture de régularisation.",
+          "Bien entendu, je vous mets en blacklist Génie-Opérateur. Vous pouvez toujours nous recontacter et demander Samuel.",
+          "Effectivement Bloctel interdit le démarchage, mais aujourd'hui nous parlons d'un cas différent — suite à votre discussion avec mon collègue.",
+          "Vous êtes bien Monsieur/Madame [nom], résidant à [adresse] ? C'est tout ce que j'ai eu — vous aviez parlé avec mon collègue."
+        ]
+      },
+      {
         "id": "objection_handling",
         "label": "Objections — empathie et relance",
         "examples": [

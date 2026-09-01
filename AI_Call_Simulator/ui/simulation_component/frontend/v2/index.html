@@ -1566,6 +1566,58 @@
         const SCENARIO_FIRST = ["Jean", "Marie", "Sophie", "Pierre", "Claire", "Thomas"];
         const SCENARIO_LAST = ["Dupont", "Martin", "Bernard", "Leroy", "Moreau", "Petit"];
         const COLLEAGUE_NAMES = ["Florian", "Camille", "Julien", "Julia", "Charles", "Adèle"];
+        const FEMALE_COLLEAGUE_NAMES = new Set(["Camille", "Julia", "Adèle", "Adèle"]);
+        const FEMALE_SCENARIO_FIRST = new Set([
+            "Marie", "Sophie", "Claire", "Isabelle", "Nathalie", "Camille", "Julie", "Émilie", "Emilie",
+            "Anne", "Céline", "Celine", "Virginie", "Sandrine", "Valérie", "Valerie", "Patricia", "Hélène", "Helene"
+        ]);
+
+        function getColleagueGenderPhrase() {
+            const c = getColleagueName();
+            return (FEMALE_COLLEAGUE_NAMES.has(c) ? "ma collègue " : "mon collègue ") + c;
+        }
+
+        function getProspectCivility() {
+            const fn = callScenario?.firstName || "";
+            if (FEMALE_SCENARIO_FIRST.has(fn)) return "Madame";
+            return "Monsieur";
+        }
+
+        function buildColleagueContactScript() {
+            return "Nous avons pris votre contact suite à votre discussion avec "
+                + getColleagueGenderPhrase()
+                + " pour votre facture d'électricité et l'augmentation qui s'applique dessus avec l'hiver qui arrive.";
+        }
+
+        function buildNouvelleLoiReplyScripts() {
+            const colleague = getColleagueGenderPhrase();
+            const colleagueName = getColleagueName();
+            const agentName = getAgentDisplayName();
+            const civility = getProspectCivility();
+            const identity = getProspectIdentityRef();
+            const address = getProspectAddressRef();
+            const contactScript = buildColleagueContactScript();
+            return {
+                pas_droit_appeler: contactScript,
+                centre_appels: contactScript,
+                jamais_accord: "Je comprends " + civility + " que vous n'ayez pas le souvenir de cet appel — c'est que vous êtes harcelé encore malgré les interventions de l'État dans ce sens. "
+                    + "Mais sachez que je vous appelle suite à votre entretien avec " + colleague
+                    + " concernant la hausse de 18 % qui s'applique sur votre facture. Vous avez déjà fait le plus gros du chemin : j'ai juste à confirmer quelques informations pour vous donner l'estimation des économies que vous pouvez faire.",
+                origine_numero: "Vous avez eu une conversation avec " + colleague
+                    + " pour votre facture d'électricité. Mon appel est simplement pour confirmer quelques détails ou vous communiquer la différence que vous pouvez avoir sur votre facture de régularisation.",
+                retrait_autorisation: "Bien entendu, je vais bien le mentionner et vous mettre dans une blacklist pour qu'aucun Génie-Opérateur ne vous recontacte. "
+                    + "Cependant, vous pouvez toujours nous recontacter vous-même en cas de besoin et demander " + agentName + ".",
+                dgccrf: "Je comprends votre position et je comprends que vous soyez frustré par les enchaînements d'appels sans raison. "
+                    + "Sachez que cet appel est la suite de votre conversation avec " + colleague
+                    + " : mon appel a pour but de confirmer ce qui a été dit entre vous et vous communiquer la différence de votre facture après changement de fournisseur, si vous êtes d'accord.",
+                bloctel: "Effectivement Bloctel interdit le démarchage téléphonique aux personnes inscrites dans ses listes, mais aujourd'hui nous parlons d'un cas différent. "
+                    + contactScript,
+                prouver_consentement: "Bien sûr, vous avez échangé avec " + colleague
+                    + " à qui vous avez communiqué quelques informations qui m'ont été importantes pour étudier votre comparatif. "
+                    + "Vous êtes bien " + civility + " " + identity + ", résidant à " + address + " ? "
+                    + "Bien, c'est tout ce que j'ai eu — je ne sais pas si vous vous en souvenez, mais vous aviez parlé avec " + colleague + "."
+            };
+        }
 
         function hashAgentName(name) {
             let h = 0;
@@ -1597,26 +1649,22 @@
         }
 
         function colleagueContactScript() {
-            const c = getColleagueName();
-            return "Nous avons pris votre contact suite à votre discussion avec mon collègue " + c
-                + " pour votre facture d'électricité et l'augmentation qui s'applique dessus avec l'hiver qui arrive.";
+            return buildColleagueContactScript();
         }
 
         function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
         function buildLegalObjectionScriptBlock() {
-            const c = getColleagueName();
-            const agent = getAgentDisplayName();
-            return "\n\nSCRIPTS OBJECTIONS LÉGALES (reformule avec tes mots — ne saute jamais l'objection) :"
-                + "\n- Nouvelle loi / pas le droit d'appeler / centre d'appels : contact suite entretien collègue " + c + ", facture électricité, hausse ~18 %, hiver."
-                + "\n- Jamais donné mon accord : empathie harcèlement malgré l'État → entretien " + c + ", hausse 18 %, confirmer infos pour estimation économies."
-                + "\n- Où avez-vous eu mon numéro : conversation avec " + c + " pour facture électricité — confirmer détails ou différence facture de régul."
-                + "\n- Retrait autorisation : blacklist Génie-Opérateur + recontact possible en demandant " + agent + "."
-                + "\n- DGCCRF : reformuler frustration → suite entretien " + c + ", confirmer échanges, différence facture après changement fournisseur."
-                + "\n- Bloctel : cas différent — contact suite entretien " + c + " (facture, hausse, hiver)."
-                + "\n- Prouver consentement : échange avec " + c + ", confirmer identité/adresse si connues."
-                + "\n- Pressé/occupé (1re fois) : rassurer — bref et précis, pas long."
-                + "\n- Pressé/occupé (insiste vraiment) : proposer un rappel à un moment qui convient.";
+            const s = buildNouvelleLoiReplyScripts();
+            return "\n\nSCRIPTS OBJECTIONS NOUVELLE LOI (OBLIGATOIRE — traiter l'objection AVANT de continuer l'appel ; reformule légèrement si besoin mais garde le FOND exact) :"
+                + "\n1. « Selon la nouvelle loi, vous n'avez pas le droit de m'appeler » → " + s.pas_droit_appeler
+                + "\n2. « Je n'ai jamais donné mon accord » → " + s.jamais_accord
+                + "\n3. « Où avez-vous obtenu mon numéro ? » → " + s.origine_numero
+                + "\n4. « Je retire mon autorisation » → " + s.retrait_autorisation
+                + "\n5. « Je vais vous signaler à la DGCCRF » → " + s.dgccrf
+                + "\n6. « Centre d'appels qui ne respecte pas la loi » → " + s.centre_appels
+                + "\n7. « Je suis inscrit sur Bloctel » → " + s.bloctel
+                + "\n8. « Prouvez-moi que vous avez mon consentement » → " + s.prouver_consentement;
         }
 
         function createCallScenario() {
@@ -1819,14 +1867,15 @@ PRESSÉ / OCCUPÉ :
 - 1re fois : « Rassurez-vous, ça ne sera pas long, je vais être bref et précis. »
 - Si le client insiste vraiment (pas dispo, réunion, rappeler) : propose un rappel à un créneau qui lui convient.
 
-NOUVELLE LOI / BLOCTEL / CONSENTEMENT (reformule, ne récite pas mot pour mot) :
-- Pas le droit d'appeler / centre d'appels : contact suite à discussion avec un collègue — facture électricité, hausse ~18 %, hiver.
-- Jamais donné mon accord : empathie harcélé malgré l'État → entretien collègue, hausse 18 %, plus gros du chemin fait, confirmer infos pour estimation économies.
-- Numéro / données : conversation collègue pour facture électricité — confirmer détails ou différence sur facture de régul.
-- Retrait autorisation : blacklist Génie-Opérateur + le client peut nous recontacter lui-même.
-- DGCCRF : reformuler frustration → suite entretien collègue, confirmer ce qui a été dit, différence facture après changement fournisseur.
-- Bloctel : cas différent du démarchage — contact suite entretien collègue (facture, hausse, hiver).
-- Prouver consentement : échange collègue, confirmer nom/adresse si connus, rappeler l'entretien préalable.
+NOUVELLE LOI / BLOCTEL / CONSENTEMENT — SCRIPTS OBLIGATOIRES (traiter l'objection en premier, puis reprendre l'appel) :
+- « Pas le droit de m'appeler » / nouvelle loi / centre d'appels : script collègue + facture électricité + hausse hiver (voir scripts détaillés).
+- « Jamais donné mon accord » : empathie harcèlement malgré l'État → entretien collègue → hausse 18 % → confirmer infos pour estimation économies.
+- « Où avez-vous obtenu mon numéro ? » : conversation collègue → confirmer détails ou différence facture de régularisation.
+- « Je retire mon autorisation » : blacklist Génie-Opérateur + recontact possible en demandant Samuel.
+- « DGCCRF » : empathie frustration → suite entretien collègue → confirmer échanges → différence facture après changement fournisseur.
+- « Bloctel » : cas différent du démarchage → script collègue + facture + hausse hiver.
+- « Prouvez mon consentement » : échange collègue → confirmer civilité + nom + adresse → rappeler entretien collègue.
+- INTERDIT d'ignorer une objection nouvelle loi pour enchaîner sur fournisseur, PDL ou offre.
 
 INTERDIT : « base de données », « fichier clients », ignorer une objection pour enchaîner sur une question commerciale.
 
@@ -2187,8 +2236,8 @@ RÈGLES FORMAT :
             if (/d ou vous|dou vous|coordonnees|mon numero|chez qui|stock|comment vous savez|mes coord/i.test(t)) {
                 hints.push("Question origine du numéro : réponds CLAIREMENT — entretien avec " + c + ", pas achat de fichier, pas démarchage froid, pas de CB.");
             }
-            if (/nouvelle loi|pas le droit|bloctel|consentement|dgccrf|arnaque|harcelement/i.test(t)) {
-                hints.push("Objection légale/méfiance : reformule, scripts collègue + hausse ~18 % + régularisation, gratuit sans engagement.");
+            if (/nouvelle loi|pas le droit|bloctel|consentement|dgccrf|arnaque|harcelement|retire mon autorisation|jamais donne mon accord/i.test(t)) {
+                hints.push("Objection nouvelle loi : utilise le SCRIPT EXACT correspondant dans les scripts légaux — traite l'objection avant toute question commerciale.");
             }
             if (/meme phrase|repeter|repondez|reponse claire|respectez quoi|carte bleue|cb/i.test(t)) {
                 hints.push("Il exige une réponse directe : réponds à la question posée, ne dis pas « je respecte votre choix » tant que la question n'est pas traitée.");
@@ -2540,31 +2589,55 @@ RÈGLES FORMAT :
 
         function getObjectionHandlingReply(prospectText) {
             const t = prospectTextNorm(prospectText);
-            const colleague = getColleagueName();
-            const agentName = getAgentDisplayName();
-            const identity = getProspectIdentityRef();
-            const address = getProspectAddressRef();
-            const contactScript = colleagueContactScript();
+            const scripts = buildNouvelleLoiReplyScripts();
+            const contactScript = scripts.pas_droit_appeler;
 
             if (/de quel collegue|quel collegue|parle avec personne|parle a personne|discute avec personne|personne qui m a appel/i.test(t)) {
                 return pickUnusedReply([
-                    "Je comprends, vous n'avez peut-être pas le souvenir de cet échange — c'est fréquent. Mon collègue " + colleague + " a noté un entretien sur votre facture d'énergie. Je reprends le dossier pour un comparatif gratuit, sans engagement.",
-                    "Tout à fait, je reformule : ce n'est pas un appel à froid. Vous aviez échangé avec mon collègue " + colleague + " sur votre facture d'énergie ; je reprends simplement le dossier pour voir si une offre plus avantageuse est possible."
+                    scripts.jamais_accord,
+                    "Je comprends, vous n'avez peut-être pas le souvenir de cet échange — c'est fréquent. " + contactScript
                 ]);
             }
 
-            if (/d ou vous avez|dou vous avez|ou vous avez eu|ou vous les avez|coordonnees|mon numero|chez qui|stock|comment vous savez/i.test(t)) {
+            if (/retire mon autorisation|retrait.*autorisation/i.test(t)) {
+                return scripts.retrait_autorisation;
+            }
+
+            if (/prouvez|consentement/i.test(t) && !/retire mon autorisation/i.test(t)) {
+                return scripts.prouver_consentement;
+            }
+
+            if (/dgccrf/i.test(t)) {
+                return scripts.dgccrf;
+            }
+
+            if (/bloctel/i.test(t)) {
+                return scripts.bloctel;
+            }
+
+            if (/jamais donne mon accord|jamais donne.*accord|donne mon accord/i.test(t)) {
+                return scripts.jamais_accord;
+            }
+
+            if (/nouvelle loi|pas le droit de m appeler|pas le droit.*appel|conscient.*loi/i.test(t)) {
+                return scripts.pas_droit_appeler;
+            }
+
+            if (/centre d appel|centre d appels|respecte pas la loi/i.test(t)) {
+                return scripts.centre_appels;
+            }
+
+            if (/d ou vous avez|dou vous avez|ou vous avez eu|ou vous les avez|obtenu mon numero|obtenu mes donnees|eu mes donnees|comment avez vous eu|coordonnees|mon numero|chez qui|stock|comment vous savez/i.test(t)) {
                 return pickUnusedReply([
-                    "Je vous réponds clairement : votre contact provient de l'échange avec mon collègue " + colleague + " sur votre facture d'énergie — ce n'est pas un fichier acheteur. Mon appel sert à confirmer quelques points ou à vous indiquer la différence sur votre facture de régularisation.",
-                    "Nous n'achetons pas de listes : vous aviez parlé avec mon collègue " + colleague + " pour votre facture d'énergie. Je reprends le dossier pour un comparatif gratuit. Nous ne demandons jamais de carte bancaire au téléphone.",
-                    "Votre numéro nous a été communiqué lors de cet entretien avec " + colleague + ". Je ne stocke rien de plus que ce qui est nécessaire au comparatif — et vous pouvez demander le retrait de vos coordonnées à tout moment."
+                    scripts.origine_numero,
+                    "Je vous réponds clairement : " + scripts.origine_numero
                 ]);
             }
 
             if (/meme phrase|repeter|repete|repondez|reponse claire|respectez quoi|arreter de me dire|arretez de me dire/i.test(t)) {
                 return pickUnusedReply([
-                    "Vous avez raison, je vais être clair : nous vous contactons suite à l'échange avec mon collègue " + colleague + " sur votre facture d'énergie, pas en démarchage à froid. C'est gratuit, sans engagement, et je ne vous demanderai jamais votre carte bancaire.",
-                    "Je comprends votre exigence. Concrètement : votre numéro vient de l'entretien avec " + colleague + ". Je reprends le dossier pour un comparatif. Si vous le souhaitez, je peux aussi vous expliquer comment retirer votre autorisation de contact."
+                    "Vous avez raison, je vais être clair : " + contactScript,
+                    scripts.origine_numero
                 ]);
             }
 
@@ -2610,61 +2683,6 @@ RÈGLES FORMAT :
                     "Rassurez-vous, ça ne sera pas long — je vais être bref et précis.",
                     "Je comprends, vous manquez de temps. Promis, je serai bref et précis : deux minutes pour vérifier si vous payez le juste tarif.",
                     "Compris. Je fais court et précis : une rapide vérification tarifaire, gratuit et sans engagement."
-                ]);
-            }
-
-            if (/nouvelle loi|pas le droit de m appeler|pas le droit.*appel/i.test(t)) {
-                return pickUnusedReply([contactScript]);
-            }
-
-            if (/centre d appel|centre d appels|respecte pas la loi/i.test(t)) {
-                return pickUnusedReply([contactScript]);
-            }
-
-            if (/bloctel/i.test(t)) {
-                return pickUnusedReply([
-                    "Effectivement Bloctel interdit le démarchage téléphonique aux personnes inscrites dans ses listes, mais aujourd'hui nous parlons d'un cas différent. "
-                        + contactScript
-                ]);
-            }
-
-            if (/jamais donne mon accord|jamais donne.*accord|donne mon accord/i.test(t)) {
-                return pickUnusedReply([
-                    "Je comprends Monsieur/Madame que vous n'ayez pas le souvenir de cet appel — vous êtes harcelé encore malgré les interventions de l'État dans ce sens. "
-                        + "Sachez que je vous appelle suite à votre entretien avec mon collègue " + colleague
-                        + " concernant la hausse de 18 % qui s'applique sur votre facture. Vous avez déjà fait le plus gros du chemin : j'ai juste à confirmer quelques informations pour vous donner l'estimation des économies que vous pouvez faire."
-                ]);
-            }
-
-            if (/obtenu mon numero|obtenu mes donnees|eu mes donnees|comment avez vous eu/i.test(t)) {
-                return pickUnusedReply([
-                    "Vous avez eu une conversation avec mon collègue " + colleague
-                        + " pour votre facture d'électricité. Mon appel est simplement pour confirmer quelques détails ou vous communiquer la différence que vous pouvez avoir sur votre facture de régularisation.",
-                    "Je vous réponds directement : le contact vient de l'entretien avec " + colleague + " sur votre facture d'énergie. Je reprends le dossier pour le comparatif — rien n'est obligatoire."
-                ]);
-            }
-
-            if (/retire mon autorisation|retrait.*autorisation/i.test(t)) {
-                return pickUnusedReply([
-                    "Bien entendu, je vais bien le mentionner et vous mettre dans une blacklist pour qu'aucun Génie-Opérateur ne vous recontacte. "
-                        + "Cependant, vous pouvez toujours nous recontacter vous-même en cas de besoin et demander " + agentName + "."
-                ]);
-            }
-
-            if (/dgccrf/i.test(t)) {
-                return pickUnusedReply([
-                    "Je comprends votre position et je comprends que vous soyez frustré par les enchaînements d'appels sans raison. "
-                        + "Sachez que cet appel est la suite de votre conversation avec mon collègue " + colleague
-                        + " : mon appel a pour but de confirmer ce qui a été dit entre vous et vous communiquer la différence de votre facture après changement de fournisseur, si vous êtes d'accord."
-                ]);
-            }
-
-            if (/prouvez|consentement/i.test(t) && !/retire mon autorisation/i.test(t)) {
-                return pickUnusedReply([
-                    "Bien sûr, vous avez échangé avec mon collègue " + colleague
-                        + " à qui vous avez communiqué quelques informations importantes pour étudier votre comparatif. "
-                        + "Vous êtes bien " + identity + ", résidant à " + address + " ? "
-                        + "C'est tout ce que j'ai eu — je ne sais pas si vous vous en souvenez, mais vous aviez parlé avec mon collègue " + colleague + "."
                 ]);
             }
 
@@ -2715,8 +2733,11 @@ RÈGLES FORMAT :
             if (prospectAskedEstimationMethod(last)) {
                 return "OBJECTION ESTIMATION / CONSO : PDL ou adresse si refus — sans Enedis. Puis OHM Energy, puis offre Home Energy chiffrée dès que tout est verrouillé.";
             }
-            if (prospectRefuses(last) || prospectIsHostile(last) || prospectHasLegalObjection(last) || prospectIsBusy(last)) {
-                return "TRAITE l'objection en premier (" + adapt.tone + "). Utilise reformulation + script légal si RGPD/Bloctel/consentement. Ne demande PAS fournisseur/facture/PDL tant que l'objection n'est pas traitée.";
+            if (prospectHasLegalObjection(last)) {
+                return "OBJECTION NOUVELLE LOI : utilise le script exact correspondant (collègue, hausse 18 %, Bloctel cas différent, DGCCRF, consentement, blacklist Génie-Opérateur). Traite l'objection AVANT de continuer.";
+            }
+            if (prospectRefuses(last) || prospectIsHostile(last) || prospectIsBusy(last)) {
+                return "TRAITE l'objection en premier (" + adapt.tone + "). Ne demande PAS fournisseur/facture/PDL tant que l'objection n'est pas traitée.";
             }
             const phase = getCallPhase();
             const hints = {
