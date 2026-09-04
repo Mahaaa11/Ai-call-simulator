@@ -1581,6 +1581,73 @@
             ]
         ];
 
+        const COLLEAGUE_NAMES = ["Florian", "Camille", "Julien", "Julia", "Charles", "Adèle"];
+        const FEMALE_COLLEAGUE_NAMES = new Set(["Camille", "Julia", "Adèle"]);
+
+        function getColleagueNameForAgent(agentName) {
+            return COLLEAGUE_NAMES[hashAgentName(agentName) % COLLEAGUE_NAMES.length];
+        }
+
+        function getColleagueGenderPhrase(agentName) {
+            const c = getColleagueNameForAgent(agentName);
+            return (FEMALE_COLLEAGUE_NAMES.has(c) ? "ma collègue " : "mon collègue ") + c;
+        }
+
+        function getProspectCivilityFromStep(step) {
+            if (!step?.firstName) return "Monsieur";
+            return FEMALE_FIRST_NAMES.has(step.firstName) ? "Madame" : "Monsieur";
+        }
+
+        function buildColleagueContactScript(agentName) {
+            return "Nous avons pris votre contact suite à votre discussion avec "
+                + getColleagueGenderPhrase(agentName)
+                + " pour votre facture d'électricité et l'augmentation qui s'applique dessus avec l'hiver qui arrive.";
+        }
+
+        function buildNouvelleLoiReplyScripts(agentName, step) {
+            const colleague = getColleagueGenderPhrase(agentName);
+            const civility = getProspectCivilityFromStep(step || {});
+            const identity = (step?.firstName && step?.lastName) ? (step.firstName + " " + step.lastName) : "Monsieur/Madame";
+            const address = step?.address || "l'adresse communiquée lors de votre échange avec mon collègue";
+            const contactScript = buildColleagueContactScript(agentName);
+            const agentDisplayName = String(agentName || "votre interlocuteur").trim();
+            return {
+                pas_droit_appeler: contactScript,
+                centre_appels: contactScript,
+                jamais_accord: "Je comprends " + civility + " que vous n'ayez pas le souvenir de cet appel — c'est que vous êtes harcelé encore malgré les interventions de l'État dans ce sens. "
+                    + "Mais sachez que je vous appelle suite à votre entretien avec " + colleague
+                    + " concernant la hausse de 18 % qui s'applique sur votre facture. Vous avez déjà fait le plus gros du chemin : j'ai juste à confirmer quelques informations pour vous donner l'estimation des économies que vous pouvez faire.",
+                origine_numero: "Vous avez eu une conversation avec " + colleague
+                    + " pour votre facture d'électricité. Mon appel est simplement pour confirmer quelques détails ou vous communiquer la différence que vous pouvez avoir sur votre facture de régularisation.",
+                retrait_autorisation: "Bien entendu, je vais bien le mentionner et vous mettre dans une blacklist pour qu'aucun Génie-Opérateur ne vous recontacte. "
+                    + "Cependant, vous pouvez toujours nous recontacter vous-même en cas de besoin et demander " + agentDisplayName + ".",
+                dgccrf: "Je comprends votre position et je comprends que vous soyez frustré par les enchaînements d'appels sans raison. "
+                    + "Sachez que cet appel est la suite de votre conversation avec " + colleague
+                    + " : mon appel a pour but de confirmer ce qui a été dit entre vous et vous communiquer la différence de votre facture après changement de fournisseur, si vous êtes d'accord.",
+                bloctel: "Effectivement Bloctel interdit le démarchage téléphonique aux personnes inscrites dans ses listes, mais aujourd'hui nous parlons d'un cas différent. "
+                    + contactScript,
+                prouver_consentement: "Bien sûr, vous avez échangé avec " + colleague
+                    + " à qui vous avez communiqué quelques informations qui m'ont été importantes pour étudier votre comparatif. "
+                    + "Vous êtes bien " + civility + " " + identity + ", résidant à " + address + " ? "
+                    + "Bien, c'est tout ce que j'ai eu — je ne sais pas si vous vous en souvenez, mais vous aviez parlé avec " + colleague + "."
+            };
+        }
+
+        function buildNouvelleLoiEvalScriptBlock(agentName, step) {
+            const s = buildNouvelleLoiReplyScripts(agentName, step);
+            return `
+
+SCRIPTS AGENT OBLIGATOIRES — OBJECTIONS NOUVELLE LOI (évalue si l'agent utilise le FOND de ces réponses) :
+1. « Selon la nouvelle loi, vous n'avez pas le droit de m'appeler » / centre d'appels → ${s.pas_droit_appeler}
+2. « Je n'ai jamais donné mon accord » → ${s.jamais_accord}
+3. « Où avez-vous obtenu mon numéro ? » / mes données → ${s.origine_numero}
+4. « Je retire mon autorisation » → ${s.retrait_autorisation}
+5. « Je vais vous signaler à la DGCCRF » → ${s.dgccrf}
+6. « Je suis inscrit sur Bloctel » → ${s.bloctel}
+7. « Prouvez-moi que vous avez mon consentement » → ${s.prouver_consentement}
+Pénaliser (-10 à -15 pts) si l'agent ignore l'objection, dit « base de données » / « fichier clients », ou ne mentionne pas le collègue + facture d'électricité + hausse 18 %.`;
+        }
+
         const CLOTURE_RESILIATION_OBJECTION = "La dernière fois on m'a fait payer des frais de résiliation — je ne veux plus me faire avoir comme ça.";
 
         function hashAgentName(name) {
@@ -1601,6 +1668,26 @@
             return NOUVELLE_LOI_SETS[Math.floor(Math.random() * NOUVELLE_LOI_SETS.length)].slice();
         }
 
+        function buildEngieMefiantExamObjections(agentName) {
+            const legal = pickNouvelleLoiSetForAgent(agentName);
+            const head = [
+                "Je suis chez Engie, je ne veux pas changer de fournisseur.",
+                "Engie me convient — pourquoi je prendrais le risque ?"
+            ];
+            const legalHasNumero = legal.some(o => /numéro|numero|données|donnees/i.test(o));
+            const tail = [
+                ...(legalHasNumero ? [] : ["Comment avez-vous eu mon numéro ?"]),
+                "La dernière fois que j'ai changé, c'était compliqué.",
+                "Votre offre cache peut-être des frais de résiliation.",
+                "Mon voisin a quitté Engie et il n'est pas content.",
+                "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                "Allez droit au but, j'ai pas le temps pour un long discours.",
+                "Concrètement, qu'est-ce que j'y gagne à quitter Engie ?",
+                "Envoyez-moi tout par mail, je préfère vérifier par écrit."
+            ];
+            return head.concat(legal).concat(tail);
+        }
+
         function buildEngieRgpdExamObjections(agentName) {
             const legal = pickNouvelleLoiSetForAgent(agentName);
             return [
@@ -1619,8 +1706,16 @@
 
         function resolveScenarioStep(step) {
             if (!step) return null;
-            if (!step.useNouvelleLoiSets) return step;
             const agentName = getAgentName() || getExamAgentName() || "agent";
+            if (!step.useNouvelleLoiSets) return step;
+            if (step.profile === "mefiant_fournisseur") {
+                const assigned = pickNouvelleLoiSetForAgent(agentName);
+                return Object.assign({}, step, {
+                    objections: buildEngieMefiantExamObjections(agentName),
+                    minObjections: step.minObjections || 8,
+                    assignedNouvelleLoi: assigned
+                });
+            }
             const objections = buildEngieRgpdExamObjections(agentName);
             return Object.assign({}, step, {
                 objections: objections,
@@ -1630,21 +1725,37 @@
         }
 
         function buildNouvelleLoiProspectBlock() {
-            const assigned = getNouvelleLoiObjectionsForSession();
-            return `\nOBJECTIONS NOUVELLE LOI (3 seulement pour cet appel — reformule, ne les enchaîne pas) :
+            const step = getFixedScenarioStep();
+            if (!step?.useNouvelleLoiSets && getProfileKey() !== "mefiant_rgpd") return "";
+            const assigned = step?.assignedNouvelleLoi || getNouvelleLoiObjectionsForSession();
+            let block = `\nOBJECTIONS NOUVELLE LOI (3 assignées pour cet appel — une à la fois, traitée avant de continuer) :
 - « ${assigned[0]} »
 - « ${assigned[1]} »
 - « ${assigned[2]} »
 
+AUTRES OBJECTIONS LÉGALES POSSIBLES (selon le fil) :
+- « Selon la nouvelle loi, vous n'avez pas le droit de m'appeler. »
+- « Je n'ai jamais donné mon accord. »
+- « Où avez-vous obtenu mon numéro ? »
+- « Je retire mon autorisation. »
+- « Je vais vous signaler à la DGCCRF. »
+- « Vous êtes encore un centre d'appels qui ne respecte pas la loi. »
+- « Je suis inscrit sur Bloctel. »
+- « Prouvez-moi que vous avez mon consentement. »
+
 COMPORTEMENT ATTENDU :
-- Utilise ces 3 objections quand le sujet touche à la légalité, Bloctel ou consentement.
-- Si l'agent répond bien (entretien avec un collègue, hausse ~18 %, comparatif gratuit), tu peux te calmer progressivement.
-- Si l'agent dit « base de données » ou ignore ta question → reste ferme sur la même objection.
+- Utilise tes 3 objections assignées quand le sujet touche à la légalité, Bloctel ou consentement — UNE à la fois.
+- Ne passe à la suivante QUE si l'agent reformule et répond (collègue, hausse 18 %, facture régul, blacklist Génie-Opérateur, etc.).
+- Si l'agent dit « base de données » / « fichier clients » ou ignore ta question → reste ferme sur la MÊME objection.
+- Si l'agent répond bien (entretien collègue, hausse ~18 %, comparatif), tu peux te calmer progressivement.`;
+            if (step?.profile === "mefiant_rgpd") {
+                block += `
 
 FACTURE DE CLÔTURE (important) :
-- Toi tu dis avoir payé des « frais de résiliation » — tu es méfiant, tu ne connais PAS le terme « facture de clôture ».
-- C'est à L'AGENT d'expliquer que c'était en réalité une facture de clôture (solde de fin de contrat), pas des frais de résiliation cachés.
-- Ne dis pas toi-même « c'était la facture de clôture » — attends l'explication de l'agent.`;
+- Toi tu dis avoir payé des « frais de résiliation » — tu ne connais PAS le terme « facture de clôture ».
+- C'est à L'AGENT d'expliquer que c'était une facture de clôture (solde de fin de contrat), pas des frais cachés.`;
+            }
+            return block;
         }
 
         const PROFILE_UI = {
@@ -1879,6 +1990,8 @@ FACTURE DE CLÔTURE (important) :
             level: "avance",
             scenarioType: "standard",
             prospectTone: "mefiant_ferme",
+            strictObjectionGate: true,
+            useNouvelleLoiSets: true,
             firstName: "Marc",
             lastName: "Dupont",
             supplier: "Engie",
@@ -1887,9 +2000,9 @@ FACTURE DE CLÔTURE (important) :
             yearsAtSupplier: "5 ans",
             address: "24 boulevard Longchamp, 13001 Marseille",
             opening: "Oui bonjour ? C'est pour quoi… je ne change pas de fournisseur en général.",
-            brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule). Méfiant et ferme : ne veut pas changer, pose des objections sérieuses. Cède à la fin si l'agent reformule et répond avec des arguments concrets (objectif : changement de fournisseur).",
-            goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a bien géré les objections.",
-            minObjections: 5,
+            brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois). Méfiant sur le changement fournisseur + 3 objections nouvelle loi (selon le nom de l'agent). Cède si l'agent reformule et utilise les scripts collègue / hausse 18 % / facture régul.",
+            goal: "Objections dans l'ordre : refus changement Engie → 3 nouvelle loi (selon agent) → objections fournisseur/SEPA/mail. L'agent doit traiter chaque objection nouvelle loi avec le script collègue + hausse 18 % avant de continuer.",
+            minObjections: 8,
             expectedOutcome: "changement_fournisseur",
             objections: [
                 "Je suis chez Engie, je ne veux pas changer de fournisseur.",
@@ -1909,7 +2022,7 @@ FACTURE DE CLÔTURE (important) :
                 id: "certif_engie_20260904",
                 title: "Examen certification — Changement fournisseur Engie",
                 dateLabel: "4 septembre 2026",
-                instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant chez Engie (ferme mais jouable) · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur · Modèle payant Gemini 2.5 Flash.",
+                instructions: "Un seul appel · Même scénario pour tous · Marc Dupont chez Engie · 3 objections nouvelle loi différentes selon le nom de l'agent (scripts collègue + hausse 18 % obligatoires) · Niveau avancé · Mode strict · 70/100 · Modèle payant Gemini 2.5 Flash.",
                 passScore: 70,
                 steps: [EXAM_ENGIE_MEFIANT_STEP]
             },
@@ -2127,15 +2240,16 @@ FACTURE DE CLÔTURE (important) :
                 ]
             },
             nouvelle_loi: {
-                label: "Nouvelle loi / consentement",
+                label: "Nouvelle loi / consentement — scripts obligatoires",
                 tips: [
-                    "Ne jamais « base de données » ou « fichier clients » — expliquer l'entretien préalable avec un collègue sur la facture d'électricité.",
-                    "Bloctel / pas le droit d'appeler : rappeler que le contact fait suite à une discussion avec un collègue (hausse ~18 %, régularisation).",
-                    "Jamais donné mon accord : empathie sur le harcèlement, puis rappel de l'échange avec le collègue et confirmation des économies possibles.",
-                    "Retrait d'autorisation : proposer blacklist Génie-Opérateur + rappeler que le client peut rappeler lui-même.",
-                    "DGCCRF / centre d'appels : reformuler — appel de suivi après entretien collègue, pas démarchage froid.",
-                    "Prouver le consentement : confirmer nom, adresse, rappeler l'échange avec le collègue (sans inventer de détails absents du dossier).",
-                    "Frais de résiliation : le client dit avoir payé des frais — expliquer que c'était une facture de clôture (solde de fin de contrat), pas une arnaque."
+                    "Pas le droit d'appeler / centre d'appels : contact suite à discussion avec mon/ma collègue + facture électricité + hausse hiver.",
+                    "Jamais donné mon accord : empathie harcèlement + entretien collègue + hausse 18 % + confirmation infos pour estimation économies.",
+                    "Origine numéro : conversation collègue + facture électricité + différence facture de régularisation.",
+                    "Retrait autorisation : blacklist Génie-Opérateur + le client peut rappeler et demander votre nom.",
+                    "DGCCRF : frustration comprise + suite entretien collègue + différence facture après changement fournisseur.",
+                    "Bloctel : cas différent + script collègue facture électricité hausse hiver.",
+                    "Prouver consentement : nom + adresse + échange avec le collègue.",
+                    "INTERDIT : « base de données », « fichier clients » — pénalisation examen."
                 ]
             }
         };
@@ -7788,9 +7902,17 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
             const handled = countAgentObjectionHandling();
             const resistance = countScenarioResistance();
             const yielded = prospectYieldedInCall();
+            const agentName = getAgentName() || getExamAgentName() || "agent";
+            const nouvelleLoiBlock = step.useNouvelleLoiSets
+                ? buildNouvelleLoiEvalScriptBlock(agentName, step)
+                : "";
             return "\n\nCONTEXTE SCÉNARIO CERTIFICATION :\n"
                 + "- Scénario : " + step.label + "\n"
                 + "- Objectif agent : " + step.goal + "\n"
+                + (step.assignedNouvelleLoi?.length
+                    ? "- Objections nouvelle loi assignées : « " + step.assignedNouvelleLoi.join(" », « ") + " »\n"
+                    : "")
+                + nouvelleLoiBlock
                 + "- Objections scénario traitées : ~" + countScenarioObjectionsUsed() + " / " + step.minObjections + "\n"
                 + "- Réponses agent traitées (reformulation + arguments) : ~" + handled + "\n"
                 + "- Prospect ouvert en fin d'appel : " + (yielded ? "OUI" : "NON") + "\n"
