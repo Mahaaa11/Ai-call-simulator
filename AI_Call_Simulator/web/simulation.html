@@ -756,6 +756,138 @@
         }
         .benchmark-models-result .best-row { background: rgba(0, 130, 127, 0.08); font-weight: 600; }
 
+        .exam-panel {
+            margin: 16px 0;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(0, 45, 88, 0.08), rgba(217, 128, 46, 0.1));
+            border: 2px solid rgba(0, 45, 88, 0.2);
+            box-shadow: 0 4px 18px rgba(0, 45, 88, 0.06);
+        }
+        .exam-panel h4 { margin: 0 0 6px 0; font-size: 16px; color: var(--lc-navy); }
+        .exam-panel .exam-sub { margin: 0 0 14px 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+        .exam-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: var(--lc-navy);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .exam-badge.preview { background: var(--lc-orange); }
+        .exam-formateur-access {
+            margin: 16px 0;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(0, 45, 88, 0.04);
+            border: 1px dashed rgba(0, 45, 88, 0.22);
+        }
+        .exam-formateur-access label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--lc-navy);
+            margin-bottom: 8px;
+        }
+        .exam-formateur-row {
+            display: flex;
+            gap: 8px;
+        }
+        .exam-formateur-row input {
+            flex: 1;
+            min-width: 0;
+        }
+        .exam-formateur-row button {
+            flex-shrink: 0;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: var(--lc-navy);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .exam-formateur-msg {
+            margin: 8px 0 0 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .exam-locked-notice {
+            margin: 12px 0 0 0;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.06);
+            border: 1px solid rgba(0, 45, 88, 0.14);
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text);
+        }
+        .exam-locked-notice strong { color: var(--lc-navy); }
+        .exam-steps { list-style: none; margin: 0; padding: 0; }
+        .exam-step {
+            display: grid;
+            grid-template-columns: 28px 1fr auto;
+            gap: 10px 12px;
+            align-items: start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 45, 88, 0.1);
+        }
+        .exam-step:last-child { border-bottom: none; }
+        .exam-step-num {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 45, 88, 0.12);
+            color: var(--lc-navy);
+            font-weight: 800;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .exam-step.done .exam-step-num { background: var(--success); color: #fff; }
+        .exam-step.active .exam-step-num { background: var(--lc-orange); color: #fff; }
+        .exam-step-title { font-weight: 700; font-size: 14px; color: var(--lc-navy); margin: 0 0 4px 0; }
+        .exam-step-meta { font-size: 12px; color: var(--text-muted); margin: 0 0 6px 0; }
+        .exam-objections { font-size: 11px; color: var(--text); margin: 0; padding-left: 16px; line-height: 1.45; }
+        .exam-objections li { margin-bottom: 2px; }
+        .exam-step-score { font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .exam-step-score.pass { color: var(--success); }
+        .exam-step-score.fail { color: var(--danger); }
+        .exam-launch-btn {
+            margin-top: 6px;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--lc-navy);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .exam-launch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .exam-summary {
+            margin-top: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .exam-cert { color: var(--success); font-weight: 700; }
+        .exam-scenario-card {
+            margin: 12px 0;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 45, 88, 0.15);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .exam-scenario-card h5 { margin: 0 0 8px 0; font-size: 14px; color: var(--lc-navy); }
+        .exam-scenario-card ul { margin: 8px 0 0 0; padding-left: 18px; }
+        .exam-scenario-card li { margin-bottom: 4px; }
         .training-scenario-hint {
             font-size: 12px;
             color: var(--text-muted);
@@ -763,15 +895,13 @@
             line-height: 1.45;
         }
         .training-scenario-hint strong { color: var(--lc-navy); }
-
-        .coaching-panel {
-            margin: 16px 0;
-            padding: 16px 18px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(0, 45, 88, 0.06), rgba(0, 130, 127, 0.08));
-            border: 1px solid rgba(0, 130, 127, 0.22);
+        .exam-eval-banner {
+            margin-bottom: 16px;
+            padding: 14px;
+            border-radius: 10px;
+            background: rgba(0, 45, 88, 0.06);
+            border-left: 4px solid var(--lc-navy);
         }
-        .coaching-panel h4 { margin: 0 0 8px 0; font-size: 15px; color: var(--lc-navy); }
 
         .status-badge {
             display: inline-block;
@@ -1072,10 +1202,11 @@
         <p class="hint" id="apiKeyStatus" style="display:none;">✅ Clé configurée</p>
         <p class="hint" id="apiHint">OpenRouter : <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> · <strong id="appUrlLabel"></strong></p>
 
+        <div id="examConfigurableBlock">
         <label for="trainingScenarioSelect">Scénario d'entraînement</label>
         <select id="trainingScenarioSelect">
-            <option value="random" selected>🎲 Aléatoire — profil et client variables</option>
-            <option value="certif_engie_rgpd_nouvelle_loi">🎯 Certification — Engie 3 mois, RGPD & nouvelle loi (Karim Benali)</option>
+            <option value="random">🎲 Aléatoire — profil et client variables</option>
+            <option value="certif_engie_rgpd_nouvelle_loi" selected>🎓 Examen — Engie 3 mois, RGPD & nouvelle loi (Karim Benali)</option>
             <option value="certif_fournisseur_mefiant">🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
             <option value="certif_engie_mefiant_agressif">🔥 Certification — Engie méfiant (Marc Dupont, Marseille)</option>
         </select>
@@ -1113,9 +1244,22 @@
         <label class="calibration-label">
             <input type="checkbox" id="calibrationToggle"> Mode strict (force plus d'objections scriptées)
         </label>
+        </div>
+
+        <div id="examLockedNotice" class="exam-locked-notice" style="display:none;">
+            <strong>Mode examen</strong> — paramètres verrouillés. Le scénario est identique pour tous et se découvre à l'appel. Cliquez « Préparer l'examen » puis « Décrocher ».
+        </div>
 
         <details class="advanced-options" id="advancedOptions">
             <summary>Options avancées (modèle IA)</summary>
+            <div class="exam-formateur-access" id="examFormateurAccess" style="display:none;">
+                <label for="examFormateurCode">Code accès formateur</label>
+                <div class="exam-formateur-row">
+                    <input type="text" id="examFormateurCode" placeholder="formateur" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+                    <button type="button" id="examFormateurBtn" onclick="window.tryUnlockExamFormateur && window.tryUnlockExamFormateur()">Valider</button>
+                </div>
+                <p class="exam-formateur-msg" id="examFormateurMsg"></p>
+            </div>
             <label for="nvidiaModelSelect">Modèle OpenRouter (prospect)</label>
             <select id="nvidiaModelSelect">
                 <optgroup label="Gratuits — recommandés">
@@ -1139,6 +1283,17 @@
             <button type="button" id="benchmarkModelsBtn" class="benchmark-models-btn">⚡ Comparer 4 modèles gratuits (test rapide)</button>
             <div id="benchmarkModelsResult" class="benchmark-models-result" style="display:none;"></div>
         </details>
+
+        <div class="exam-panel" id="examPanel" style="display:none;">
+            <span class="exam-badge" id="examBadge">Examen</span>
+            <h4 id="examTitle">Examen certification</h4>
+            <p class="exam-sub" id="examSub"></p>
+            <div id="examScenarioCard" class="exam-scenario-card"></div>
+            <label for="examAgentName" style="display:block;margin:12px 0 6px;font-size:13px;font-weight:600;color:var(--lc-navy);">Votre nom et prénom (obligatoire)</label>
+            <input type="text" id="examAgentName" placeholder="Ex : Marie Dupont" autocomplete="name" style="width:100%;margin-bottom:8px;">
+            <button type="button" id="examLaunchBtn" class="exam-launch-btn" style="width:100%;margin-top:12px;padding:10px;">🎯 Préparer l'examen — même scénario pour tous</button>
+            <div class="exam-summary" id="examSummary"></div>
+        </div>
 
         <div class="coaching-panel" id="coachingPanel">
             <h4>🎯 Coaching personnalisé</h4>
@@ -1435,12 +1590,12 @@
         }
 
         function getNouvelleLoiObjectionsForSession() {
-            const name = getAgentName();
+            const name = getAgentName() || getExamAgentName();
             if (name) return pickNouvelleLoiSetForAgent(name);
             return NOUVELLE_LOI_SETS[Math.floor(Math.random() * NOUVELLE_LOI_SETS.length)].slice();
         }
 
-        function buildEngieRgpdScenarioObjections(agentName) {
+        function buildEngieRgpdExamObjections(agentName) {
             const legal = pickNouvelleLoiSetForAgent(agentName);
             return [
                 "Ça ne m'intéresse pas, je viens tout juste de passer chez Engie.",
@@ -1459,8 +1614,8 @@
         function resolveScenarioStep(step) {
             if (!step) return null;
             if (!step.useNouvelleLoiSets) return step;
-            const agentName = getAgentName() || "agent";
-            const objections = buildEngieRgpdScenarioObjections(agentName);
+            const agentName = getAgentName() || getExamAgentName() || "agent";
+            const objections = buildEngieRgpdExamObjections(agentName);
             return Object.assign({}, step, {
                 objections: objections,
                 minObjections: step.minObjections || 7,
@@ -1687,10 +1842,93 @@ FACTURE DE CLÔTURE (important) :
 5. CLOSING — seulement si proposition bien menée`;
 
         const V1_TRAINING_KEY = "simulator_v1_training_evolution";
+        const V1_EXAM_PROGRESS_KEY = "simulator_v1_exam_progress";
+        const EXAM_ENGIE_RGPD_NOUVELLE_LOI_STEP = {
+            id: "examen_engie_rgpd_nouvelle_loi",
+            label: "Examen — Engie 3 mois, RGPD & nouvelle loi",
+            profile: "mefiant_rgpd",
+            level: "avance",
+            scenarioType: "standard",
+            prospectTone: "mefiant_ferme",
+            strictObjectionGate: true,
+            useNouvelleLoiSets: true,
+            firstName: "Karim",
+            lastName: "Benali",
+            supplier: "Engie",
+            billAmount: 88,
+            offerTarget: 72,
+            yearsAtSupplier: "3 mois",
+            address: "14 avenue Jean Jaurès, 69007 Lyon",
+            opening: "Oui bonjour ? Écoutez, je viens de passer chez Engie, c'est pour quoi ?",
+            brief: "Karim Benali, 41 ans, chez Engie depuis 3 mois (~88 €/mois). Pas intéressé. Méfiant RGPD : 3 objections nouvelle loi (différentes selon l'agent). A payé des « frais de résiliation » chez l'ancien fournisseur — l'agent doit expliquer que c'était une facture de clôture.",
+            backstory: "Tu as quitté ton ancien fournisseur il y a environ 4 mois pour Engie (tu es chez Engie depuis 3 mois). On t'a facturé des « frais de résiliation » à la fin — tu penses t'être fait avoir. Tu ne connais pas le terme « facture de clôture » : c'est l'agent qui doit t'expliquer. Tu refuses de rechanger sans garanties claires.",
+            goal: "Objections dans l'ordre : pas intéressé → 3 nouvelle loi (selon agent) → frais de résiliation (agent explique facture de clôture) → IBAN/mail. Reformulation + réponses concrètes obligatoires avant de passer à la suite.",
+            minObjections: 7,
+            expectedOutcome: "changement_fournisseur"
+        };
+        const EXAM_CAMPAIGNS = {
+            "2026-09-04": {
+                id: "certif_engie_rgpd_20260904",
+                title: "Examen — Engie récent, RGPD & nouvelle loi",
+                dateLabel: "4 septembre 2026",
+                instructions: "Un seul appel · Même scénario client pour tous (Engie 3 mois) · 3 objections nouvelle loi différentes selon le nom de l'agent · Objection frais de résiliation (l'agent doit expliquer facture de clôture) · Niveau avancé · 70/100 — une objection à la fois, traitée avant de continuer.",
+                passScore: 70,
+                steps: [EXAM_ENGIE_RGPD_NOUVELLE_LOI_STEP]
+            },
+            "2026-08-18": {
+                id: "certif_engie_rgpd_20260818",
+                title: "Examen — Engie récent, RGPD & nouvelle loi",
+                dateLabel: "18 août 2026",
+                instructions: "Un seul appel · Même scénario client pour tous (Engie 3 mois) · 3 objections nouvelle loi différentes selon le nom de l'agent · Objection frais de résiliation (l'agent doit expliquer facture de clôture) · Niveau avancé · 70/100 — une objection à la fois, traitée avant de continuer.",
+                passScore: 70,
+                steps: [EXAM_ENGIE_RGPD_NOUVELLE_LOI_STEP]
+            },
+            "2026-07-27": {
+                id: "certif_engie_20260727",
+                title: "Examen certification — Changement fournisseur Engie",
+                dateLabel: "27 juillet 2026",
+                instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant chez Engie (ferme mais jouable) · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur",
+                passScore: 70,
+                steps: [
+                    {
+                        id: "examen_engie_mefiant_agressif",
+                        label: "Examen — Engie méfiant (changement fournisseur)",
+                        profile: "mefiant_fournisseur",
+                        level: "avance",
+                        scenarioType: "standard",
+                        prospectTone: "mefiant_ferme",
+                        firstName: "Marc",
+                        lastName: "Dupont",
+                        supplier: "Engie",
+                        billAmount: 92,
+                        offerTarget: 76,
+                        yearsAtSupplier: "5 ans",
+                        address: "24 boulevard Longchamp, 13001 Marseille",
+                        opening: "Oui bonjour ? C'est pour quoi… je ne change pas de fournisseur en général.",
+                        brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule). Méfiant et ferme : ne veut pas changer, pose des objections sérieuses. Cède à la fin si l'agent reformule et répond avec des arguments concrets (objectif : changement de fournisseur).",
+                        goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a bien géré les objections.",
+                        minObjections: 5,
+                        expectedOutcome: "changement_fournisseur",
+                        objections: [
+                            "Je suis chez Engie, je ne veux pas changer de fournisseur.",
+                            "Engie me convient — pourquoi je prendrais le risque ?",
+                            "Comment avez-vous eu mon numéro ?",
+                            "La dernière fois que j'ai changé, c'était compliqué.",
+                            "Votre offre cache peut-être des frais de résiliation.",
+                            "Mon voisin a quitté Engie et il n'est pas content.",
+                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                            "Allez droit au but, j'ai pas le temps pour un long discours.",
+                            "Concrètement, qu'est-ce que j'y gagne à quitter Engie ?",
+                            "Envoyez-moi tout par mail, je préfère vérifier par écrit."
+                        ]
+                    }
+                ]
+            }
+        };
         const TRAINING_SCENARIOS = {
             certif_engie_rgpd_nouvelle_loi: {
                 id: "certif_engie_rgpd_nouvelle_loi",
-                label: "Certification — Engie 3 mois, RGPD & nouvelle loi",
+                label: "Examen — Engie 3 mois, RGPD & nouvelle loi",
                 description: "Karim Benali, Engie 3 mois (~88 €/mois) — 3 objections nouvelle loi selon votre nom, frais de résiliation (agent explique facture de clôture). Avancé.",
                 profile: "mefiant_rgpd",
                 level: "avance",
@@ -1714,7 +1952,7 @@ FACTURE DE CLÔTURE (important) :
             certif_fournisseur_mefiant: {
                 id: "certif_fournisseur_mefiant",
                 label: "Certification — Changement fournisseur méfiant",
-                description: "Philippe Bernard, 52 ans, EDF à Lyon (~89 €/mois) — prospect méfiant sur le changement de fournisseur.",
+                description: "Philippe Bernard, 52 ans, EDF à Lyon (~89 €/mois) — même scénario que l'examen certification.",
                 profile: "mefiant_fournisseur",
                 level: "avance",
                 scenarioType: "standard",
@@ -2130,6 +2368,150 @@ FACTURE DE CLÔTURE (important) :
             return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate() + 0).padStart(2, "0");
         }
 
+        const EXAM_FORMATEUR_CODE = "formateur";
+        const EXAM_FORMATEUR_SESSION_KEY = "simulator_exam_formateur_v1";
+        let examFormateurUnlockedMemory = false;
+
+        let examCallContext = null;
+        let pendingExamStepIndex = null;
+
+        function normalizeFormateurCode(raw) {
+            return String(raw || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[\u200B-\u200D\uFEFF]/g, "");
+        }
+
+        function isValidFormateurCode(raw) {
+            return normalizeFormateurCode(raw) === EXAM_FORMATEUR_CODE;
+        }
+
+        function setExamFormateurUnlocked() {
+            examFormateurUnlockedMemory = true;
+            try { sessionStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+            try { localStorage.setItem(EXAM_FORMATEUR_SESSION_KEY, "1"); } catch (_) {}
+        }
+
+        function isExamFormateurUnlocked() {
+            if (examFormateurUnlockedMemory) return true;
+            try {
+                if (sessionStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1") return true;
+                if (localStorage.getItem(EXAM_FORMATEUR_SESSION_KEY) === "1") return true;
+            } catch (_) {}
+            return false;
+        }
+
+        function isExamPreviewUnlocked() {
+            return isExamFormateurUnlocked();
+        }
+
+        function canViewExamScenarioDetails() {
+            return isExamFormateurUnlocked();
+        }
+
+        function shouldLockExamSettings() {
+            return !!getActiveExamCampaign() && !canViewExamScenarioDetails();
+        }
+
+        function renderExamAgentLock() {
+            const locked = shouldLockExamSettings();
+            const block = document.getElementById("examConfigurableBlock");
+            const notice = document.getElementById("examLockedNotice");
+            if (block) block.style.display = locked ? "none" : "";
+            if (notice) notice.style.display = locked ? "block" : "none";
+        }
+
+        function renderFormateurAccess() {
+            const block = document.getElementById("examFormateurAccess");
+            if (!block) return;
+            const hasCampaigns = Object.keys(EXAM_CAMPAIGNS).length > 0;
+            if (!hasCampaigns) {
+                block.style.display = "none";
+                return;
+            }
+            const today = getDayVarietyKey();
+            if (EXAM_CAMPAIGNS[today] || isExamFormateurUnlocked()) {
+                block.style.display = "none";
+                return;
+            }
+            block.style.display = "block";
+        }
+
+        function tryUnlockExamFormateur() {
+            const block = document.getElementById("examFormateurAccess");
+            const input = block ? block.querySelector("#examFormateurCode") : document.getElementById("examFormateurCode");
+            const msg = document.getElementById("examFormateurMsg");
+            const code = input ? input.value : "";
+            if (isValidFormateurCode(code)) {
+                setExamFormateurUnlocked();
+                if (msg) {
+                    msg.textContent = "Accès formateur activé.";
+                    msg.style.color = "var(--success)";
+                }
+                renderFormateurAccess();
+                renderExamAgentLock();
+                renderExamPanel();
+                document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                return;
+            }
+            if (msg) {
+                msg.textContent = normalizeFormateurCode(code)
+                    ? "Code incorrect."
+                    : "Saisissez le code formateur.";
+                msg.style.color = "var(--danger)";
+            }
+        }
+        window.tryUnlockExamFormateur = tryUnlockExamFormateur;
+
+        function getUpcomingExamDate(fromKey) {
+            const keys = Object.keys(EXAM_CAMPAIGNS).sort();
+            return keys.find(k => k >= fromKey) || keys[keys.length - 1] || null;
+        }
+
+        function getActiveExamCampaign() {
+            const today = getDayVarietyKey();
+            let examDate = today;
+            let campaign = EXAM_CAMPAIGNS[today];
+            let isPreview = false;
+            if (!campaign && isExamPreviewUnlocked()) {
+                examDate = getUpcomingExamDate(today);
+                campaign = examDate ? EXAM_CAMPAIGNS[examDate] : null;
+                isPreview = !!(campaign && examDate !== today);
+            }
+            if (!campaign) return null;
+            return Object.assign({}, campaign, { examDate, isPreview });
+        }
+
+        function loadExamProgress(examId) {
+            try {
+                const raw = localStorage.getItem(V1_EXAM_PROGRESS_KEY);
+                const all = raw ? JSON.parse(raw) : {};
+                return all[examId] || { currentStep: 0, results: [] };
+            } catch (_) {
+                return { currentStep: 0, results: [] };
+            }
+        }
+
+        function saveExamProgress(examId, progress) {
+            try {
+                const raw = localStorage.getItem(V1_EXAM_PROGRESS_KEY);
+                const all = raw ? JSON.parse(raw) : {};
+                all[examId] = progress;
+                localStorage.setItem(V1_EXAM_PROGRESS_KEY, JSON.stringify(all));
+            } catch (_) {}
+            renderExamPanel();
+        }
+
+        function getPendingExamStep() {
+            const campaign = getActiveExamCampaign();
+            if (!campaign || pendingExamStepIndex == null) return null;
+            const step = campaign.steps[pendingExamStepIndex];
+            if (!step) return null;
+            return { campaign, stepIdx: pendingExamStepIndex, step };
+        }
+
         function getSelectedTrainingScenario() {
             const sel = document.getElementById("trainingScenarioSelect");
             const id = sel ? sel.value : "random";
@@ -2139,6 +2521,8 @@ FACTURE DE CLÔTURE (important) :
 
         function getFixedScenarioStep() {
             if (resolvedScenarioStep) return resolvedScenarioStep;
+            const examCtx = getPendingExamStep();
+            if (examCtx) return resolveScenarioStep(examCtx.step);
             return resolveScenarioStep(getSelectedTrainingScenario());
         }
 
@@ -2366,6 +2750,175 @@ ${objList}
             }
             el.innerHTML = "<strong>" + scenario.label + "</strong> — " + scenario.description
                 + " · Profil verrouillé · Mode strict activé · Évaluation visible à la fin.";
+        }
+
+        function buildExamPromptBlock(ctx) {
+            if (!ctx) return "";
+            const step = resolveScenarioStep(ctx.step) || ctx.step;
+            const n = ctx.stepIdx + 1;
+            const total = ctx.campaign.steps.length;
+            const objList = (step.objections || []).map(o => "- " + o).join("\n");
+            const behavior = buildScenarioBehaviorBlock(step);
+            const legalNote = step.assignedNouvelleLoi?.length
+                ? `\n- Tes 3 objections « nouvelle loi » pour cet agent : « ${step.assignedNouvelleLoi.join(" », « ")} »`
+                : "";
+            return `
+
+MODE EXAMEN — ${step.label.toUpperCase()} (${n}/${total})
+Objectif formateur : ${step.goal}
+${behavior ? behavior + "\n" : ""}- Minimum ${step.minObjections || 4} objections variées : ne cède que si l'agent reformule ton refus ET répond avec des arguments concrets et convaincants.
+- Tu peux utiliser « envoyez-moi tout par mail » ou « je vais réfléchir » comme freins — l'agent doit les traiter à l'oral (reformulation, arguments), pas forcément clôturer par un mail ou un rappel.
+- Objection frais de résiliation : tu parles de « frais de résiliation » payés — tu ne connais PAS « facture de clôture ». C'est l'agent qui doit l'expliquer.${legalNote}
+- Utilise ces objections dans l'ordre (varie la formulation, ne les enchaîne pas) :
+${objList}
+- Niveau AVANCÉ : reste exigeant même si l'agent est poli.
+- Si l'agent répète la même phrase, ignore ton objection ou reste vague → relance ou durcis ton ton.
+- Ne facilite pas la vente tant que les réponses ne te convainquent pas vraiment.`;
+        }
+
+        function applyExamStepToForm(stepIdx) {
+            const campaign = getActiveExamCampaign();
+            if (!campaign) return;
+            const agentName = getExamAgentName();
+            if (!agentName) {
+                alert("Indiquez votre nom et prénom avant de préparer l'examen.");
+                document.getElementById("examAgentName")?.focus();
+                return;
+            }
+            const step = campaign.steps[stepIdx];
+            if (!step) return;
+            pendingExamStepIndex = stepIdx;
+            const profileSel = document.getElementById("profileSelect");
+            const levelSel = document.getElementById("levelSelect");
+            const calib = document.getElementById("calibrationToggle");
+            if (profileSel) profileSel.value = step.profile;
+            if (levelSel) levelSel.value = step.level || "avance";
+            if (calib) calib.checked = true;
+            updateProfilePreview();
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) {
+                startBtn.textContent = "📞 Décrocher — Examen certification";
+            }
+            renderExamPanel();
+            document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function resetExamUiAfterCampaignEnded() {
+            if (Object.keys(EXAM_CAMPAIGNS).length > 0) return;
+            pendingExamStepIndex = null;
+            examCallContext = null;
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn && /examen/i.test(startBtn.textContent || "")) {
+                startBtn.textContent = "📞 Décrocher — lancer la simulation";
+            }
+            renderExamAgentLock();
+        }
+
+        function renderExamPanel() {
+            const panel = document.getElementById("examPanel");
+            if (!panel) return;
+            const campaign = getActiveExamCampaign();
+            if (!campaign) {
+                panel.style.display = "none";
+                return;
+            }
+            panel.style.display = "block";
+            const step = campaign.steps[0];
+            const progress = loadExamProgress(campaign.id);
+            const result = progress.results && progress.results[0];
+            const badge = document.getElementById("examBadge");
+            const title = document.getElementById("examTitle");
+            const sub = document.getElementById("examSub");
+            const card = document.getElementById("examScenarioCard");
+            const summary = document.getElementById("examSummary");
+            const launchBtn = document.getElementById("examLaunchBtn");
+            if (badge) {
+                badge.textContent = campaign.isPreview ? "Mode test formateur" : "Examen du jour";
+                badge.classList.toggle("preview", !!campaign.isPreview);
+            }
+            if (title) title.textContent = campaign.title + " — " + campaign.dateLabel;
+            if (sub) {
+                if (canViewExamScenarioDetails()) {
+                    sub.textContent = campaign.isPreview
+                        ? "Aperçu formateur — invisible pour les agents. " + campaign.instructions
+                        : campaign.instructions;
+                } else {
+                    sub.textContent = "Examen officiel · Un seul appel · Scénario identique pour tous, découvert à l'appel · Résultat communiqué par le formateur.";
+                }
+            }
+            if (card && step) {
+                card.innerHTML = `<h5 style="margin:0;">${step.label || campaign.title}</h5>`;
+            }
+            renderExamAgentLock();
+            if (launchBtn) {
+                launchBtn.disabled = !!(result && result.passed);
+                if (result && result.passed) {
+                    launchBtn.textContent = canViewExamScenarioDetails()
+                        ? "✓ Examen validé — " + result.score + "/100"
+                        : "✓ Examen soumis — en attente de validation";
+                } else {
+                    launchBtn.textContent = pendingExamStepIndex === 0
+                        ? "✓ Scénario chargé — cliquez Décrocher"
+                        : "🎯 Préparer l'examen — même scénario pour tous";
+                }
+            }
+            if (summary) {
+                let html = canViewExamScenarioDetails()
+                    ? `<strong>Seuil de validation :</strong> ${campaign.passScore}/100 minimum`
+                    : `<strong>Examen certification</strong> — votre appel sera analysé par le formateur`;
+                if (result) {
+                    if (canViewExamScenarioDetails()) {
+                        html += `<br>Dernier score : <strong>${result.score}/100</strong> — `
+                            + (result.passed
+                                ? `<span class="exam-cert">✓ Examen réussi</span>`
+                                : `<span style="color:var(--danger)">✗ Non validé — recommencez après analyse du rapport</span>`);
+                        if (result.passed) {
+                            html += `<br><span class="exam-cert">🏆 Certification obtenue — bravo !</span>`;
+                        }
+                    } else {
+                        html += `<br><em>Appel enregistré — votre formateur vous communiquera le résultat.</em>`;
+                    }
+                } else if (pendingExamStepIndex === 0) {
+                    html += `<br><em>Scénario prêt — cliquez sur « Décrocher » pour passer l'examen.</em>`;
+                } else {
+                    html += `<br><em>Cliquez sur « Préparer l'examen » puis « Décrocher ».</em>`;
+                }
+                summary.innerHTML = html;
+            }
+        }
+
+        function recordExamStepResult(evaluation) {
+            if (!examCallContext) return null;
+            const { campaignId, stepIdx } = examCallContext;
+            const campaign = getActiveExamCampaign();
+            if (!campaign || campaign.id !== campaignId) return null;
+            const score = Number(evaluation && evaluation.score_total);
+            if (!Number.isFinite(score)) return null;
+            const progress = loadExamProgress(campaignId);
+            const passed = score >= campaign.passScore;
+            progress.results[stepIdx] = { score, passed, at: Date.now() };
+            if (passed) {
+                progress.currentStep = Math.max(progress.currentStep || 0, stepIdx + 1);
+            }
+            saveExamProgress(campaignId, progress);
+            examCallContext = null;
+            pendingExamStepIndex = passed ? null : 0;
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) startBtn.textContent = "📞 Décrocher — lancer la simulation";
+            return { passed, score, step: campaign.steps[stepIdx], campaign };
+        }
+
+        function renderExamEvalBanner(examResult) {
+            if (!examResult) return "";
+            const step = examResult.step;
+            const status = examResult.passed
+                ? `<strong style="color:var(--success)">Examen validé</strong> — ${examResult.score}/100 (seuil ${examResult.campaign.passScore}/100)`
+                : `<strong style="color:var(--danger)">Examen non validé</strong> — ${examResult.score}/100 (minimum ${examResult.campaign.passScore}/100 requis)`;
+            return `<div class="exam-eval-banner"><h4 style="margin:0 0 8px 0;">📋 ${step.label}</h4><p style="margin:0;">${status}. ${examResult.passed ? "Certification obtenue — félicitations !" : "Analysez le rapport et repassez l'examen."}</p></div>`;
+        }
+
+        function isExamAgentMode() {
+            return isExamCallActive() && !canViewExamScenarioDetails();
         }
 
         function setEvaluationPanelTitle(text) {
@@ -3108,6 +3661,7 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
                     persona.openingLine = fixedStep?.opening || pickVariedOpening(profileKey, state);
                     persona.callContext = pickCallContext(state);
                     if (fixedStep?.id) persona.trainingScenarioId = fixedStep.id;
+                    if (fixedStep && getPendingExamStep()) persona.examStepId = fixedStep.id;
                     break;
                 }
             }
@@ -3261,13 +3815,52 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
             }
         }
 
+        function getExamAgentName() {
+            const el = document.getElementById("examAgentName");
+            return el ? el.value.trim() : "";
+        }
+
         function getAgentName() {
             const cfg = getSimulatorConfig();
-            return (cfg.agentName || "").trim();
+            const fromHost = (cfg.agentName || "").trim();
+            if (fromHost) return fromHost;
+            return getExamAgentName();
+        }
+
+        function applyHostedAgentName() {
+            const cfg = getSimulatorConfig();
+            const name = (cfg.agentName || "").trim();
+            if (!name) return;
+            const el = document.getElementById("examAgentName");
+            if (el) {
+                el.value = name;
+                el.readOnly = true;
+                el.title = "Nom défini à la connexion Streamlit";
+            }
+        }
+
+        function isExamCallActive() {
+            return !!(examCallContext || pendingExamStepIndex != null || (prospectPersona && prospectPersona.examStepId));
+        }
+
+        function attachExamMetaToEvaluation(evaluation) {
+            if (!evaluation || !isExamCallActive()) return evaluation;
+            const campaign = getActiveExamCampaign();
+            const passScore = campaign?.passScore || 70;
+            const score = Number(evaluation.score_total);
+            evaluation.exam_meta = {
+                agent_name: getAgentName(),
+                campaign_id: examCallContext?.campaignId || campaign?.id || "certif_vente_20260717",
+                passed: Number.isFinite(score) && score >= passScore,
+                pass_score: passScore,
+                exam_date: campaign?.examDate || getDayVarietyKey()
+            };
+            return evaluation;
         }
 
         function buildConversationPayload(evaluation) {
-            const evalData = evaluation ? Object.assign({}, evaluation) : null;
+            let evalData = evaluation || null;
+            if (evalData) evalData = attachExamMetaToEvaluation(Object.assign({}, evalData));
             const payload = {
                 profile: document.getElementById("profileSelect").value,
                 level: getLevel(),
@@ -3278,13 +3871,19 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
                 evaluation: evalData,
                 messages: chatTurns.map(t => ({ role: t.role, content: t.content }))
             };
-            const trainingScenario = getSelectedTrainingScenario();
-            if (trainingScenario) {
-                payload.training_mode = "scenario_certif";
-                payload.training_scenario_id = trainingScenario.id;
+            if (isExamCallActive()) {
+                payload.training_mode = "exam_certif";
+                payload.agent_name = getAgentName() || null;
+                payload.exam_campaign_id = examCallContext?.campaignId || getActiveExamCampaign()?.id || null;
+            } else {
+                const trainingScenario = getSelectedTrainingScenario();
+                if (trainingScenario) {
+                    payload.training_mode = "scenario_certif";
+                    payload.training_scenario_id = trainingScenario.id;
+                }
+                const agentName = getAgentName();
+                if (agentName) payload.agent_name = agentName;
             }
-            const agentName = getAgentName();
-            if (agentName) payload.agent_name = agentName;
             return payload;
         }
 
@@ -3296,6 +3895,7 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
                 persona: prospectPersona,
                 level: getLevel(),
                 agent_name: getAgentName(),
+                exam_campaign_id: examCallContext?.campaignId || getActiveExamCampaign()?.id || null,
                 stashed_at: Date.now()
             }));
         }
@@ -3319,6 +3919,10 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
                 callStartedAt = pending.callStartedAt || null;
                 prospectPersona = pending.persona || prospectPersona;
                 callLevel = pending.level || callLevel;
+                if (pending.agent_name) {
+                    const nameEl = document.getElementById("examAgentName");
+                    if (nameEl && !nameEl.value.trim()) nameEl.value = pending.agent_name;
+                }
                 lastConversationId = result.conversation_id;
 
                 setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
@@ -7283,25 +7887,53 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
         }
 
         async function showEvaluation(apiKey) {
-            setStatus("Génération de l'évaluation (10–30 s)…", "status-thinking");
+            const examAgentMode = isExamAgentMode();
+            setStatus(examAgentMode ? "Enregistrement de votre examen…" : "Génération de l'évaluation (10–30 s)…", "status-thinking");
             const retryBtn = document.getElementById("retryEvalBtn");
             let evaluationData = null;
             try {
                 const evalResult = await runEvaluation(apiKey);
                 evaluationData = evalResult.evaluation;
-                evalContent.innerHTML = evalResult.html;
-                if (retryBtn) {
-                    retryBtn.style.display = evalResult.source === "heuristic" ? "block" : "none";
+                if (!examAgentMode) {
+                    evalContent.innerHTML = evalResult.html;
+                    if (retryBtn) {
+                        retryBtn.style.display = evalResult.source === "heuristic" ? "block" : "none";
+                    }
+                } else if (retryBtn) {
+                    retryBtn.style.display = "none";
                 }
             } catch (_) {
                 evaluationData = computeHeuristicEvaluation();
-                evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
-                if (retryBtn) retryBtn.style.display = "block";
+                if (!examAgentMode) {
+                    evalContent.innerHTML = renderEvaluationReport(evaluationData, "heuristic");
+                    if (retryBtn) retryBtn.style.display = "block";
+                } else if (retryBtn) {
+                    retryBtn.style.display = "none";
+                }
             }
-            revealEvaluationPanel();
+            evaluationData = finalizeEvaluationData(evaluationData);
+            const examResult = recordExamStepResult(evaluationData);
+            if (examAgentMode) {
+                evaluationDiv.style.display = "none";
+                evalContent.innerHTML = "";
+                setEvaluationPanelTitle("Rapport pédagogique — Évaluation (/100)");
+                setStatus("Examen enregistré — merci", "status-idle");
+                document.getElementById("examPanel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            } else {
+                if (examResult) {
+                    evalContent.innerHTML = renderExamEvalBanner(examResult) + evalContent.innerHTML;
+                }
+                revealEvaluationPanel();
+            }
             recordTrainingSession(evaluationData);
+            renderExamPanel();
             scheduleStreamlitFrameHeightSync(2000);
             return evaluationData;
+        }
+
+        function finalizeEvaluationData(evaluationData) {
+            if (!evaluationData) return evaluationData;
+            return attachExamMetaToEvaluation(Object.assign({}, evaluationData));
         }
 
         function resetUi() {
@@ -7319,6 +7951,10 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
             setProspectThinking(false);
             stopCallTimer();
             setStatus("Ligne inactive", "status-idle");
+            const startBtnEl = document.getElementById("startBtn");
+            if (startBtnEl && !getPendingExamStep()) {
+                startBtnEl.textContent = "📞 Décrocher — lancer la simulation";
+            }
         }
 
         startBtn.addEventListener('click', async () => {
@@ -7335,14 +7971,24 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
             const level = document.getElementById('levelSelect').value;
             callLevel = level;
 
+            const examCtx = getPendingExamStep();
+            if (examCtx && examCtx.step.profile === profileKey && examCtx.step.level === level) {
+                examCallContext = { campaignId: examCtx.campaign.id, stepIdx: examCtx.stepIdx };
+                const calib = document.getElementById("calibrationToggle");
+                if (calib) calib.checked = true;
+            } else {
+                examCallContext = null;
+            }
+
             const trainingScenario = getSelectedTrainingScenario();
-            if (trainingScenario) {
+            if (trainingScenario && !examCtx) {
                 const calib = document.getElementById("calibrationToggle");
                 if (calib) calib.checked = true;
             }
 
-            resolvedScenarioStep = resolveScenarioStep(trainingScenario);
-            const guidedStep = resolvedScenarioStep || trainingScenario;
+            const guidedStepRaw = examCtx?.step || trainingScenario;
+            resolvedScenarioStep = resolveScenarioStep(guidedStepRaw);
+            const guidedStep = resolvedScenarioStep || guidedStepRaw;
             const profileLevelBlock = PROFILE_LEVEL_PROMPTS[profileKey]?.[level];
             const levelBlock = guidedStep?.minObjections
                 ? buildGuidedScenarioLevelBlock(guidedStep)
@@ -7367,7 +8013,7 @@ CONTEXTE SITUATIONNEL : ${persona.callContext || pickCallContext(loadTrainingSta
 
 ${CALL_STRUCTURE}
 ${buildNouvelleLoiProspectBlock()}
-${guidedStep?.minObjections ? buildTrainingScenarioPromptBlock(guidedStep) : getTrainingEvolutionBlock(persona)}
+${examCtx && examCallContext ? buildExamPromptBlock(examCtx) : (guidedStep?.minObjections ? buildTrainingScenarioPromptBlock(guidedStep) : getTrainingEvolutionBlock(persona))}
 
 RÈGLES DE FORMAT (OBLIGATOIRE) :
 - LANGUE : français UNIQUEMENT. Jamais un mot d'anglais.
@@ -7528,6 +8174,7 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
 
         function onStreamlitConfigApplied() {
             applyHostedConfig();
+            applyHostedAgentName();
             showLastSaveResult();
             checkDbServer();
             checkTtsServer();
@@ -7574,6 +8221,9 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             renderTrainingScenarioLock();
             updateTrainingScenarioHint();
             renderCoachingPanel();
+            resetExamUiAfterCampaignEnded();
+            renderFormateurAccess();
+            renderExamPanel();
             installStreamlitHeightObserver();
             bindProspectVideos("female");
             syncStreamlitFrameHeight();
@@ -7584,6 +8234,16 @@ RÈGLES DE FORMAT (OBLIGATOIRE) :
             applyTrainingScenarioToForm();
             const benchmarkBtn = document.getElementById("benchmarkModelsBtn");
             if (benchmarkBtn) benchmarkBtn.addEventListener("click", () => { void runFreeModelsBenchmark(); });
+            const examLaunchBtn = document.getElementById("examLaunchBtn");
+            if (examLaunchBtn) examLaunchBtn.addEventListener("click", () => applyExamStepToForm(0));
+            const examFormateurBtn = document.getElementById("examFormateurBtn");
+            if (examFormateurBtn) examFormateurBtn.addEventListener("click", tryUnlockExamFormateur);
+            const examFormateurCode = document.getElementById("examFormateurCode");
+            if (examFormateurCode) {
+                examFormateurCode.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") tryUnlockExamFormateur();
+                });
+            }
             if (!ready) {
                 const el = document.getElementById("dbStatus");
                 if (el) {
