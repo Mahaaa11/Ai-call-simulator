@@ -1205,8 +1205,8 @@
         <div id="examConfigurableBlock">
         <label for="trainingScenarioSelect">Scénario d'entraînement</label>
         <select id="trainingScenarioSelect">
-            <option value="random">🎲 Aléatoire — profil et client variables</option>
-            <option value="certif_engie_rgpd_nouvelle_loi" selected>🎓 Examen — Engie 3 mois, RGPD & nouvelle loi (Karim Benali)</option>
+            <option value="random" selected>🎲 Aléatoire — profil et client variables</option>
+            <option value="certif_engie_rgpd_nouvelle_loi">🎯 Certification — Engie 3 mois, RGPD & nouvelle loi (Karim Benali)</option>
             <option value="certif_fournisseur_mefiant">🎯 Certification — Changement fournisseur méfiant (Philippe Bernard, EDF Lyon)</option>
             <option value="certif_engie_mefiant_agressif">🔥 Certification — Engie méfiant (Marc Dupont, Marseille)</option>
         </select>
@@ -1262,8 +1262,14 @@
             </div>
             <label for="nvidiaModelSelect">Modèle OpenRouter (prospect)</label>
             <select id="nvidiaModelSelect">
-                <optgroup label="Gratuits — recommandés">
-                    <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit) — actuel</option>
+                <optgroup label="Payants — examen">
+                    <option value="google/gemini-2.5-flash" selected>Gemini 2.5 Flash — examen (recommandé)</option>
+                    <option value="openai/gpt-4o-mini">GPT-4o mini</option>
+                    <option value="nvidia/nemotron-3-super-120b-a12b">Nemotron 3 Super 120B</option>
+                    <option value="anthropic/claude-3.5-haiku">Claude 3.5 Haiku</option>
+                </optgroup>
+                <optgroup label="Gratuits — entraînement">
+                    <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super 120B (gratuit)</option>
                     <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (gratuit)</option>
                     <option value="google/gemma-4-31b-it:free">Gemma 4 31B (gratuit)</option>
                     <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen3 Next 80B (gratuit)</option>
@@ -1866,14 +1872,46 @@ FACTURE DE CLÔTURE (important) :
             minObjections: 7,
             expectedOutcome: "changement_fournisseur"
         };
+        const EXAM_ENGIE_MEFIANT_STEP = {
+            id: "examen_engie_mefiant_agressif",
+            label: "Examen — Engie méfiant (changement fournisseur)",
+            profile: "mefiant_fournisseur",
+            level: "avance",
+            scenarioType: "standard",
+            prospectTone: "mefiant_ferme",
+            firstName: "Marc",
+            lastName: "Dupont",
+            supplier: "Engie",
+            billAmount: 92,
+            offerTarget: 76,
+            yearsAtSupplier: "5 ans",
+            address: "24 boulevard Longchamp, 13001 Marseille",
+            opening: "Oui bonjour ? C'est pour quoi… je ne change pas de fournisseur en général.",
+            brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule). Méfiant et ferme : ne veut pas changer, pose des objections sérieuses. Cède à la fin si l'agent reformule et répond avec des arguments concrets (objectif : changement de fournisseur).",
+            goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a bien géré les objections.",
+            minObjections: 5,
+            expectedOutcome: "changement_fournisseur",
+            objections: [
+                "Je suis chez Engie, je ne veux pas changer de fournisseur.",
+                "Engie me convient — pourquoi je prendrais le risque ?",
+                "Comment avez-vous eu mon numéro ?",
+                "La dernière fois que j'ai changé, c'était compliqué.",
+                "Votre offre cache peut-être des frais de résiliation.",
+                "Mon voisin a quitté Engie et il n'est pas content.",
+                "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
+                "Allez droit au but, j'ai pas le temps pour un long discours.",
+                "Concrètement, qu'est-ce que j'y gagne à quitter Engie ?",
+                "Envoyez-moi tout par mail, je préfère vérifier par écrit."
+            ]
+        };
         const EXAM_CAMPAIGNS = {
             "2026-09-04": {
-                id: "certif_engie_rgpd_20260904",
-                title: "Examen — Engie récent, RGPD & nouvelle loi",
+                id: "certif_engie_20260904",
+                title: "Examen certification — Changement fournisseur Engie",
                 dateLabel: "4 septembre 2026",
-                instructions: "Un seul appel · Même scénario client pour tous (Engie 3 mois) · 3 objections nouvelle loi différentes selon le nom de l'agent · Objection frais de résiliation (l'agent doit expliquer facture de clôture) · Niveau avancé · 70/100 — une objection à la fois, traitée avant de continuer.",
+                instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant chez Engie (ferme mais jouable) · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur · Modèle payant Gemini 2.5 Flash.",
                 passScore: 70,
-                steps: [EXAM_ENGIE_RGPD_NOUVELLE_LOI_STEP]
+                steps: [EXAM_ENGIE_MEFIANT_STEP]
             },
             "2026-08-18": {
                 id: "certif_engie_rgpd_20260818",
@@ -1889,40 +1927,7 @@ FACTURE DE CLÔTURE (important) :
                 dateLabel: "27 juillet 2026",
                 instructions: "Un seul appel · Même scénario pour tous · Prospect méfiant chez Engie (ferme mais jouable) · Niveau avancé · Mode strict · Valider à 70/100 — critère : traiter les objections, reformuler, réponses convaincantes, conclure le changement de fournisseur",
                 passScore: 70,
-                steps: [
-                    {
-                        id: "examen_engie_mefiant_agressif",
-                        label: "Examen — Engie méfiant (changement fournisseur)",
-                        profile: "mefiant_fournisseur",
-                        level: "avance",
-                        scenarioType: "standard",
-                        prospectTone: "mefiant_ferme",
-                        firstName: "Marc",
-                        lastName: "Dupont",
-                        supplier: "Engie",
-                        billAmount: 92,
-                        offerTarget: 76,
-                        yearsAtSupplier: "5 ans",
-                        address: "24 boulevard Longchamp, 13001 Marseille",
-                        opening: "Oui bonjour ? C'est pour quoi… je ne change pas de fournisseur en général.",
-                        brief: "Marc Dupont, 48 ans, chez Engie à Marseille (~92 €/mois élec seule). Méfiant et ferme : ne veut pas changer, pose des objections sérieuses. Cède à la fin si l'agent reformule et répond avec des arguments concrets (objectif : changement de fournisseur).",
-                        goal: "Conduire un comparatif changement de fournisseur (Engie → Home Énergie ou équivalent), traiter chaque objection avec reformulation et réponses convaincantes, rassurer sur Engie/résiliation/SEPA sans insister lourdement, puis conclure la vente si l'agent a bien géré les objections.",
-                        minObjections: 5,
-                        expectedOutcome: "changement_fournisseur",
-                        objections: [
-                            "Je suis chez Engie, je ne veux pas changer de fournisseur.",
-                            "Engie me convient — pourquoi je prendrais le risque ?",
-                            "Comment avez-vous eu mon numéro ?",
-                            "La dernière fois que j'ai changé, c'était compliqué.",
-                            "Votre offre cache peut-être des frais de résiliation.",
-                            "Mon voisin a quitté Engie et il n'est pas content.",
-                            "Pourquoi mon IBAN au téléphone ? Le SEPA me méfie.",
-                            "Allez droit au but, j'ai pas le temps pour un long discours.",
-                            "Concrètement, qu'est-ce que j'y gagne à quitter Engie ?",
-                            "Envoyez-moi tout par mail, je préfère vérifier par écrit."
-                        ]
-                    }
-                ]
+                steps: [EXAM_ENGIE_MEFIANT_STEP]
             }
         };
         const TRAINING_SCENARIOS = {
@@ -2419,8 +2424,26 @@ FACTURE DE CLÔTURE (important) :
             const locked = shouldLockExamSettings();
             const block = document.getElementById("examConfigurableBlock");
             const notice = document.getElementById("examLockedNotice");
+            const modelSel = document.getElementById("nvidiaModelSelect");
             if (block) block.style.display = locked ? "none" : "";
             if (notice) notice.style.display = locked ? "block" : "none";
+            if (modelSel) {
+                if (locked || shouldUseExamPaidModel()) {
+                    applyExamPaidModel();
+                    modelSel.disabled = true;
+                } else {
+                    modelSel.disabled = false;
+                }
+            }
+        }
+
+        function shouldUseExamPaidModel() {
+            return !!(getActiveExamCampaign() && (pendingExamStepIndex != null || examCallContext != null));
+        }
+
+        function applyExamPaidModel() {
+            const sel = document.getElementById("nvidiaModelSelect");
+            if (sel) sel.value = DEFAULT_EXAM_MODEL;
         }
 
         function renderFormateurAccess() {
@@ -2794,6 +2817,7 @@ ${objList}
             if (profileSel) profileSel.value = step.profile;
             if (levelSel) levelSel.value = step.level || "avance";
             if (calib) calib.checked = true;
+            applyExamPaidModel();
             updateProfilePreview();
             const startBtn = document.getElementById("startBtn");
             if (startBtn) {
@@ -2843,7 +2867,7 @@ ${objList}
                         ? "Aperçu formateur — invisible pour les agents. " + campaign.instructions
                         : campaign.instructions;
                 } else {
-                    sub.textContent = "Examen officiel · Un seul appel · Scénario identique pour tous, découvert à l'appel · Résultat communiqué par le formateur.";
+                    sub.textContent = "Examen officiel · Un seul appel · Scénario identique pour tous, découvert à l'appel · Modèle payant Gemini 2.5 Flash · Résultat communiqué par le formateur.";
                 }
             }
             if (card && step) {
@@ -3432,14 +3456,18 @@ Commentaires = citations ou moments précis de l'agent. Pas de commentaire gén�
 RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » / « fichier clients » (-15 pts). Bon : consentement, formulaire, comparateur, partenaire, OU entretien préalable avec un collègue (facture électricité, hausse 18 %). Pénaliser « je ne sais pas » / « numéro affiché » sans explication.`;
 
         const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+        const DEFAULT_EXAM_MODEL = "google/gemini-2.5-flash";
         const OPENROUTER_FALLBACK_MODELS = [
+            "google/gemini-2.5-flash",
+            "openai/gpt-4o-mini",
+            "nvidia/nemotron-3-super-120b-a12b",
+            "anthropic/claude-3.5-haiku",
             "meta-llama/llama-3.3-70b-instruct:free",
             "google/gemma-4-31b-it:free",
             "qwen/qwen3-next-80b-a3b-instruct:free",
             "openai/gpt-oss-120b:free",
             "nvidia/nemotron-3-super-120b-a12b:free",
-            "nvidia/nemotron-3-nano-30b-a3b:free",
-            "nvidia/nemotron-3-super-120b-a12b"
+            "nvidia/nemotron-3-nano-30b-a3b:free"
         ];
         const BENCHMARK_FREE_MODELS = [
             "nvidia/nemotron-3-super-120b-a12b:free",
@@ -5534,6 +5562,7 @@ RÈGLE CRITIQUE origine numéro / nouvelle loi : jamais « base de données » /
         }
 
         function getNvidiaModel() {
+            if (shouldUseExamPaidModel()) return DEFAULT_EXAM_MODEL;
             const el = document.getElementById("nvidiaModelSelect");
             return el ? el.value : "nvidia/nemotron-3-super-120b-a12b:free";
         }
